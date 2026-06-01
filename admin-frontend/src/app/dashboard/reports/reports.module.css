@@ -1,0 +1,802 @@
+/* Reports Page Styles */
+.reportsPage {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+    padding: 2rem 0;
+}
+
+.reportsContainer {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+/* Page Header */
+.pageHeader {
+    margin-bottom: 1rem;
+    margin-top: 4.5rem;
+}
+
+.headerContent {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 2rem;
+    background: white;
+    padding: 2rem;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+}
+
+.headerText {
+    flex: 1;
+}
+
+.pageTitle {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+    line-height: 1.2;
+}
+
+.titleIcon {
+    width: 2.5rem;
+    height: 2.5rem;
+    color: #f97316;
+    flex-shrink: 0;
+}
+
+.pageSubtitle {
+    color: #64748b;
+    font-size: 1.1rem;
+    line-height: 1.5;
+    max-width: 600px;
+}
+
+.printButton {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: #f97316;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+.printButton:hover {
+    background: #ea580c;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+}
+
+.printIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Tabs */
+.tabsContainer {
+    margin-bottom: 2rem;
+}
+
+.tabsList {
+    display: flex;
+    gap: 0.5rem;
+    background: white;
+    padding: 0.5rem;
+    border-radius: 1rem;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e2e8f0;
+}
+
+.tabButton {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    padding: 1rem 1.5rem;
+    border: none;
+    background: transparent;
+    color: #64748b;
+    font-weight: 500;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.tabButton:hover {
+    background: #f8fafc;
+    color: #475569;
+}
+
+.tabButton.active {
+    background: #f97316;
+    color: white;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
+}
+
+.tabIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+    flex-shrink: 0;
+}
+
+.tabName {
+    font-size: 0.9rem;
+    white-space: nowrap;
+}
+
+.tabCount {
+    background: rgba(255, 255, 255, 0.2);
+    color: inherit;
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    min-width: 1.5rem;
+    text-align: center;
+}
+
+.tabButton.active .tabCount {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.tabButton:not(.active) .tabCount {
+    background: #e2e8f0;
+    color: #64748b;
+}
+
+/* Report Content */
+.reportContent {
+    background: white;
+    border-radius: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+}
+
+.reportSection {
+    padding: 2rem;
+}
+
+.sectionHeader {
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.sectionTitle {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.sectionDescription {
+    color: #64748b;
+    font-size: 1rem;
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+}
+
+/* Loading and Error States */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    color: #64748b;
+}
+
+.spinner {
+    width: 3rem;
+    height: 3rem;
+    border: 3px solid #e2e8f0;
+    border-top: 3px solid #f97316;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+.errorContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    color: #dc2626;
+    text-align: center;
+}
+
+.errorIcon {
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1rem;
+}
+
+/* Grids */
+.coursesGrid {
+    display: grid;
+    gap: 1.5rem;
+}
+
+.candidatesGrid {
+    display: grid;
+    gap: 1.5rem;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+}
+
+/* Course Cards */
+.courseCard {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.courseCard:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.courseHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.courseInfo h3.courseTitle {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.courseSemester {
+    color: #64748b;
+    font-size: 0.9rem;
+}
+
+.courseStats {
+    text-align: right;
+}
+
+.selectedCount {
+    background: #dcfce7;
+    color: #166534;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    border: 1px solid #bbf7d0;
+}
+
+/* Candidate Items */
+.candidatesList {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.candidateItem {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    background: white;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+}
+
+.candidateItem:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    border-color: #f97316;
+}
+
+.candidateInfo {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    flex: 1;
+}
+
+.candidateAvatar {
+    width: 3rem;
+    height: 3rem;
+    background: #f97316;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.avatarIcon {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: white;
+}
+
+.candidateDetails h4.candidateName {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.25rem;
+}
+
+.candidateEmail {
+    color: #64748b;
+    font-size: 0.9rem;
+    margin-bottom: 0.75rem;
+}
+
+.candidateMeta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.roleTag {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid #fde68a;
+}
+
+.selectionDate {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+.selectionMeta {
+    text-align: right;
+    flex-shrink: 0;
+}
+
+.selectedBy {
+    color: #64748b;
+    font-size: 0.85rem;
+    font-style: italic;
+}
+
+/* Multiple Selection Cards */
+.multipleSelectionCard {
+    background: #fef7ff;
+    border: 1px solid #f3e8ff;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.multipleSelectionCard:hover {
+    box-shadow: 0 8px 25px rgba(147, 51, 234, 0.1);
+    transform: translateY(-2px);
+}
+
+.candidateHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #f3e8ff;
+}
+
+.selectionBadge {
+    background: #9333ea;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(147, 51, 234, 0.3);
+}
+
+.selectionsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.selectionItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: white;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid #f3e8ff;
+    transition: all 0.3s ease;
+}
+
+.selectionItem:hover {
+    border-color: #9333ea;
+    box-shadow: 0 2px 8px rgba(147, 51, 234, 0.1);
+}
+
+.selectionInfo h4.courseName {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.selectionMeta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+/* Unselected Cards */
+.unselectedCard {
+    background: #fefcf8;
+    border: 1px solid #fed7aa;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.unselectedCard:hover {
+    box-shadow: 0 8px 25px rgba(234, 88, 12, 0.1);
+    transform: translateY(-2px);
+}
+
+.applicationBadge {
+    background: #ea580c;
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 0.75rem;
+    font-weight: 600;
+    font-size: 0.9rem;
+    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.3);
+}
+
+.applicationsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.applicationItem {
+    background: white;
+    padding: 1rem;
+    border-radius: 0.75rem;
+    border: 1px solid #fed7aa;
+    transition: all 0.3s ease;
+}
+
+.applicationItem:hover {
+    border-color: #ea580c;
+    box-shadow: 0 2px 8px rgba(234, 88, 12, 0.1);
+}
+
+.applicationInfo h4.courseName {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin-bottom: 0.5rem;
+}
+
+.applicationMeta {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.statusTag {
+    background: #fef3c7;
+    color: #92400e;
+    padding: 0.25rem 0.75rem;
+    border-radius: 0.5rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    border: 1px solid #fde68a;
+}
+
+.applicationDate {
+    color: #64748b;
+    font-size: 0.75rem;
+}
+
+/* Empty States */
+.emptyState {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 2rem;
+    text-align: center;
+    color: #64748b;
+}
+
+.emptyIcon {
+    width: 4rem;
+    height: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.6;
+}
+
+.emptyState h3 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #475569;
+    margin-bottom: 0.5rem;
+}
+
+.emptyState p {
+    color: #64748b;
+    line-height: 1.6;
+}
+
+/* ========== DARK MODE STYLES ========== */
+
+/* Page Layout - Dark Mode */
+:global(.dark) .reportsPage {
+    background: linear-gradient(
+        135deg,
+        var(--color-bg-primary) 0%,
+        var(--color-bg-secondary) 100%
+    );
+}
+
+:global(.dark) .headerContent,
+:global(.dark) .tabsList,
+:global(.dark) .reportContent {
+    background: var(--color-bg-primary);
+    border-color: var(--color-border);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+/* Text Colors - Dark Mode */
+:global(.dark) .pageTitle,
+:global(.dark) .sectionTitle {
+    color: var(--color-text-primary);
+}
+
+:global(.dark) .pageSubtitle,
+:global(.dark) .sectionDescription,
+:global(.dark) .courseSemester,
+:global(.dark) .candidateEmail,
+:global(.dark) .selectionDate,
+:global(.dark) .selectedBy,
+:global(.dark) .applicationDate,
+:global(.dark) .loadingContainer,
+:global(.dark) .emptyState {
+    color: var(--color-text-secondary);
+}
+
+:global(.dark) .emptyState h3 {
+    color: var(--color-text-primary);
+}
+
+/* Tabs - Dark Mode */
+:global(.dark) .tabButton {
+    color: var(--color-text-secondary);
+}
+
+:global(.dark) .tabButton:hover {
+    background: var(--color-bg-hover);
+    color: var(--color-text-primary);
+}
+
+:global(.dark) .tabButton:not(.active) .tabCount {
+    background: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+}
+
+:global(.dark) .tabButton.active .tabName {
+    color: #ffffff;
+}
+
+/* Cards - Dark Mode */
+:global(.dark) .courseCard {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+:global(.dark) .courseCard:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .courseHeader {
+    border-bottom-color: var(--color-border);
+}
+
+:global(.dark) .courseInfo h3.courseTitle,
+:global(.dark) .candidateDetails h4.candidateName,
+:global(.dark) .selectionInfo h4.courseName,
+:global(.dark) .applicationInfo h4.courseName {
+    color: var(--color-text-primary);
+}
+
+/* Multiple Selection Cards - Dark Mode */
+:global(.dark) .multipleSelectionCard {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+:global(.dark) .multipleSelectionCard:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .candidateHeader {
+    border-bottom-color: var(--color-border);
+}
+
+:global(.dark) .selectionCount {
+    background: rgba(147, 51, 234, 0.2);
+    color: #a855f7;
+    border-color: rgba(147, 51, 234, 0.3);
+}
+
+/* Unselected Cards - Dark Mode */
+:global(.dark) .unselectedCard {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+:global(.dark) .unselectedCard:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .applicationCount {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ffffff;
+    border-color: rgba(239, 68, 68, 0.3);
+}
+
+/* Candidate/Selection/Application Items - Dark Mode */
+:global(.dark) .candidateItem,
+:global(.dark) .selectionItem,
+:global(.dark) .applicationItem {
+    background: var(--color-bg-primary);
+    border-color: var(--color-border);
+}
+
+:global(.dark) .candidateItem:hover,
+:global(.dark) .selectionItem:hover,
+:global(.dark) .applicationItem:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    border-color: var(--color-primary);
+}
+
+/* Tags and Badges - Dark Mode */
+:global(.dark) .selectedCount {
+    background: rgba(34, 197, 94, 0.2);
+    color: #22c55e;
+    border-color: rgba(34, 197, 94, 0.3);
+}
+
+:global(.dark) .roleTag,
+:global(.dark) .statusTag {
+    background: rgba(245, 158, 11, 0.2);
+    color: #f59e0b;
+    border-color: rgba(245, 158, 11, 0.3);
+}
+
+/* Loading and Error States - Dark Mode */
+:global(.dark) .spinner {
+    border-color: var(--color-border);
+    border-top-color: var(--color-primary);
+}
+
+:global(.dark) .errorContainer {
+    color: #ef4444;
+}
+
+/* Print Styles */
+@media print {
+    .printButton {
+        display: none;
+    }
+
+    .tabsContainer {
+        display: none;
+    }
+
+    .reportsPage {
+        background: white;
+        padding: 0;
+    }
+
+    .reportsContainer {
+        max-width: none;
+        padding: 0;
+    }
+
+    .reportContent {
+        box-shadow: none;
+        border: none;
+    }
+
+    .courseCard,
+    .multipleSelectionCard,
+    .unselectedCard {
+        break-inside: avoid;
+        margin-bottom: 1rem;
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .reportsContainer {
+        padding: 0 1rem;
+    }
+
+    .headerContent {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .pageTitle {
+        font-size: 1.5rem;
+    }
+
+    .titleIcon {
+        width: 2rem;
+        height: 2rem;
+    }
+
+    .tabsList {
+        flex-direction: column;
+    }
+
+    .candidatesGrid {
+        grid-template-columns: 1fr;
+    }
+
+    .candidateHeader {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 1rem;
+    }
+
+    .candidateInfo {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .candidateAvatar {
+        align-self: flex-start;
+    }
+
+    .candidateMeta {
+        justify-content: flex-start;
+    }
+
+    .selectionMeta {
+        text-align: left;
+    }
+}

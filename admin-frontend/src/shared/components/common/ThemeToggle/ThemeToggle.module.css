@@ -1,0 +1,140 @@
+/* Theme Toggle Button - Exact copy from Frontend */
+.theme-toggle-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  transition:
+    background-color 0.3s ease-in-out,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.theme-toggle-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Theme icon wrapper and icons */
+.theme-icon-wrapper {
+  position: relative;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.theme-icon {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 24px;
+  height: 24px;
+  transition:
+    transform 0.3s ease-in-out,
+    opacity 0.3s ease-in-out;
+}
+
+/* --- Sunrise/Sunset Animation --- */
+
+/* Initial state (Light mode) - Sun visible, Moon hidden below */
+.theme-icon.sun {
+  transform: translate(-50%, -50%) translateY(0) rotate(0) scale(1);
+  opacity: 1;
+  color: #fbbf24;
+}
+
+.theme-icon.moon {
+  transform: translate(-50%, -50%) translateY(100%) rotate(0) scale(0.8);
+  opacity: 0;
+  color: #6366f1;
+}
+
+/* Transition to Dark mode (Sunset) */
+:global(.dark) .theme-icon.sun {
+  transform: translate(-50%, -50%) translateY(-100%) rotate(-90deg) scale(0.8);
+  opacity: 0;
+}
+
+:global(.dark) .theme-icon.moon {
+  transform: translate(-50%, -50%) translateY(0) rotate(0) scale(1);
+  opacity: 1;
+}
+
+/* Additional theme icon states */
+.theme-icon.sun.hidden {
+  transform: translate(-50%, -50%) translateY(-100%) rotate(-90deg) scale(0.8);
+  opacity: 0;
+}
+
+.theme-icon.moon.hidden {
+  transform: translate(-50%, -50%) translateY(100%) rotate(90deg) scale(0.8);
+  opacity: 0;
+}
+
+:global(.dark) .theme-toggle-btn {
+  background-color: #2d3748;
+}
+
+:global(.dark) .theme-toggle-btn:hover {
+  background-color: #374151;
+}
+
+/* Dark Mode Adjustments */
+:global(.dark) .theme-icon.sun {
+  color: #fbbf24;
+}
+
+:global(.dark) .theme-icon.moon {
+  color: #6366f1;
+}
+
+/* Theme Toggle Animation States */
+.theme-toggle-btn {
+  animation: popInRotate 0.3s ease-in-out;
+}
+
+.theme-toggle-btn.removing {
+  animation: popOutRotate 0.2s ease-in-out forwards;
+}
+
+.theme-toggle-btn.adding {
+  animation: popInRotate 0.3s ease-in-out;
+}
+
+@keyframes popInRotate {
+  0% {
+    transform: scale(0.8) rotate(-90deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.1) rotate(0deg);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+@keyframes popOutRotate {
+  0% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8) rotate(90deg);
+    opacity: 0;
+  }
+} 

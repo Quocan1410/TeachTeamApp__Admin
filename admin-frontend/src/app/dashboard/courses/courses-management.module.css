@@ -1,0 +1,962 @@
+/* Courses Management Page - Enhanced Styling */
+.coursesManagement {
+    width: 100%;
+    min-height: calc(100vh - 80px);
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+    background: linear-gradient(
+        135deg,
+        var(--color-bg-primary) 0%,
+        var(--color-bg-secondary) 100%
+    );
+}
+
+.managementContainer {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1.5rem;
+    padding-right: 1.5rem;
+    max-width: 1280px;
+}
+
+/* Header Section */
+.headerSection {
+    margin-bottom: 2rem;
+    padding-top: 5.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.headerContent {
+    flex: 1;
+}
+
+.title {
+    font-size: 2.5rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: var(--color-primary);
+    background: linear-gradient(
+        135deg,
+        var(--color-primary) 0%,
+        var(--color-secondary) 100%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    font-size: 1.125rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    margin: 0;
+}
+
+.createButton {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.2);
+}
+
+.createButton:hover {
+    background: var(--color-secondary);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.createButtonIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+/* Search Section */
+.searchSection {
+    background: var(--color-bg-surface);
+    border-radius: 16px;
+    border: 1px solid var(--color-border);
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.searchContainer {
+    position: relative;
+    width: 100%;
+}
+
+.searchIcon {
+    position: absolute;
+    left: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 1.125rem;
+    height: 1.125rem;
+    color: var(--color-text-secondary);
+    transition: color 0.2s ease;
+    z-index: 1;
+}
+
+.searchInput {
+    width: 100%;
+    padding: 0.75rem 1rem 0.75rem 2.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    font-size: 0.875rem;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+}
+
+.searchInput:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.searchInput:focus + .searchIcon,
+.searchContainer:focus-within .searchIcon {
+    color: var(--color-primary);
+}
+
+/* Courses Grid */
+.coursesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.courseCard {
+    background: var(--color-bg-surface);
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+    border: 1px solid var(--color-border);
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.courseCard::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: linear-gradient(
+        135deg,
+        var(--color-primary),
+        var(--color-secondary)
+    );
+    border-radius: 16px 16px 0 0;
+}
+
+.courseCard:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+}
+
+.courseHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+}
+
+.courseInfo {
+    flex: 1;
+}
+
+.courseCode {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    margin: 0 0 0.25rem 0;
+}
+
+.courseName {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0 0 0.5rem 0;
+    line-height: 1.3;
+}
+
+.courseSemester {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.courseActions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+}
+
+.actionButton {
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--color-border);
+    background: var(--color-bg-primary);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.actionButton:hover {
+    background: var(--color-bg-secondary);
+}
+
+.actionButtonDanger {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.actionButtonDanger:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.actionButtonPrimary {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.actionButtonPrimary:hover {
+    background: rgba(249, 115, 22, 0.1);
+}
+
+.actionIcon {
+    width: 1rem;
+    height: 1rem;
+}
+
+.courseDescription {
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    line-clamp: 2;
+    overflow: hidden;
+}
+
+.courseStats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.courseStat {
+    text-align: center;
+    padding: 0.75rem;
+    background: var(--color-bg-secondary);
+    border-radius: 8px;
+}
+
+.courseStatValue {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-primary);
+    margin: 0 0 0.25rem 0;
+}
+
+.courseStatLabel {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    margin: 0;
+}
+
+.courseAssignments {
+    margin-top: 1rem;
+}
+
+.assignmentsHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.assignmentsTitle {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    margin: 0;
+}
+
+.assignButton {
+    padding: 0.25rem 0.75rem;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.assignButton:hover {
+    background: var(--color-secondary);
+}
+
+.assignmentsList {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.assignmentItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--color-bg-secondary);
+    border-radius: 6px;
+}
+
+.lecturerName {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text-primary);
+}
+
+.removeButton {
+    padding: 0.25rem;
+    background: none;
+    border: 1px solid #ef4444;
+    color: #ef4444;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.removeButton:hover {
+    background: rgba(239, 68, 68, 0.1);
+}
+
+.removeIcon {
+    width: 0.875rem;
+    height: 0.875rem;
+}
+
+.emptyAssignments {
+    text-align: center;
+    padding: 1rem;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+}
+
+/* Modal Styles - Matching Apply Modal */
+.modalOverlay {
+    background-color: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(8px) !important;
+    z-index: 50 !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1rem !important;
+    animation: fadeIn 0.3s ease-out !important;
+}
+
+:global(.dark) .modalOverlay {
+    background-color: rgba(0, 0, 0, 0.8) !important;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+.modal {
+    background-color: #ffffff !important;
+    color: #111827 !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 0.75rem !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    width: 100% !important;
+    max-width: 36rem !important;
+    max-height: 90vh !important;
+    overflow-y: auto !important;
+    animation: slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+}
+
+:global(.dark) .modal {
+    background-color: #1f2937 !important;
+    color: #f3f4f6 !important;
+    border: 1px solid #374151 !important;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.modalHeader {
+    border-bottom: 1px solid #e5e7eb !important;
+    padding: 1.5rem 1.5rem 1rem !important;
+    background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%) !important;
+    position: relative !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    gap: 1rem !important;
+}
+
+:global(.dark) .modalHeader {
+    border-bottom: 1px solid #374151 !important;
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%) !important;
+}
+
+.modalTitle {
+    color: #111827 !important;
+    font-size: 1.375rem !important;
+    font-weight: 700 !important;
+    margin: 0 !important;
+    line-height: 1.3 !important;
+}
+
+:global(.dark) .modalTitle {
+    color: #f3f4f6 !important;
+}
+
+.closeButton {
+    color: #6b7280 !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    background: white !important;
+    border: 1px solid #e5e7eb !important;
+    padding: 0.5rem !important;
+    border-radius: 50% !important;
+    cursor: pointer !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    width: 36px !important;
+    height: 36px !important;
+    flex-shrink: 0 !important;
+}
+
+:global(.dark) .closeButton {
+    color: #9ca3af !important;
+    background: #374151 !important;
+    border-color: #4b5563 !important;
+}
+
+.closeButton:hover {
+    color: #ef4444 !important;
+    background-color: #fef2f2 !important;
+    border-color: #f87171 !important;
+    transform: scale(1.1) rotate(90deg) !important;
+    box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2) !important;
+}
+
+:global(.dark) .closeButton:hover {
+    color: #f87171 !important;
+    background-color: #450a0a !important;
+    border-color: #7f1d1d !important;
+}
+
+.closeIcon {
+    width: 18px !important;
+    height: 18px !important;
+    position: relative !important;
+    z-index: 1 !important;
+    transition: transform 0.2s ease !important;
+}
+
+.modalForm {
+    padding: 1.5rem !important;
+}
+
+.formGroup {
+    margin-bottom: 1rem !important;
+}
+
+.formLabel {
+    color: #111827 !important;
+    font-weight: 600 !important;
+    font-size: 0.875rem !important;
+    display: block !important;
+    margin-bottom: 0.5rem !important;
+}
+
+:global(.dark) .formLabel {
+    color: #f3f4f6 !important;
+}
+
+.formInput,
+.formTextarea,
+.formSelect {
+    background-color: #f9fafb !important;
+    border: 1px solid #d1d5db !important;
+    color: #111827 !important;
+    transition: all 0.3s ease !important;
+    resize: none !important;
+    width: 100% !important;
+    padding: 0.625rem !important;
+    border-radius: 0.5rem !important;
+    font-size: 0.8rem !important;
+    line-height: 1.25rem !important;
+}
+
+:global(.dark) .formInput,
+:global(.dark) .formTextarea,
+:global(.dark) .formSelect {
+    background-color: #1f2937 !important;
+    border: 1px solid #374151 !important;
+    color: #f3f4f6 !important;
+}
+
+.formInput:focus,
+.formTextarea:focus,
+.formSelect:focus {
+    outline: none !important;
+    border-color: #f97316 !important;
+    background-color: #ffffff !important;
+}
+
+:global(.dark) .formInput:focus,
+:global(.dark) .formTextarea:focus,
+:global(.dark) .formSelect:focus {
+    background-color: #1f2937 !important;
+    border-color: #f97316 !important;
+}
+
+.formInput::placeholder,
+.formTextarea::placeholder {
+    color: #9ca3af !important;
+}
+
+:global(.dark) .formInput::placeholder,
+:global(.dark) .formTextarea::placeholder {
+    color: #6b7280 !important;
+}
+
+.formTextarea {
+    min-height: 80px !important;
+}
+
+.formRow {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1rem !important;
+    margin-bottom: 1rem !important;
+}
+
+@media (max-width: 768px) {
+    .formRow {
+        grid-template-columns: 1fr !important;
+    }
+}
+
+.modalActions {
+    display: flex !important;
+    justify-content: flex-end !important;
+    padding: 1rem 0rem 1rem 1.5rem !important;
+    border-top: 1px solid #e5e7eb !important;
+    gap: 0.75rem !important;
+    background-color: #f9fafb !important;
+}
+
+:global(.dark) .modalActions {
+    border-top: 1px solid #374151 !important;
+    background-color: #1f2937 !important;
+}
+
+.modalButtonSecondary {
+    color: #111827 !important;
+    border: 1px solid #d1d5db !important;
+    background-color: #ffffff !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+    cursor: pointer !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.5rem !important;
+    position: relative !important;
+    overflow: hidden !important;
+}
+
+:global(.dark) .modalButtonSecondary {
+    color: #f3f4f6 !important;
+    border: 1px solid #374151 !important;
+    background-color: #1f2937 !important;
+}
+
+.modalButtonSecondary:hover {
+    border-color: #9ca3af !important;
+    transform: translateY(-1px) !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1) !important;
+}
+
+:global(.dark) .modalButtonSecondary:hover {
+    border-color: #6b7280 !important;
+}
+
+.modalButtonPrimary,
+.modalButtonDanger {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%) !important;
+    color: white !important;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    font-weight: 600 !important;
+    font-size: 0.8rem !important;
+    border: none !important;
+    cursor: pointer !important;
+    padding: 0.5rem 1rem !important;
+    border-radius: 0.5rem !important;
+    position: relative !important;
+    overflow: hidden !important;
+    box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2) !important;
+}
+
+.modalButtonDanger {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2) !important;
+}
+
+.modalButtonPrimary:hover {
+    background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(249, 115, 22, 0.2) !important;
+}
+
+.modalButtonDanger:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 8px rgba(239, 68, 68, 0.3) !important;
+}
+
+.modalButtonPrimary:focus,
+.modalButtonDanger:focus {
+    outline: none !important;
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.3) !important;
+}
+
+/* Assignment Modal */
+.lecturersList {
+    max-height: 300px;
+    overflow-y: auto;
+    border: 1px solid var(--color-border);
+    border-radius: 8px;
+    background: var(--color-bg-primary);
+}
+
+.lecturerItem {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color 0.2s ease;
+}
+
+.lecturerItem:last-child {
+    border-bottom: none;
+}
+
+.lecturerItem:hover {
+    background: var(--color-bg-secondary);
+}
+
+.lecturerInfo {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.lecturerName {
+    font-weight: 600;
+    color: var(--color-text-primary);
+}
+
+.lecturerEmail {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+}
+
+.assignLecturerButton {
+    padding: 0.5rem 1rem;
+    background: var(--color-primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.assignLecturerButton:hover {
+    background: var(--color-secondary);
+}
+
+.emptyLecturers {
+    text-align: center;
+    padding: 2rem;
+    color: var(--color-text-secondary);
+    font-size: 0.875rem;
+}
+
+/* Loading States */
+.loadingContainer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    padding: 2rem;
+}
+
+.loadingSkeleton {
+    height: 1rem;
+    background: linear-gradient(
+        90deg,
+        var(--color-bg-secondary) 25%,
+        var(--color-border) 50%,
+        var(--color-bg-secondary) 75%
+    );
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: 4px;
+    width: 75%;
+}
+
+@keyframes loading {
+    0% {
+        background-position: 200% 0;
+    }
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+/* Empty State */
+.emptyState {
+    text-align: center;
+    padding: 3rem 2rem;
+    color: var(--color-text-secondary);
+}
+
+.emptyStateIcon {
+    width: 4rem;
+    height: 4rem;
+    margin: 0 auto 1rem;
+    color: var(--color-text-secondary);
+    opacity: 0.5;
+}
+
+.emptyStateText {
+    font-size: 1.125rem;
+    font-weight: 500;
+    margin: 0;
+}
+
+/* Dark Mode Support */
+:global(.dark) .coursesManagement {
+    background: linear-gradient(
+        135deg,
+        var(--color-bg-primary) 0%,
+        var(--color-bg-secondary) 100%
+    );
+}
+
+:global(.dark) .courseCard,
+:global(.dark) .searchSection,
+:global(.dark) .modal,
+:global(.dark) .lecturersList {
+    background: var(--color-bg-secondary);
+    border-color: var(--color-border);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+}
+
+:global(.dark) .courseCard:hover {
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+:global(.dark) .courseName,
+:global(.dark) .modalTitle {
+    color: var(--color-text-primary);
+}
+
+:global(.dark) .courseSemester,
+:global(.dark) .courseDescription {
+    color: var(--color-text-secondary);
+}
+
+:global(.dark) .courseStat {
+    background: var(--color-bg-primary);
+}
+
+:global(.dark) .courseStatValue {
+    color: var(--color-text-primary);
+}
+
+:global(.dark) .courseStatLabel {
+    color: var(--color-text-secondary);
+}
+
+:global(.dark) .assignmentItem {
+    background: var(--color-bg-primary);
+}
+
+:global(.dark) .lecturerName {
+    color: var(--color-text-primary);
+}
+
+:global(.dark) .searchInput,
+:global(.dark) .formInput,
+:global(.dark) .formTextarea,
+:global(.dark) .formSelect {
+    background: var(--color-bg-primary);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+:global(.dark) .searchInput:focus,
+:global(.dark) .formInput:focus,
+:global(.dark) .formTextarea:focus,
+:global(.dark) .formSelect:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+:global(.dark) .searchIcon {
+    color: var(--color-text-secondary);
+}
+
+:global(.dark) .searchContainer:focus-within .searchIcon {
+    color: var(--color-primary);
+}
+
+:global(.dark) .formLabel {
+    color: var(--color-text-primary);
+}
+
+:global(.dark) .actionButton {
+    background: var(--color-bg-primary);
+    border-color: var(--color-border);
+    color: var(--color-text-secondary);
+}
+
+:global(.dark) .actionButton:hover {
+    background: var(--color-bg-hover);
+}
+
+:global(.dark) .emptyStateText {
+    color: var(--color-text-secondary);
+}
+
+:global(.dark) .deleteWarningIcon {
+    background-color: rgba(239, 68, 68, 0.2);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .coursesManagement {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .managementContainer {
+        padding-left: 1rem;
+        padding-right: 1rem;
+    }
+
+    .title {
+        font-size: 2rem;
+    }
+
+    .headerSection {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .coursesGrid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    .courseStats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .formRow {
+        grid-template-columns: 1fr;
+    }
+
+    .modalActions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 480px) {
+    .title {
+        font-size: 1.75rem;
+    }
+
+    .subtitle {
+        font-size: 1rem;
+    }
+
+    .modal {
+        max-width: 95%;
+        margin: 0.5rem;
+    }
+
+    .courseStats {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+}
+
+.deleteWarningIcon {
+    width: 4rem;
+    height: 4rem;
+    padding: 0.75rem;
+    border-radius: 50%;
+    background-color: rgba(239, 68, 68, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem auto;
+    color: #ef4444;
+}
+
+:global(.dark) .deleteWarningIcon {
+    background-color: rgba(239, 68, 68, 0.2);
+}

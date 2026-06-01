@@ -1,0 +1,181 @@
+.dark {
+    --color-orange-dark-500: #ea580c;
+    --color-orange-dark-600: #c2410c;
+    --color-orange-dark-700: #9a3412;
+    --color-orange-dark-800: #7c2d12;
+
+    /* Main theme colors - dark version */
+    --color-primary: #f97316;
+    --color-secondary: #ea580c;
+    --color-accent: #c2410c;
+    --color-highlight: #9a3412;
+
+    /* Dark theme colors */
+    --color-bg-primary: #1f2937;
+    --color-bg-secondary: #111827;
+    --color-text-primary: #f9fafb;
+    --color-text-secondary: #d1d5db;
+    --color-text-tertiary: #9ca3af;
+    --color-border: #374151;
+    --color-shadow: rgba(0, 0, 0, 0.2);
+    --color-primary-light: rgba(249, 115, 22, 0.2);
+}
+
+.dark body {
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-primary);
+}
+
+.dark .btn-outline {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.dark .btn-outline:hover {
+    background-color: rgba(249, 115, 22, 0.2);
+}
+
+.dark .btn-primary {
+    background-color: var(--color-primary);
+}
+
+.dark .btn-primary:hover {
+    background-color: #ea580c;
+}
+
+.dark .dark-mode-toggle:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dark .mobile-menu-link:hover {
+    background-color: rgba(249, 115, 22, 0.2);
+}
+
+.dark .mobile-menu-link-active {
+    background-color: rgba(249, 115, 22, 0.2);
+    color: var(--color-primary);
+}
+
+.dark .course-card {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+.dark .course-card-title {
+    color: var(--color-text-primary);
+}
+
+.dark .course-card-skill {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--color-text-secondary);
+}
+
+.dark .apply-button {
+    background-color: var(--color-primary);
+}
+
+.dark .apply-button:hover {
+    background-color: var(--color-secondary);
+}
+
+.dark .hover-overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+}
+
+.dark .hover-apply-button {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-primary);
+}
+
+.dark .hover-apply-button:hover {
+    background-color: var(--color-bg-primary);
+}
+
+/* Dark theme styles */
+[data-theme="dark"] .details-container {
+    background-color: var(--color-bg-primary);
+    box-shadow: var(--shadow-sm);
+}
+
+[data-theme="dark"] .empty-details {
+    background-color: var(--color-bg-secondary);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .empty-details:hover {
+    border-color: var(--color-primary);
+    background-color: var(--color-bg-hover);
+}
+
+[data-theme="dark"] .course-card {
+    background-color: var(--color-bg-primary);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .course-card:hover {
+    background-color: rgba(79, 70, 229, 0.15);
+    border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .course-card.selected {
+    background-color: rgba(79, 70, 229, 0.2);
+    border-color: var(--color-primary);
+}
+
+[data-theme="dark"] .role-item {
+    background-color: var(--color-bg-primary);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .role-item:hover {
+    background-color: var(--color-bg-hover);
+}
+
+[data-theme="dark"] .academic-text {
+    background-color: var(--color-bg-primary);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .academic-text:hover {
+    background-color: var(--color-bg-hover);
+}
+
+[data-theme="dark"] .comment-textarea {
+    background-color: var(--color-bg-primary);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .comment-textarea:focus {
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+/* Admin-specific dark theme styles */
+[data-theme="dark"] .admin-card {
+    background-color: var(--color-bg-primary);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .admin-button-secondary {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border-color: var(--color-border);
+}
+
+[data-theme="dark"] .admin-button-secondary:hover {
+    background-color: var(--color-bg-hover);
+}
+
+[data-theme="dark"] .admin-input {
+    background-color: var(--color-bg-primary);
+    border-color: var(--color-border);
+    color: var(--color-text-primary);
+}
+
+[data-theme="dark"] .admin-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+[data-theme="dark"] .admin-input::placeholder {
+    color: var(--color-text-tertiary);
+}

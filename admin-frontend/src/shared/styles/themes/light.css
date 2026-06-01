@@ -1,0 +1,159 @@
+:root {
+    --color-orange-50: #fff7ed;
+    --color-orange-100: #ffedd5;
+    --color-orange-200: #fed7aa;
+    --color-orange-300: #fdba74;
+    --color-orange-400: #fb923c;
+    --color-orange-500: #f97316;
+    --color-orange-600: #ea580c;
+    --color-orange-700: #c2410c;
+    --color-orange-800: #9a3412;
+    --color-orange-900: #7c2d12;
+
+    /* Main theme colors */
+    --color-primary: #f97316;
+    --color-secondary: #fb923c;
+    --color-accent: #fdba74;
+    --color-highlight: #ffedd5;
+
+    /* Light theme colors */
+    --color-bg-primary: #ffffff;
+    --color-bg-secondary: #f9fafb;
+    --color-text-primary: #3d4451;
+    --color-text-secondary: #6b7280;
+    --color-text-tertiary: #9ca3af;
+    --color-border: #e5e7eb;
+    --color-shadow: rgba(0, 0, 0, 0.05);
+    --color-primary-light: rgba(249, 115, 22, 0.1);
+}
+
+body {
+    color: var(--color-text-primary);
+    background-color: var(--color-bg-primary);
+}
+
+/* Light mode specific styles */
+.btn-outline {
+    border-color: var(--color-primary);
+    color: var(--color-primary);
+}
+
+.btn-outline:hover {
+    background-color: rgba(249, 115, 22, 0.1);
+}
+
+.btn-primary {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background-color: #ea580c;
+}
+
+.nav-link-active {
+    color: var(--color-primary);
+}
+
+.nav-link-active::after {
+    background-color: var(--color-primary);
+}
+
+.nav-link:hover {
+    color: var(--color-primary);
+}
+
+.header-logo-text {
+    color: var(--color-primary);
+}
+
+.header-logo-text:hover .highlight {
+    text-decoration: underline;
+}
+
+.dark-mode-toggle:hover {
+    background-color: rgba(249, 115, 22, 0.1);
+}
+
+/* Hero section special styles */
+.hero-title {
+    color: var(--color-primary);
+}
+
+.hero-btn {
+    background-color: var(--color-primary);
+}
+
+.hero-btn:hover {
+    background-color: #ea580c;
+}
+
+.course-card {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+    box-shadow: 0 4px 6px var(--color-shadow);
+}
+
+.course-card:hover {
+    box-shadow: 0 10px 15px var(--color-shadow);
+}
+
+.course-tag {
+    background-color: var(--color-highlight);
+    color: var(--color-text-primary);
+}
+
+.apply-button {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.apply-button:hover {
+    background-color: var(--color-secondary);
+}
+
+.applied-badge {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-secondary);
+}
+
+/* Admin-specific light theme styles */
+.admin-card {
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+}
+
+.admin-button-primary {
+    background-color: var(--color-primary);
+    color: white;
+}
+
+.admin-button-primary:hover {
+    background-color: var(--color-secondary);
+}
+
+.admin-button-secondary {
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text-primary);
+    border: 1px solid var(--color-border);
+}
+
+.admin-button-secondary:hover {
+    background-color: var(--color-bg-hover);
+}
+
+.admin-input {
+    background-color: var(--color-bg-primary);
+    border: 1px solid var(--color-border);
+    color: var(--color-text-primary);
+}
+
+.admin-input:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.admin-input::placeholder {
+    color: var(--color-text-tertiary);
+}

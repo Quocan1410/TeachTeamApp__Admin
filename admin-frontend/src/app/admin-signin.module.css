@@ -1,0 +1,326 @@
+/* Admin Signin Page - Enhanced Styling */
+.pageContainer {
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+    background-color: var(--color-bg-primary);
+    position: relative;
+    overflow: hidden;
+}
+
+.pageContainer::before {
+    content: "";
+    position: absolute;
+    top: 15vh;
+    right: 34vw;
+    width: 200px;
+    height: 200px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    z-index: 0;
+    opacity: 0.15;
+    animation: pulse-slow 4s infinite ease-in-out;
+    pointer-events: none;
+}
+
+.pageContainer::after {
+    content: "";
+    position: absolute;
+    bottom: 10vh;
+    left: 35vw;
+    width: 150px;
+    height: 150px;
+    background: var(--color-primary);
+    border-radius: 50%;
+    z-index: 0;
+    opacity: 0.15;
+    animation: pulse-slow 4s infinite ease-in-out 1s;
+    pointer-events: none;
+}
+
+@keyframes pulse-slow {
+    0%,
+    100% {
+        transform: scale(1);
+        opacity: 0.15;
+    }
+    50% {
+        transform: scale(1.15);
+        opacity: 0.25;
+    }
+}
+
+.darkModeToggle {
+    position: absolute;
+    top: 1.5rem;
+    right: 1.5rem;
+    z-index: 10;
+}
+
+.formContainer {
+    width: 100%;
+    max-width: 450px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+}
+
+.form {
+    background-color: var(--color-bg-primary);
+    padding: 2.5rem;
+    border-radius: 20px;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+    transition: all 0.3s ease;
+    border: 1px solid var(--color-border);
+    position: relative;
+    z-index: 2;
+}
+
+:global(.dark) .form {
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.logoContainer {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    background: linear-gradient(
+        135deg,
+        var(--color-primary) 0%,
+        var(--color-secondary) 100%
+    );
+    border-radius: 50%;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.logoIcon {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: white;
+}
+
+.title {
+    font-size: 1.875rem;
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: var(--color-primary);
+    background: linear-gradient(
+        135deg,
+        var(--color-primary) 0%,
+        var(--color-secondary) 100%
+    );
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.subtitle {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+}
+
+.inputContainer {
+    margin-bottom: 1rem;
+    position: relative;
+    min-height: 4rem;
+}
+
+.passwordContainer {
+    margin-bottom: 2rem;
+    position: relative;
+    min-height: 4rem;
+}
+
+.inputWrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.inputIcon {
+    position: absolute;
+    left: 1rem;
+    width: 1.25rem;
+    height: 1.25rem;
+    color: var(--color-text-secondary);
+    z-index: 2;
+    pointer-events: none;
+}
+
+.inputField {
+    width: 100%;
+    padding: 1rem 1.5rem 1rem 3rem;
+    margin: 0.7rem 0;
+    background-color: var(--color-bg-secondary);
+    border-radius: 25px;
+    outline: none;
+    transition: all 0.3s ease;
+    color: var(--color-text-primary);
+    font-size: 1rem;
+}
+
+.passwordContainer .inputField {
+    padding-right: 3rem;
+}
+
+.inputField:focus {
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.2);
+    background-color: var(--color-bg-primary);
+}
+
+.inputField::placeholder {
+    color: var(--color-text-secondary);
+}
+
+.passwordToggle {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: color 0.3s ease;
+    z-index: 10;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.5rem;
+    height: 1.5rem;
+}
+
+.passwordToggle:hover {
+    color: var(--color-text-primary);
+}
+
+.toggleIcon {
+    width: 1.25rem;
+    height: 1.25rem;
+}
+
+.submitButton {
+    width: auto;
+    min-width: 180px;
+    padding: 0.75rem 2.5rem;
+    margin: 1.5rem auto 0;
+    display: block;
+    border: none;
+    border-radius: 25px;
+    background: linear-gradient(
+        135deg,
+        var(--color-primary) 0%,
+        var(--color-secondary) 100%
+    );
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.3);
+}
+
+.submitButton:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 15px rgba(249, 115, 22, 0.4);
+}
+
+.submitButton:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: 0 4px 6px rgba(249, 115, 22, 0.2);
+}
+
+.alert {
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    animation: fadeIn 0.3s ease-out;
+}
+
+.alertError {
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: var(--color-danger, #ef4444);
+}
+
+.credentialsHint {
+    margin-top: 2rem;
+    text-align: center;
+}
+
+.hintText {
+    font-size: 0.875rem;
+    color: var(--color-text-secondary);
+    background-color: var(--color-bg-secondary);
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    border: 1px solid var(--color-border);
+}
+
+.hintText strong {
+    color: var(--color-primary);
+    font-weight: 600;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+    .pageContainer {
+        padding: 4rem 0.75rem 2rem;
+    }
+
+    .form {
+        padding: 2rem 1.5rem;
+    }
+
+    .title {
+        font-size: 1.5rem;
+    }
+
+    .logoContainer {
+        width: 3rem;
+        height: 3rem;
+    }
+
+    .logoIcon {
+        width: 1.125rem;
+        height: 1.125rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .pageContainer::before,
+    .pageContainer::after {
+        display: none;
+    }
+
+    .formContainer {
+        max-width: 100%;
+    }
+}

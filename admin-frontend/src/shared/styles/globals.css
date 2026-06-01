@@ -1,0 +1,26 @@
+/* ======== CORE/GLOBAL STYLES ======== */
+/* This is the main entry point for all core/global styles */
+
+@import "tailwindcss/preflight"; /* Corrected Tailwind base import */
+@tailwind utilities;
+
+/* Core Foundation */
+@import "./variables.css"; /* CSS custom properties */
+@import "./base.css"; /* Consolidated base styles, animations, and layout components */
+@import "./global/animations.css";
+@import "./global/utilities.css";
+
+/* Themes */
+@import "./themes/light.css";
+@import "./themes/dark.css";
+
+/* Framework Overrides & Global Essential */
+@import "./overrides.css"; /* Framework overrides */
+
+/* Responsive utilities */
+@import "./responsive.css"; /* Responsive utilities and breakpoints */
+
+/* 
+  Admin-specific styles can be added here or in separate files
+  Component-specific styles should be handled by their respective CSS Modules.
+*/

@@ -1,0 +1,586 @@
+/* Toast Notification Styles - round inner content only, do not clip floating icon */
+.toastNotification {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.375rem; /* 75% of 0.5rem */
+    border-radius: 0.75rem; /* rounded corners */
+    color: rgb(0, 0, 0);
+    min-width: 300px; /* 75% of 400px */
+    max-width: 375px; /* 75% of 500px */
+    overflow: visible; /* keep floating icon visible */
+}
+
+/* Pseudo-element for rounded background */
+.toastNotification::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 0.75rem;
+    z-index: -1;
+}
+
+/* Background colors - lighter light mode */
+.toastSuccess::before {
+    background-color: rgb(240, 253, 244);
+}
+
+.toastError::before {
+    background-color: rgb(254, 242, 242);
+}
+
+.toastInfo::before {
+    background-color: rgb(239, 246, 255);
+}
+
+.toastWarning::before {
+    background-color: rgb(255, 251, 235);
+}
+
+/* Dark Mode backgrounds - EXTREMELY DARK tones for true dark theme integration */
+.toastNotification.darkMode.toastSuccess::before,
+:global(.dark) .toastNotification.toastSuccess::before {
+    background-color: rgb(8, 32, 18); /* EXTREMELY dark green, true dark mode */
+}
+
+.toastNotification.darkMode.toastError::before,
+:global(.dark) .toastNotification.toastError::before {
+    background-color: rgb(32, 10, 10); /* EXTREMELY dark red, true dark mode */
+}
+
+.toastNotification.darkMode.toastInfo::before,
+:global(.dark) .toastNotification.toastInfo::before {
+    background-color: rgb(10, 20, 50); /* EXTREMELY dark blue, true dark mode */
+}
+
+.toastNotification.darkMode.toastWarning::before,
+:global(.dark) .toastNotification.toastWarning::before {
+    background-color: rgb(40, 20, 6); /* EXTREMELY dark amber, true dark mode */
+}
+
+/* Variants */
+.toastNotification.toast {
+    position: fixed;
+    z-index: 9999;
+}
+
+.toastNotification.inline {
+    position: relative;
+    width: 100%;
+    max-width: none;
+    margin-bottom: 1rem;
+}
+
+/* Positioning for toast variant */
+.toastNotification.bottom-left {
+    bottom: 20px;
+    left: 20px;
+}
+
+.toastNotification.bottom-center {
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.toastNotification.top-right {
+    top: 20px;
+    right: 20px;
+}
+
+.toastNotification.top-center {
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+/* Type Variants - lighter light mode */
+.toastSuccess {
+    background-color: rgb(240, 253, 244);
+}
+
+.toastError {
+    background-color: rgb(254, 242, 242);
+}
+
+.toastInfo {
+    background-color: rgb(239, 246, 255);
+}
+
+.toastWarning {
+    background-color: rgb(255, 251, 235);
+}
+
+/* Dark Mode - EXTREMELY DARK tones for true dark theme integration */
+.toastNotification.darkMode.toastSuccess,
+:global(.dark) .toastNotification.toastSuccess {
+    background-color: rgb(8, 32, 18); /* EXTREMELY dark green, true dark mode */
+    color: rgb(220, 252, 231); /* bright light green text for excellent contrast */
+}
+
+.toastNotification.darkMode.toastError,
+:global(.dark) .toastNotification.toastError {
+    background-color: rgb(32, 10, 10); /* EXTREMELY dark red, true dark mode */
+    color: rgb(254, 226, 226); /* bright light red text for excellent contrast */
+}
+
+.toastNotification.darkMode.toastInfo,
+:global(.dark) .toastNotification.toastInfo {
+    background-color: rgb(10, 20, 50); /* EXTREMELY dark blue, true dark mode */
+    color: rgb(219, 234, 254); /* bright light blue text for excellent contrast */
+}
+
+.toastNotification.darkMode.toastWarning,
+:global(.dark) .toastNotification.toastWarning {
+    background-color: rgb(40, 20, 6); /* EXTREMELY dark amber, true dark mode */
+    color: rgb(254, 243, 199); /* bright light amber text for excellent contrast */
+}
+
+/* Floating Icon - 10% smaller */
+.toastFloatingIcon {
+    position: absolute;
+    top: -15px; /* 90% of -17px */
+    left: 10px; /* 90% of 11px */
+    border-radius: 50%;
+    padding: 4px; /* 90% of 5px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    width: 31px; /* 90% of 34px */
+    height: 31px;
+}
+
+.toastFloatingIcon svg {
+    width: 17px;
+    height: 17px;
+    stroke-width: 3.5;
+}
+
+/* Icon backgrounds - 75% border and shadow scale */
+.toastSuccess .toastFloatingIcon {
+    background-color: rgb(34, 197, 94);
+    color: rgb(255, 255, 255);
+    border: 3px solid rgb(255, 255, 255); /* 75% of 4px */
+    box-shadow: 0 3px 9px rgba(34, 197, 94, 0.2); /* 75% of 4px 12px */
+}
+
+.toastError .toastFloatingIcon {
+    background-color: rgb(239, 68, 68);
+    color: rgb(255, 255, 255);
+    border: 3px solid rgb(255, 255, 255);
+    box-shadow: 0 3px 9px rgba(239, 68, 68, 0.2);
+}
+
+.toastInfo .toastFloatingIcon {
+    background-color: rgb(59, 130, 246);
+    color: rgb(255, 255, 255);
+    border: 3px solid rgb(255, 255, 255);
+    box-shadow: 0 3px 9px rgba(59, 130, 246, 0.2);
+}
+
+.toastWarning .toastFloatingIcon {
+    background-color: rgb(245, 158, 11);
+    color: rgb(255, 255, 255);
+    border: 3px solid rgb(255, 255, 255);
+    box-shadow: 0 3px 9px rgba(245, 158, 11, 0.2);
+}
+
+/* Dark Mode Icons - borders to match EXTREMELY DARK backgrounds */
+.toastNotification.darkMode.toastSuccess .toastFloatingIcon,
+:global(.dark) .toastNotification.toastSuccess .toastFloatingIcon {
+    background-color: rgb(34, 197, 94);
+    color: rgb(255, 255, 255);
+    border: 3px solid rgb(8, 32, 18); /* match EXTREMELY dark background */
+    box-shadow: 0 3px 9px rgba(34, 197, 94, 0.7),
+        0 0 0 1px rgba(34, 197, 94, 0.5);
+}
+
+.toastNotification.darkMode.toastError .toastFloatingIcon,
+:global(.dark) .toastNotification.toastError .toastFloatingIcon {
+    background-color: rgb(239, 68, 68);
+    color: rgb(255, 255, 255);
+    border: 3px solid rgb(32, 10, 10);
+    box-shadow: 0 3px 9px rgba(239, 68, 68, 0.7),
+        0 0 0 1px rgba(239, 68, 68, 0.5);
+}
+
+.toastNotification.darkMode.toastInfo .toastFloatingIcon,
+:global(.dark) .toastNotification.toastInfo .toastFloatingIcon {
+    background-color: rgb(59, 130, 246);
+    color: rgb(255, 255, 255);
+    border: 3px solid rgb(10, 20, 50);
+    box-shadow: 0 3px 9px rgba(59, 130, 246, 0.7),
+        0 0 0 1px rgba(59, 130, 246, 0.5);
+}
+
+.toastNotification.darkMode.toastWarning .toastFloatingIcon,
+:global(.dark) .toastNotification.toastWarning .toastFloatingIcon {
+    background-color: rgb(245, 158, 11);
+    color: rgb(255, 255, 255);
+    border: 3px solid rgb(40, 20, 6);
+    box-shadow: 0 3px 9px rgba(245, 158, 11, 0.7),
+        0 0 0 1px rgba(245, 158, 11, 0.5);
+}
+
+/* Inner Content - ensure all four corners are rounded */
+.toastInner {
+    display: flex;
+    height: 75px; /* 75% of 100px */
+    max-width: 375px; /* 75% of 500px */
+    align-items: center;
+    overflow: hidden; /* clip content for rounded corners */
+    border-radius: 0.75rem; /* rounded corners */
+    width: 100%; /* full width */
+}
+
+/* Decorative area - adjusted for smaller size */
+.toastDecorative {
+    position: relative;
+    height: 100%; /* h-full */
+    min-width: 60px; /* down from 80px */
+    max-width: 100px; /* down from 144px */
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.toastDecorative .circle1,
+.toastDecorative .circle2,
+.toastDecorative .circle3 {
+    position: absolute;
+    border-radius: 50%;
+}
+
+/* Circles - 75% KÍCH THƯỚC */
+.toastSuccess .toastDecorative .circle1 {
+    width: 64px; /* 75% of 85px */
+    height: 64px;
+    background-color: rgba(187, 247, 208, 0.8);
+    bottom: -15px; /* 75% of -20px */
+    left: -26px; /* 75% of -35px */
+}
+
+.toastSuccess .toastDecorative .circle2 {
+    width: 41px; /* 75% of 55px */
+    height: 41px;
+    background-color: rgba(134, 239, 172, 0.5);
+    bottom: -11px; /* 75% of -15px */
+    left: 6px; /* 75% of 8px */
+}
+
+.toastSuccess .toastDecorative .circle3 {
+    width: 14px; /* 75% of 18px */
+    height: 14px;
+    background-color: rgba(134, 239, 172, 0.7);
+    bottom: 38px; /* 75% of 50px */
+    left: 29px; /* 75% of 38px */
+}
+
+/* Other circles - 75% size scale */
+.toastError .toastDecorative .circle1 {
+    width: 64px;
+    height: 64px;
+    background-color: rgba(254, 202, 202, 0.8);
+    bottom: -15px;
+    left: -26px;
+}
+
+.toastError .toastDecorative .circle2 {
+    width: 41px;
+    height: 41px;
+    background-color: rgba(252, 165, 165, 0.5);
+    bottom: -11px;
+    left: 6px;
+}
+
+.toastError .toastDecorative .circle3 {
+    width: 14px;
+    height: 14px;
+    background-color: rgba(252, 165, 165, 0.7);
+    bottom: 38px;
+    left: 29px;
+}
+
+.toastInfo .toastDecorative .circle1 {
+    width: 64px;
+    height: 64px;
+    background-color: rgba(191, 219, 254, 0.8);
+    bottom: -15px;
+    left: -26px;
+}
+
+.toastInfo .toastDecorative .circle2 {
+    width: 41px;
+    height: 41px;
+    background-color: rgba(147, 197, 253, 0.5);
+    bottom: -11px;
+    left: 6px;
+}
+
+.toastInfo .toastDecorative .circle3 {
+    width: 14px;
+    height: 14px;
+    background-color: rgba(147, 197, 253, 0.7);
+    bottom: 38px;
+    left: 29px;
+}
+
+.toastWarning .toastDecorative .circle1 {
+    width: 64px;
+    height: 64px;
+    background-color: rgba(254, 215, 170, 0.8);
+    bottom: -15px;
+    left: -26px;
+}
+
+.toastWarning .toastDecorative .circle2 {
+    width: 41px;
+    height: 41px;
+    background-color: rgba(253, 186, 116, 0.5);
+    bottom: -11px;
+    left: 6px;
+}
+
+.toastWarning .toastDecorative .circle3 {
+    width: 14px;
+    height: 14px;
+    background-color: rgba(253, 186, 116, 0.7);
+    bottom: 38px;
+    left: 29px;
+}
+
+/* Dark Mode Circles - lighter colors for visibility on dark background */
+.toastNotification.darkMode.toastSuccess .toastDecorative .circle1,
+:global(.dark) .toastNotification.toastSuccess .toastDecorative .circle1 {
+    background-color: rgba(34, 197, 94, 0.4);
+}
+
+.toastNotification.darkMode.toastSuccess .toastDecorative .circle2,
+:global(.dark) .toastNotification.toastSuccess .toastDecorative .circle2 {
+    background-color: rgba(34, 197, 94, 0.3);
+}
+
+.toastNotification.darkMode.toastSuccess .toastDecorative .circle3,
+:global(.dark) .toastNotification.toastSuccess .toastDecorative .circle3 {
+    background-color: rgba(34, 197, 94, 0.5);
+}
+
+.toastNotification.darkMode.toastError .toastDecorative .circle1,
+:global(.dark) .toastNotification.toastError .toastDecorative .circle1 {
+    background-color: rgba(239, 68, 68, 0.4);
+}
+
+.toastNotification.darkMode.toastError .toastDecorative .circle2,
+:global(.dark) .toastNotification.toastError .toastDecorative .circle2 {
+    background-color: rgba(239, 68, 68, 0.3);
+}
+
+.toastNotification.darkMode.toastError .toastDecorative .circle3,
+:global(.dark) .toastNotification.toastError .toastDecorative .circle3 {
+    background-color: rgba(239, 68, 68, 0.5);
+}
+
+.toastNotification.darkMode.toastInfo .toastDecorative .circle1,
+:global(.dark) .toastNotification.toastInfo .toastDecorative .circle1 {
+    background-color: rgba(59, 130, 246, 0.4);
+}
+
+.toastNotification.darkMode.toastInfo .toastDecorative .circle2,
+:global(.dark) .toastNotification.toastInfo .toastDecorative .circle2 {
+    background-color: rgba(59, 130, 246, 0.3);
+}
+
+.toastNotification.darkMode.toastInfo .toastDecorative .circle3,
+:global(.dark) .toastNotification.toastInfo .toastDecorative .circle3 {
+    background-color: rgba(59, 130, 246, 0.5);
+}
+
+.toastNotification.darkMode.toastWarning .toastDecorative .circle1,
+:global(.dark) .toastNotification.toastWarning .toastDecorative .circle1 {
+    background-color: rgba(245, 158, 11, 0.4);
+}
+
+.toastNotification.darkMode.toastWarning .toastDecorative .circle2,
+:global(.dark) .toastNotification.toastWarning .toastDecorative .circle2 {
+    background-color: rgba(245, 158, 11, 0.3);
+}
+
+.toastNotification.darkMode.toastWarning .toastDecorative .circle3,
+:global(.dark) .toastNotification.toastWarning .toastDecorative .circle3 {
+    background-color: rgba(245, 158, 11, 0.5);
+}
+
+/* Content Area */
+.toastContentArea {
+    flex: 1;
+    padding: 0 1rem;
+}
+
+/* Header - padding for close button */
+.toastHeader {
+    margin-bottom: 4px; /* mb-1 */
+    display: flex;
+    align-items: flex-start; /* items-start */
+    gap: 0.5rem; /* gap-2 */
+    padding-right: 1.5rem; /* space for close button */
+}
+
+/* Typography - 75% FONT SIZE */
+.toastTitle {
+    font-size: 1.03rem; /* 75% of 1.375rem */
+    line-height: 1.31rem; /* 75% of 1.75rem */
+    font-weight: 600;
+    margin: 0;
+    color: rgb(0, 0, 0);
+    letter-spacing: -0.025em;
+}
+
+.toastMessage {
+    margin: 0;
+    font-size: 0.675rem; /* 75% of 0.9rem */
+    line-height: 1.05rem; /* 75% of 1.4rem */
+    color: rgba(0, 0, 0, 0.85);
+    margin-top: 2px; /* 75% of 2px, rounded up */
+}
+
+/* Dark Mode Text - enhanced brightness and contrast for darker backgrounds */
+.toastNotification.darkMode .toastTitle,
+:global(.dark) .toastNotification .toastTitle {
+    color: rgb(255, 255, 255);
+    font-weight: 700; /* bold for better visibility on dark backgrounds */
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3); /* subtle shadow for better readability */
+}
+
+.toastNotification.darkMode .toastMessage,
+:global(.dark) .toastNotification .toastMessage {
+    color: rgba(255, 255, 255, 0.95); /* brighter for better contrast on darker backgrounds */
+    text-shadow: 0 1px 1px rgba(0, 0, 0, 0.2); /* subtle shadow for enhanced readability */
+}
+
+/* Close button - 75% KÍCH THƯỚC */
+.toastClose {
+    position: absolute;
+    top: 6px; /* 75% of 8px */
+    right: 6px; /* 75% of 8px */
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.28rem; /* 75% of 0.375rem */
+    border-radius: 0.19rem; /* 75% of 0.25rem */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+    z-index: 10;
+}
+
+.toastClose:hover {
+    background-color: rgba(0, 0, 0, 0.08);
+    transform: scale(1.05);
+}
+
+.toastClose svg {
+    width: 15px; /* 75% of 20px */
+    height: 15px;
+    stroke-width: 2.5;
+}
+
+/* Close button colors - light mode */
+.toastSuccess .toastClose {
+    color: rgb(34, 197, 94); /* text-green-500 */
+}
+
+.toastError .toastClose {
+    color: rgb(239, 68, 68); /* text-red-500 */
+}
+
+.toastInfo .toastClose {
+    color: rgb(59, 130, 246); /* text-blue-500 */
+}
+
+.toastWarning .toastClose {
+    color: rgb(245, 158, 11); /* text-orange-500 */
+}
+
+/* Dark Mode Close Button - colors matched to icon */
+.toastNotification.darkMode.toastSuccess .toastClose {
+    color: rgb(34, 197, 94);
+}
+
+.toastNotification.darkMode.toastError .toastClose {
+    color: rgb(239, 68, 68);
+}
+
+.toastNotification.darkMode.toastInfo .toastClose {
+    color: rgb(59, 130, 246);
+}
+
+.toastNotification.darkMode.toastWarning .toastClose {
+    color: rgb(245, 158, 11);
+}
+
+.toastNotification.darkMode .toastClose:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* Responsive adjustments - 75% KÍCH THƯỚC */
+@media (max-width: 640px) {
+    .toastNotification {
+        min-width: 225px; /* 75% of 300px */
+        max-width: calc(100vw - 32px);
+    }
+    
+    .toastNotification.toast {
+        left: 16px;
+        right: 16px;
+        width: calc(100% - 32px);
+    }
+
+    .toastNotification.bottom-center,
+    .toastNotification.top-center {
+        left: 50%;
+        transform: translateX(-50%);
+    }
+    
+    .toastFloatingIcon {
+        width: 28px; /* 90% of 31px */
+        height: 28px;
+        top: -14px; /* 90% of -15px */
+        padding: 4px; /* unchanged on mobile */
+    }
+    
+    .toastFloatingIcon svg {
+        width: 15px; /* 90% of 17px */
+        height: 15px;
+    }
+    
+    .toastInner {
+        height: 56px; /* 75% of 75px */
+        max-width: none;
+    }
+    
+    .toastClose {
+        top: 4px; /* 75% of 6px */
+        right: 4px;
+        padding: 0.21rem; /* 75% of 0.28rem */
+    }
+    
+    .toastClose svg {
+        width: 11px; /* 75% of 15px */
+        height: 11px;
+    }
+    
+    .toastTitle {
+        font-size: 0.77rem; /* 75% of 1.03rem */
+        line-height: 0.98rem;
+    }
+    
+    .toastMessage {
+        font-size: 0.51rem; /* 75% of 0.675rem */
+        line-height: 0.79rem;
+    }
+}

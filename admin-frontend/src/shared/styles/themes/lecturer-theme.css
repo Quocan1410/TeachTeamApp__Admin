@@ -1,0 +1,47 @@
+/* Light Mode Colors for Lecturer Page */
+:root {
+    /* Primary colors */
+    --lecturer-primary: #3b82f6; /* Bright blue instead of orange */
+    --lecturer-secondary: #60a5fa; /* Lighter blue */
+    --lecturer-accent: #93c5fd; /* Even lighter blue */
+
+    /* Background colors */
+    --lecturer-bg-primary: #ffffff;
+    --lecturer-bg-secondary: #f3f8ff; /* Light blue tint */
+    --lecturer-bg-card: #f9fafb;
+
+    /* Text colors */
+    --lecturer-text-primary: #1e3a8a; /* Dark blue */
+    --lecturer-text-secondary: #3b82f6;
+
+    /* Border colors */
+    --lecturer-border: #dbeafe;
+
+    /* Charts colors */
+    --lecturer-chart-1: #3b82f6;
+    --lecturer-chart-2: #60a5fa;
+    --lecturer-chart-3: #93c5fd;
+    --lecturer-chart-4: #bfdbfe;
+}
+
+/* Dark Mode Colors for Lecturer Page */
+.dark {
+    /* Primary colors */
+    --lecturer-primary: #3b82f6;
+    --lecturer-secondary: #1d4ed8;
+    --lecturer-accent: #1e40af;
+
+    /* Background colors */
+    --lecturer-bg-primary: #0f172a; /* Dark blue */
+    --lecturer-bg-secondary: #1e293b; /* Navy blue */
+    --lecturer-bg-card: #1e293b;
+
+    /* Text colors */
+    --lecturer-text-primary: #e2e8f0;
+    --lecturer-text-secondary: #60a5fa;
+
+    /* Border colors */
+    --lecturer-border: #1e40af;
+
+    /* Charts colors remain the same for consistency */
+}
