@@ -1,0 +1,21 @@
+.iconCloseHit {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  margin: 0;
+  line-height: 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.iconCloseCircle {
+  border-radius: 50%;
+  aspect-ratio: 1;
+}
+
+.iconCloseHit svg {
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
+}

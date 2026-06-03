@@ -16,6 +16,7 @@
 
 /* Framework Overrides & Global Essential */
 @import "./overrides.css"; /* Framework overrides */
+@import "./icon-close-button.css";
 
 /* Responsive utilities */
 @import "./responsive.css"; /* Responsive utilities and breakpoints */

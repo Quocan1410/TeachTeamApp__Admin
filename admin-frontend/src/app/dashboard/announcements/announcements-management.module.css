@@ -1,0 +1,260 @@
+.announcementsPage {
+  width: 100%;
+  min-height: calc(100vh - 80px);
+  padding: 5.5rem 1.5rem 2rem;
+  background: linear-gradient(
+    135deg,
+    var(--color-bg-primary) 0%,
+    var(--color-bg-secondary) 100%
+  );
+}
+
+.pageHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.pageTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--color-text-primary);
+}
+
+.pageTitleIcon {
+  width: 2rem;
+  height: 2rem;
+  color: var(--color-primary);
+}
+
+.pageSubtitle {
+  margin: 0.25rem 0 0;
+  color: var(--color-text-secondary);
+}
+
+.createButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: none;
+  border-radius: 10px;
+  padding: 0.7rem 1rem;
+  background: var(--color-primary);
+  color: #fff;
+  cursor: pointer;
+}
+
+.createButton:hover {
+  background: var(--color-primary-dark);
+}
+
+.buttonIcon {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+
+.tableContainer {
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  border-radius: 14px;
+  background: var(--color-bg-primary);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  text-align: left;
+  font-size: 0.8rem;
+  color: var(--color-text-secondary);
+  background: var(--color-bg-secondary);
+  border-bottom: 1px solid var(--color-border);
+  padding: 0.8rem 1rem;
+}
+
+.table td {
+  padding: 0.8rem 1rem;
+  border-bottom: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  vertical-align: top;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background: var(--color-bg-hover);
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  background: var(--color-bg-primary);
+  margin-right: 0.35rem;
+  cursor: pointer;
+}
+
+.actionButton:hover {
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+}
+
+.actionButtonDanger {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.actionButtonDanger:hover {
+  background: rgba(239, 68, 68, 0.12);
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: rgba(0, 0, 0, 0.5);
+}
+
+.modal {
+  width: min(640px, 100%);
+  max-height: 90vh;
+  overflow: auto;
+  border-radius: 12px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-primary);
+  color: var(--color-text-primary);
+  padding: 1.25rem;
+}
+
+.modal h2 {
+  margin: 0 0 1rem;
+  font-size: 1.2rem;
+}
+
+.formGroup {
+  margin-bottom: 0.9rem;
+}
+
+.formLabel {
+  display: block;
+  margin-bottom: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.formInput,
+.formTextarea {
+  width: 100%;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  background: var(--color-bg-secondary);
+  color: var(--color-text-primary);
+  padding: 0.58rem 0.7rem;
+}
+
+.formInput:focus,
+.formTextarea:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.16);
+}
+
+.formTextarea {
+  resize: vertical;
+}
+
+.formRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem;
+}
+
+.modalActions {
+  margin-top: 1rem;
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+}
+
+.modalButtonSecondary,
+.modalButtonPrimary {
+  border-radius: 8px;
+  padding: 0.55rem 1rem;
+  font-size: 0.85rem;
+  cursor: pointer;
+}
+
+.modalButtonSecondary {
+  border: 1px solid var(--color-border);
+  color: var(--color-text-primary);
+  background: var(--color-bg-secondary);
+}
+
+.modalButtonPrimary {
+  border: none;
+  color: #fff;
+  background: var(--color-primary);
+}
+
+.modalButtonPrimary:hover {
+  background: var(--color-primary-dark);
+}
+
+.loadingState,
+.errorState,
+.emptyState {
+  padding: 2rem 1.25rem;
+  text-align: center;
+  color: var(--color-text-secondary);
+}
+
+.errorState {
+  color: #ef4444;
+}
+
+.emptyState p {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 900px) {
+  .announcementsPage {
+    padding-top: 4.5rem;
+  }
+  .pageHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 760px) {
+  .formRow {
+    grid-template-columns: 1fr;
+  }
+  .table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+}

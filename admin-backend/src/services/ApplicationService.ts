@@ -2,6 +2,15 @@ import { AppDataSource } from "../config/database";
 import { Application } from "../types/Application";
 import { ApplicationStatus } from "../types/Application";
 import { CourseAssignment } from "../types/CourseAssignment";
+import { SelectedCandidate } from "../types/SelectedCandidate";
+
+export interface CandidateApplicationCleanupResult {
+    success: boolean;
+    message: string;
+    unselectedCount: number;
+    unrankedCount: number;
+    selectionsClearedCount: number;
+}
 
 export class ApplicationService {
     /**
@@ -17,7 +26,6 @@ export class ApplicationService {
             const courseAssignmentRepository =
                 AppDataSource.getRepository(CourseAssignment);
 
-            // Get all applications for this candidate
             const candidateApplications = await applicationRepository.find({
                 where: { candidateId: candidateId },
                 relations: ["course"],
@@ -28,53 +36,129 @@ export class ApplicationService {
                 return [];
             }
 
-            // Get unique course IDs from the applications
             const courseIds = [
                 ...new Set(candidateApplications.map((app) => app.courseId)),
             ];
 
-            // Find lecturers assigned to these courses
-            const courseAssignments = await courseAssignmentRepository.find({
-                where: {
-                    courseId: courseIds.length === 1 ? courseIds[0] : undefined,
-                },
-                relations: ["lecturer"],
-                select: ["id", "lecturerId", "courseId"],
-            });
-
-            // If multiple course IDs, use a more complex query
-            if (courseIds.length > 1) {
-                const assignments = await courseAssignmentRepository
-                    .createQueryBuilder("assignment")
-                    .select(["assignment.lecturerId", "assignment.courseId"])
-                    .where("assignment.courseId IN (:...courseIds)", {
-                        courseIds,
-                    })
-                    .getMany();
-
-                const affectedLecturerIds = [
-                    ...new Set(
-                        assignments.map((assignment) => assignment.lecturerId)
-                    ),
-                ];
-                return affectedLecturerIds;
+            if (courseIds.length === 0) {
+                return [];
             }
 
-            const affectedLecturerIds = [
-                ...new Set(
-                    courseAssignments.map((assignment) => assignment.lecturerId)
-                ),
+            const assignments = await courseAssignmentRepository
+                .createQueryBuilder("assignment")
+                .select(["assignment.lecturerId", "assignment.courseId"])
+                .where("assignment.courseId IN (:...courseIds)", {
+                    courseIds,
+                })
+                .getMany();
+
+            return [
+                ...new Set(assignments.map((assignment) => assignment.lecturerId)),
             ];
-            return affectedLecturerIds;
-        } catch (error) {
+        } catch {
             return [];
         }
     }
 
     /**
-     * Unselect and unrank all applications for a blocked candidate
-     * This ensures that when a candidate is blocked, they're completely removed from selection and ranking
+     * Remove candidate from shortlists, rankings, and selections.
+     * Mirrors main-app rules: pending shortlisted rows and selected apps must not linger after block/delete.
      */
+    static async cleanupCandidateApplications(
+        candidateId: number
+    ): Promise<CandidateApplicationCleanupResult> {
+        const queryRunner = AppDataSource.createQueryRunner();
+        await queryRunner.connect();
+        await queryRunner.startTransaction();
+
+        try {
+            const applicationRepository =
+                queryRunner.manager.getRepository(Application);
+            const selectedCandidateRepository =
+                queryRunner.manager.getRepository(SelectedCandidate);
+
+            const applications = await applicationRepository.find({
+                where: { candidateId },
+            });
+
+            if (applications.length === 0) {
+                await queryRunner.commitTransaction();
+                return {
+                    success: true,
+                    message: "No applications to clean up",
+                    unselectedCount: 0,
+                    unrankedCount: 0,
+                    selectionsClearedCount: 0,
+                };
+            }
+
+            const applicationIds = applications.map((app) => app.id);
+            let unselectedCount = 0;
+            let unrankedCount = 0;
+
+            for (const application of applications) {
+                let dirty = false;
+
+                if (application.status === ApplicationStatus.SELECTED) {
+                    application.status = ApplicationStatus.PENDING;
+                    unselectedCount++;
+                    dirty = true;
+                }
+
+                const wasRanked =
+                    application.rank !== null &&
+                    application.rank !== undefined &&
+                    application.rank > 0;
+
+                if (wasRanked) {
+                    application.rank = null;
+                    application.rankedBy = null;
+                    application.rankedAt = null;
+                    application.rankedForCourse = null;
+                    unrankedCount++;
+                    dirty = true;
+                }
+
+                if (dirty) {
+                    await applicationRepository.save(application);
+                }
+            }
+
+            const deleteResult = await selectedCandidateRepository
+                .createQueryBuilder()
+                .delete()
+                .from(SelectedCandidate)
+                .where("applicationId IN (:...applicationIds)", {
+                    applicationIds,
+                })
+                .execute();
+
+            await this.reorderRankingsAfterRemoval(queryRunner.manager);
+
+            await queryRunner.commitTransaction();
+
+            return {
+                success: true,
+                message: `Cleaned ${unselectedCount} selection(s), ${unrankedCount} ranking(s), and ${deleteResult.affected ?? 0} shortlist row(s)`,
+                unselectedCount,
+                unrankedCount,
+                selectionsClearedCount: deleteResult.affected ?? 0,
+            };
+        } catch {
+            await queryRunner.rollbackTransaction();
+            return {
+                success: false,
+                message: "Failed to clean up candidate applications",
+                unselectedCount: 0,
+                unrankedCount: 0,
+                selectionsClearedCount: 0,
+            };
+        } finally {
+            await queryRunner.release();
+        }
+    }
+
+    /** @deprecated Use cleanupCandidateApplications */
     static async unselectAndUnrankCandidateApplications(
         candidateId: number
     ): Promise<{
@@ -83,76 +167,25 @@ export class ApplicationService {
         unselectedCount: number;
         unrankedCount: number;
     }> {
-        try {
-            const applicationRepository =
-                AppDataSource.getRepository(Application);
-
-            // Find all applications for the candidate that are currently selected
-            const selectedApplications = await applicationRepository.find({
-                where: {
-                    candidateId: candidateId,
-                    status: ApplicationStatus.SELECTED,
-                },
-                relations: ["course", "role", "candidate"],
-            });
-
-            let unselectedCount = 0;
-            let unrankedCount = 0;
-
-            // Process each selected application
-            for (const application of selectedApplications) {
-                // Check if the application was ranked
-                const wasRanked =
-                    application.rank !== null &&
-                    application.rank !== undefined &&
-                    application.rank > 0;
-
-                if (wasRanked) {
-                    // Clear ranking information
-                    application.rank = null;
-                    application.rankedBy = null;
-                    application.rankedAt = null;
-                    application.rankedForCourse = null;
-                    unrankedCount++;
-                }
-
-                // Change status back to pending
-                application.status = ApplicationStatus.PENDING;
-                unselectedCount++;
-
-                // Save the updated application
-                await applicationRepository.save(application);
-            }
-
-            // After unranking applications, we need to reorder remaining rankings
-            await this.reorderRankingsAfterRemoval();
-
-            return {
-                success: true,
-                message: `Successfully unselected ${unselectedCount} applications and removed ${unrankedCount} rankings`,
-                unselectedCount,
-                unrankedCount,
-            };
-        } catch (error) {
-            return {
-                success: false,
-                message: "Failed to unselect and unrank candidate applications",
-                unselectedCount: 0,
-                unrankedCount: 0,
-            };
-        }
+        const result = await this.cleanupCandidateApplications(candidateId);
+        return {
+            success: result.success,
+            message: result.message,
+            unselectedCount: result.unselectedCount,
+            unrankedCount: result.unrankedCount,
+        };
     }
 
     /**
      * Reorder rankings after removing applications to ensure consecutive ranking
      * This prevents gaps in the ranking sequence
      */
-    static async reorderRankingsAfterRemoval(): Promise<void> {
+    static async reorderRankingsAfterRemoval(
+        manager = AppDataSource.manager
+    ): Promise<void> {
         try {
-            const applicationRepository =
-                AppDataSource.getRepository(Application);
+            const applicationRepository = manager.getRepository(Application);
 
-            // Get all ranked applications grouped by course
             const rankedApplications = await applicationRepository.find({
                 where: {
                     status: ApplicationStatus.SELECTED,
@@ -164,13 +197,11 @@ export class ApplicationService {
                 },
             });
 
-            // Filter only applications that have ranks
             const applicationsWithRanks = rankedApplications.filter(
                 (app) =>
                     app.rank !== null && app.rank !== undefined && app.rank > 0
             );
 
-            // Group by course
             const applicationsByCourse = applicationsWithRanks.reduce(
                 (acc, app) => {
                     const course = app.rankedForCourse || "unknown";
@@ -183,16 +214,13 @@ export class ApplicationService {
                 {} as Record<string, Application[]>
             );
 
-            // Reorder rankings for each course
-            for (const [courseCode, courseApplications] of Object.entries(
+            for (const courseApplications of Object.values(
                 applicationsByCourse
             )) {
-                // Sort by current rank to maintain relative order
                 courseApplications.sort(
                     (a, b) => (a.rank || 0) - (b.rank || 0)
                 );
 
-                // Assign new consecutive ranks
                 for (let i = 0; i < courseApplications.length; i++) {
                     const newRank = i + 1;
                     if (courseApplications[i].rank !== newRank) {
@@ -201,7 +229,7 @@ export class ApplicationService {
                     }
                 }
             }
-        } catch (error) {
+        } catch {
             // Silent error handling for production
         }
     }

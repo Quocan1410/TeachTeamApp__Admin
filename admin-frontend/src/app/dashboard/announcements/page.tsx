@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useState } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import {
@@ -8,7 +9,6 @@ import {
     UPDATE_ANNOUNCEMENT,
     DELETE_ANNOUNCEMENT,
 } from "@/lib/graphql/queries";
-import Toast from "@/shared/components/common/Toast/Toast";
 import { useToast } from "@/shared/hooks/useToast";
 import {
     MegaphoneIcon,
@@ -16,7 +16,12 @@ import {
     PencilIcon,
     TrashIcon,
 } from "@heroicons/react/24/outline";
-import styles from "../courses/courses-management.module.css";
+import styles from "./announcements-management.module.css";
+
+const Toast = dynamic(
+    () => import("@/shared/components/common/Toast/Toast"),
+    { ssr: false }
+);
 
 type AnnouncementRow = {
     id: number;
@@ -46,6 +51,20 @@ const emptyForm = (): FormState => ({
     isActive: true,
 });
 
+/** GraphQL enum names (ALL) vs DB values (all) */
+const normalizeAudience = (value: string) => value.toLowerCase();
+
+const audienceLabel = (value: string) => {
+    switch (normalizeAudience(value)) {
+        case "candidate":
+            return "Tutors / candidates";
+        case "lecturer":
+            return "Lecturers";
+        default:
+            return "All users";
+    }
+};
+
 const toLocalInput = (iso?: string | null) => {
     if (!iso) return "";
     const d = new Date(iso);
@@ -57,7 +76,7 @@ const toLocalInput = (iso?: string | null) => {
 const buildInput = (form: FormState) => ({
     title: form.title.trim(),
     body: form.body.trim(),
-    audience: form.audience,
+    audience: normalizeAudience(form.audience),
     isActive: form.isActive,
     startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : null,
     endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : null,
@@ -70,7 +89,10 @@ export default function AnnouncementsManagement() {
     const [showEdit, setShowEdit] = useState(false);
     const [selected, setSelected] = useState<AnnouncementRow | null>(null);
 
-    const { data, loading, refetch } = useQuery(GET_ALL_ANNOUNCEMENTS);
+    const { data, loading, error, refetch } = useQuery(GET_ALL_ANNOUNCEMENTS, {
+        fetchPolicy: "cache-and-network",
+    });
+
     const [createAnnouncement] = useMutation(CREATE_ANNOUNCEMENT, {
         onCompleted: (res) => {
             if (res.createAnnouncement.success) {
@@ -115,7 +137,7 @@ export default function AnnouncementsManagement() {
         setForm({
             title: row.title,
             body: row.body,
-            audience: row.audience,
+            audience: normalizeAudience(row.audience),
             startsAt: toLocalInput(row.startsAt),
             endsAt: toLocalInput(row.endsAt),
             isActive: row.isActive,
@@ -196,7 +218,7 @@ export default function AnnouncementsManagement() {
     );
 
     return (
-        <div className={styles.coursesManagement}>
+        <div className={styles.announcementsPage}>
             <Toast
                 message={toast.message}
                 type={toast.type}
@@ -227,8 +249,26 @@ export default function AnnouncementsManagement() {
             </div>
 
             <div className={styles.tableContainer}>
-                {loading ? (
-                    <p>Loading...</p>
+                {loading && rows.length === 0 ? (
+                    <p className={styles.loadingState}>Loading announcements…</p>
+                ) : error ? (
+                    <div className={styles.errorState}>
+                        <p>Could not load announcements.</p>
+                        <p>{error.message}</p>
+                        <button
+                            type="button"
+                            className={styles.createButton}
+                            style={{ marginTop: "1rem" }}
+                            onClick={() => refetch()}
+                        >
+                            Retry
+                        </button>
+                    </div>
+                ) : rows.length === 0 ? (
+                    <div className={styles.emptyState}>
+                        <p>No announcements yet</p>
+                        <p>Create one to show a banner on the main app.</p>
+                    </div>
                 ) : (
                     <table className={styles.table}>
                         <thead>
@@ -244,7 +284,7 @@ export default function AnnouncementsManagement() {
                             {rows.map((row) => (
                                 <tr key={row.id}>
                                     <td>{row.title}</td>
-                                    <td>{row.audience}</td>
+                                    <td>{audienceLabel(row.audience)}</td>
                                     <td>{row.isActive ? "Yes" : "No"}</td>
                                     <td>
                                         {row.startsAt
@@ -264,6 +304,7 @@ export default function AnnouncementsManagement() {
                                             type="button"
                                             className={styles.actionButton}
                                             onClick={() => openEdit(row)}
+                                            aria-label={`Edit ${row.title}`}
                                         >
                                             <PencilIcon width={18} />
                                         </button>
@@ -278,11 +319,12 @@ export default function AnnouncementsManagement() {
                                                 ) {
                                                     deleteAnnouncement({
                                                         variables: {
-                                                            id: row.id,
+                                                            id: Number(row.id),
                                                         },
                                                     });
                                                 }
                                             }}
+                                            aria-label={`Delete ${row.title}`}
                                         >
                                             <TrashIcon width={18} />
                                         </button>
@@ -336,7 +378,7 @@ export default function AnnouncementsManagement() {
                                 e.preventDefault();
                                 updateAnnouncement({
                                     variables: {
-                                        id: selected.id,
+                                        id: Number(selected.id),
                                         input: buildInput(form),
                                     },
                                 });

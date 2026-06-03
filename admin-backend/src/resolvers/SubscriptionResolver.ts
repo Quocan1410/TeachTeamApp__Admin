@@ -16,6 +16,11 @@ import {
 } from "../config/pubsub";
 import { User, UserType } from "../types/User";
 import { Course } from "../types/Course";
+import {
+    assertWsRole,
+    assertWsSelf,
+    WsAuthExtra,
+} from "../utils/wsAuth";
 
 @ObjectType()
 export class CandidateBlockedEvent {
@@ -93,11 +98,16 @@ export class CourseEvent {
 export class SubscriptionResolver {
     @Subscription(() => CandidateBlockedEvent, {
         description: "Subscribe to candidate blocking/unblocking events",
-        subscribe: () =>
-            createAsyncIterator([
+        subscribe: ({ context }) => {
+            assertWsRole(context?.extra as WsAuthExtra, [
+                UserType.LECTURER,
+                UserType.ADMIN,
+            ]);
+            return createAsyncIterator([
                 SUBSCRIPTION_TOPICS.CANDIDATE_BLOCKED,
                 SUBSCRIPTION_TOPICS.CANDIDATE_UNBLOCKED,
-            ]),
+            ]);
+        },
     })
     candidateBlockingUpdates(@Root() payload: any): CandidateBlockedEvent {
         const eventData = payload?.candidateBlockingUpdates || payload;
@@ -112,7 +122,8 @@ export class SubscriptionResolver {
     @Subscription(() => UserAccountEvent, {
         description:
             "Subscribe to user account status changes (blocking/deletion)",
-        subscribe: ({ args }) => {
+        subscribe: ({ args, context }) => {
+            assertWsSelf(context?.extra as WsAuthExtra, args.userId);
             const iterator = createAsyncIterator([
                 SUBSCRIPTION_TOPICS.USER_ACCOUNT_BLOCKED,
                 SUBSCRIPTION_TOPICS.USER_ACCOUNT_DELETED,
@@ -138,12 +149,14 @@ export class SubscriptionResolver {
 
     @Subscription(() => CourseEvent, {
         description: "Subscribe to course changes (create/update/delete)",
-        subscribe: () =>
-            createAsyncIterator([
+        subscribe: ({ context }) => {
+            assertWsRole(context?.extra as WsAuthExtra, [UserType.ADMIN]);
+            return createAsyncIterator([
                 SUBSCRIPTION_TOPICS.COURSE_CREATED,
                 SUBSCRIPTION_TOPICS.COURSE_UPDATED,
                 SUBSCRIPTION_TOPICS.COURSE_DELETED,
-            ]),
+            ]);
+        },
     })
     courseUpdates(@Root() payload: any): CourseEvent {
         const eventData = payload?.courseUpdates || payload;

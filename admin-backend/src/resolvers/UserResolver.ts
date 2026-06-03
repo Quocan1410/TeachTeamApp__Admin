@@ -20,6 +20,8 @@ import {
     UserAccountEvent,
 } from "./SubscriptionResolver";
 import { ApplicationService } from "../services/ApplicationService";
+import type { CandidateApplicationCleanupResult } from "../services/ApplicationService";
+import type { GraphQLContext } from "../utils/graphqlContext";
 
 @ObjectType()
 class UserStats {
@@ -49,6 +51,64 @@ class UserResponse {
 
     @Field(() => User, { nullable: true })
     user?: User;
+}
+
+async function publishCandidateBlockingUpdate(
+    user: User,
+    affectedLecturerIds: number[],
+    cleanup: CandidateApplicationCleanupResult,
+    isBlocked: boolean
+): Promise<void> {
+    const event: CandidateBlockedEvent = {
+        candidateId: user.id,
+        candidateName: user.fullName,
+        candidateEmail: user.email,
+        isBlocked,
+        timestamp: new Date().toISOString(),
+        candidate: user,
+        unselectedApplicationsCount: cleanup.unselectedCount,
+        unrankedApplicationsCount: cleanup.unrankedCount,
+        affectedLecturerIds,
+    };
+
+    await pubsub.publish(
+        isBlocked
+            ? SUBSCRIPTION_TOPICS.CANDIDATE_BLOCKED
+            : SUBSCRIPTION_TOPICS.CANDIDATE_UNBLOCKED,
+        { candidateBlockingUpdates: event }
+    );
+}
+
+async function notifyLecturersAboutCandidateChange(
+    user: User,
+    affectedLecturerIds: number[],
+    cleanup: CandidateApplicationCleanupResult,
+    action: "blocked" | "deleted"
+): Promise<void> {
+    if (affectedLecturerIds.length === 0) {
+        return;
+    }
+
+    const title =
+        action === "deleted" ? "Candidate removed" : "Candidate blocked";
+    const message =
+        action === "deleted"
+            ? `${user.fullName} was deleted from the system`
+            : `${user.fullName} has been blocked`;
+
+    await NotificationService.notifyLecturers(affectedLecturerIds, {
+        type: NotificationType.CANDIDATE_BLOCKED,
+        title,
+        message,
+        link: "/lecturer",
+        metadata: {
+            candidateId: user.id,
+            action,
+            unselectedApplicationsCount: cleanup.unselectedCount,
+            unrankedApplicationsCount: cleanup.unrankedCount,
+            selectionsClearedCount: cleanup.selectionsClearedCount,
+        },
+    });
 }
 
 @Resolver()
@@ -114,7 +174,7 @@ export class UserResolver {
     @Mutation(() => UserResponse)
     async blockUser(
         @Arg("id", () => Int) id: number,
-        @Ctx() ctx: any
+        @Ctx() ctx: GraphQLContext
     ): Promise<UserResponse> {
         try {
             const userRepository = AppDataSource.getRepository(User);
@@ -127,8 +187,7 @@ export class UserResolver {
                 };
             }
 
-            // Prevent admin from blocking themselves
-            if (ctx.user && ctx.user.id === id) {
+            if (ctx.adminUser && ctx.adminUser.id === id) {
                 return {
                     success: false,
                     message: "You cannot block yourself",
@@ -145,43 +204,36 @@ export class UserResolver {
             user.isBlocked = true;
             await userRepository.save(user);
 
-            // If blocking a candidate, automatically unselect and unrank their applications
-            let applicationResult = null;
-            let affectedLecturerIds: number[] = [];
-
             if (user.userType === UserType.CANDIDATE) {
-                // First find affected lecturers before unselecting applications
-                affectedLecturerIds =
+                const affectedLecturerIds =
                     await ApplicationService.getAffectedLecturerIds(user.id);
-
-                applicationResult =
-                    await ApplicationService.unselectAndUnrankCandidateApplications(
+                const cleanup =
+                    await ApplicationService.cleanupCandidateApplications(
                         user.id
                     );
+
+                if (!cleanup.success) {
+                    return {
+                        success: false,
+                        message: cleanup.message,
+                    };
+                }
+
+                await publishCandidateBlockingUpdate(
+                    user,
+                    affectedLecturerIds,
+                    cleanup,
+                    true
+                );
+
+                await notifyLecturersAboutCandidateChange(
+                    user,
+                    affectedLecturerIds,
+                    cleanup,
+                    "blocked"
+                );
             }
 
-            // Publish subscription event if user is a candidate
-            if (user.userType === UserType.CANDIDATE) {
-                const event: CandidateBlockedEvent = {
-                    candidateId: user.id,
-                    candidateName: user.fullName,
-                    candidateEmail: user.email,
-                    isBlocked: true,
-                    timestamp: new Date().toISOString(),
-                    candidate: user,
-                    unselectedApplicationsCount:
-                        applicationResult?.unselectedCount || 0,
-                    unrankedApplicationsCount:
-                        applicationResult?.unrankedCount || 0,
-                    affectedLecturerIds: affectedLecturerIds,
-                };
-
-                await pubsub.publish(SUBSCRIPTION_TOPICS.CANDIDATE_BLOCKED, {
-                    candidateBlockingUpdates: event,
-                });
-            }
-
-            // Publish user account event for the blocked user
             const userAccountEvent: UserAccountEvent = {
                 userId: user.id,
                 userEmail: user.email,
@@ -202,34 +254,15 @@ export class UserResolver {
                 title: "Account blocked",
                 message:
                     "Your account has been blocked by an administrator. Contact support for assistance.",
-                link: user.userType === UserType.CANDIDATE ? "/signin" : "/signin",
+                link: "/signin",
             });
-
-            if (user.userType === UserType.CANDIDATE) {
-                await NotificationService.notifyLecturers(
-                    affectedLecturerIds,
-                    {
-                        type: NotificationType.CANDIDATE_BLOCKED,
-                        title: "Candidate blocked",
-                        message: `${user.fullName} has been blocked`,
-                        link: "/lecturer",
-                        metadata: {
-                            candidateId: user.id,
-                            unselectedApplicationsCount:
-                                applicationResult?.unselectedCount || 0,
-                            unrankedApplicationsCount:
-                                applicationResult?.unrankedCount || 0,
-                        },
-                    }
-                );
-            }
 
             return {
                 success: true,
                 message: "User blocked successfully",
                 user,
             };
-        } catch (error) {
+        } catch {
             return {
                 success: false,
                 message: "Failed to block user",
@@ -310,7 +343,7 @@ export class UserResolver {
     @Mutation(() => UserResponse)
     async deleteUser(
         @Arg("id", () => Int) id: number,
-        @Ctx() ctx: any
+        @Ctx() ctx: GraphQLContext
     ): Promise<UserResponse> {
         try {
             const userRepository = AppDataSource.getRepository(User);
@@ -323,8 +356,7 @@ export class UserResolver {
                 };
             }
 
-            // Prevent admin from deleting themselves
-            if (ctx.user && ctx.user.id === id) {
+            if (ctx.adminUser && ctx.adminUser.id === id) {
                 return {
                     success: false,
                     message: "You cannot delete yourself",
@@ -338,7 +370,36 @@ export class UserResolver {
                 };
             }
 
-            // Publish user account event before deletion
+            if (user.userType === UserType.CANDIDATE) {
+                const affectedLecturerIds =
+                    await ApplicationService.getAffectedLecturerIds(user.id);
+                const cleanup =
+                    await ApplicationService.cleanupCandidateApplications(
+                        user.id
+                    );
+
+                if (!cleanup.success) {
+                    return {
+                        success: false,
+                        message: cleanup.message,
+                    };
+                }
+
+                await publishCandidateBlockingUpdate(
+                    user,
+                    affectedLecturerIds,
+                    cleanup,
+                    true
+                );
+
+                await notifyLecturersAboutCandidateChange(
+                    user,
+                    affectedLecturerIds,
+                    cleanup,
+                    "deleted"
+                );
+            }
+
             const userAccountEvent: UserAccountEvent = {
                 userId: user.id,
                 userEmail: user.email,
@@ -359,7 +420,7 @@ export class UserResolver {
                 success: true,
                 message: "User deleted successfully",
             };
-        } catch (error) {
+        } catch {
             return {
                 success: false,
                 message: "Failed to delete user",
