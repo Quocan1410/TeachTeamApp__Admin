@@ -1,19 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { adminEnv } from "@/lib/env";
 
 const getAvatarCacheBuster = (avatarUrl?: string | null): string | undefined => {
     if (!avatarUrl) return undefined;
     const filename = avatarUrl.split("/").pop()?.trim();
     return filename || undefined;
-};
-
-const getApiBase = (): string => {
-    return (
-        process.env.NEXT_PUBLIC_API_ENDPOINT ||
-        process.env.NEXT_PUBLIC_API_URL ||
-        "http://localhost:5000/api"
-    );
 };
 
 export function useProtectedAvatar(
@@ -49,7 +42,7 @@ export function useProtectedAvatar(
                     ? `?v=${encodeURIComponent(cacheBuster)}`
                     : "";
                 const response = await fetch(
-                    `${getApiBase()}/auth/avatar/image${query}`,
+                    `${adminEnv.apiEndpoint}/auth/avatar/image${query}`,
                     {
                         headers: { Authorization: `Bearer ${token}` },
                         cache: "no-store",

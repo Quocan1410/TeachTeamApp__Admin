@@ -11,15 +11,10 @@ import { clearAdminSession } from "@/lib/adminSession";
 import { GraphQLWsLink } from "@apollo/client/link/subscriptions";
 import { createClient } from "graphql-ws";
 import { getMainDefinition } from "@apollo/client/utilities";
+import { adminEnv, resolveAdminGraphqlWsUrl } from "@/lib/env";
 
-// HTTP and WebSocket URLs
-const httpUrl =
-    process.env.NEXT_PUBLIC_ADMIN_GRAPHQL_ENDPOINT ||
-    process.env.NEXT_PUBLIC_GRAPHQL_ENDPOINT ||
-    "http://localhost:4002/graphql";
-
-const wsUrl =
-    process.env.NEXT_PUBLIC_ADMIN_WS_ENDPOINT || "ws://localhost:4002/graphql";
+const httpUrl = adminEnv.graphqlHttp;
+const wsUrl = resolveAdminGraphqlWsUrl();
 
 const httpLink = createHttpLink({
     uri: httpUrl,
