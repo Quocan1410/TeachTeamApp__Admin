@@ -1,81 +1,111 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@apollo/client";
 import {
-    GET_CANDIDATES_CHOSEN_PER_COURSE,
-    GET_CANDIDATES_WITH_MULTIPLE_SELECTIONS,
-    GET_UNSELECTED_CANDIDATES,
+    GET_REPORT_SUMMARY,
+    GET_CANDIDATES_CHOSEN_PER_COURSE_PAGINATED,
+    GET_CANDIDATES_WITH_MULTIPLE_SELECTIONS_PAGINATED,
+    GET_UNSELECTED_CANDIDATES_PAGINATED,
 } from "@/lib/graphql/queries";
 import {
     formatCandidateDisplayName,
     formatLecturerDisplayName,
 } from "@/shared/utils/personDisplayName";
+import PaginationBar from "@/shared/components/common/PaginationBar/PaginationBar";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import {
     DocumentChartBarIcon,
     UserGroupIcon,
     ExclamationTriangleIcon,
     CheckCircleIcon,
     PrinterIcon,
-    ChevronRightIcon,
-    CalendarIcon,
     UserIcon,
     AcademicCapIcon,
+    MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import styles from "./reports.module.css";
 
 type ReportTab = "candidates-per-course" | "multiple-selections" | "unselected";
 
+const PAGE_SIZE = 10;
+
 export default function ReportsPage() {
     const [activeTab, setActiveTab] = useState<ReportTab>(
         "candidates-per-course"
     );
+    const [searchTerm, setSearchTerm] = useState("");
+    const [page, setPage] = useState(1);
+    const debouncedSearchTerm = useDebouncedValue(searchTerm, 320);
+
+    useEffect(() => {
+        setPage(1);
+    }, [activeTab, debouncedSearchTerm]);
+
+    const listInput = {
+        page,
+        pageSize: PAGE_SIZE,
+        search: debouncedSearchTerm || null,
+    };
+
+    const { data: summaryData } = useQuery(GET_REPORT_SUMMARY);
 
     const {
         data: candidatesPerCourseData,
         loading: candidatesPerCourseLoading,
         error: candidatesPerCourseError,
-    } = useQuery(GET_CANDIDATES_CHOSEN_PER_COURSE);
+    } = useQuery(GET_CANDIDATES_CHOSEN_PER_COURSE_PAGINATED, {
+        variables: { input: listInput },
+        skip: activeTab !== "candidates-per-course",
+    });
 
     const {
         data: multipleSelectionsData,
         loading: multipleSelectionsLoading,
         error: multipleSelectionsError,
-    } = useQuery(GET_CANDIDATES_WITH_MULTIPLE_SELECTIONS);
+    } = useQuery(GET_CANDIDATES_WITH_MULTIPLE_SELECTIONS_PAGINATED, {
+        variables: { input: listInput },
+        skip: activeTab !== "multiple-selections",
+    });
 
     const {
         data: unselectedCandidatesData,
         loading: unselectedCandidatesLoading,
         error: unselectedCandidatesError,
-    } = useQuery(GET_UNSELECTED_CANDIDATES);
+    } = useQuery(GET_UNSELECTED_CANDIDATES_PAGINATED, {
+        variables: { input: listInput },
+        skip: activeTab !== "unselected",
+    });
+
+    const summary = summaryData?.getReportSummary;
 
     const tabs = [
         {
             id: "candidates-per-course" as ReportTab,
             name: "Candidates Per Course",
             icon: AcademicCapIcon,
-            count:
-                candidatesPerCourseData?.getCandidatesChosenPerCourse?.reduce(
-                    (acc: number, course: any) => acc + course.totalSelected,
-                    0
-                ) || 0,
+            count: summary?.totalSelectedCandidates ?? 0,
         },
         {
             id: "multiple-selections" as ReportTab,
             name: "Multiple Selections",
             icon: UserGroupIcon,
-            count:
-                multipleSelectionsData?.getCandidatesWithMultipleSelections
-                    ?.length || 0,
+            count: summary?.multipleSelectionsCount ?? 0,
         },
         {
             id: "unselected" as ReportTab,
             name: "Unselected Candidates",
             icon: ExclamationTriangleIcon,
-            count:
-                unselectedCandidatesData?.getUnselectedCandidates?.length || 0,
+            count: summary?.unselectedCandidatesCount ?? 0,
         },
     ];
+
+    const perCoursePage =
+        candidatesPerCourseData?.getCandidatesChosenPerCoursePaginated;
+    const multiplePage =
+        multipleSelectionsData?.getCandidatesWithMultipleSelectionsPaginated;
+    const unselectedPage =
+        unselectedCandidatesData?.getUnselectedCandidatesPaginated;
 
     const handlePrint = () => {
         window.print();
@@ -105,10 +135,22 @@ export default function ReportsPage() {
         </div>
     );
 
+    const SearchBar = () => (
+        <div className={styles.searchContainer}>
+            <MagnifyingGlassIcon className={styles.searchIcon} />
+            <input
+                type="text"
+                placeholder="Search reports..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className={styles.searchInput}
+            />
+        </div>
+    );
+
     return (
         <div className={styles.reportsPage}>
             <div className={styles.reportsContainer}>
-                {/* Header */}
                 <div className={styles.pageHeader}>
                     <div className={styles.headerContent}>
                         <div className={styles.headerText}>
@@ -134,7 +176,6 @@ export default function ReportsPage() {
                     </div>
                 </div>
 
-                {/* Report Tabs */}
                 <div className={styles.tabsContainer}>
                     <div className={styles.tabsList}>
                         {tabs.map((tab) => (
@@ -157,7 +198,8 @@ export default function ReportsPage() {
                     </div>
                 </div>
 
-                {/* Report Content */}
+                <SearchBar />
+
                 <div className={styles.reportContent}>
                     {activeTab === "candidates-per-course" && (
                         <div className={styles.reportSection}>
@@ -178,209 +220,223 @@ export default function ReportsPage() {
                                 />
                             )}
 
-                            {candidatesPerCourseData?.getCandidatesChosenPerCourse && (
-                                <div className={styles.coursesGrid}>
-                                    {candidatesPerCourseData.getCandidatesChosenPerCourse.map(
-                                        (courseData: any) => (
-                                            <div
-                                                key={courseData.course.id}
-                                                className={styles.courseCard}
-                                            >
+                            {perCoursePage && (
+                                <>
+                                    <div className={styles.coursesGrid}>
+                                        {perCoursePage.items.map(
+                                            (courseData: any) => (
                                                 <div
+                                                    key={courseData.course.id}
                                                     className={
-                                                        styles.courseHeader
+                                                        styles.courseCard
                                                     }
                                                 >
                                                     <div
                                                         className={
-                                                            styles.courseInfo
+                                                            styles.courseHeader
                                                         }
                                                     >
-                                                        <h3
+                                                        <div
                                                             className={
-                                                                styles.courseTitle
+                                                                styles.courseInfo
                                                             }
                                                         >
-                                                            {
-                                                                courseData
-                                                                    .course
-                                                                    .courseCode
-                                                            }{" "}
-                                                            -{" "}
-                                                            {
-                                                                courseData
-                                                                    .course
-                                                                    .courseName
-                                                            }
-                                                        </h3>
-                                                        <p
+                                                            <h3
+                                                                className={
+                                                                    styles.courseTitle
+                                                                }
+                                                            >
+                                                                {
+                                                                    courseData
+                                                                        .course
+                                                                        .courseCode
+                                                                }{" "}
+                                                                -{" "}
+                                                                {
+                                                                    courseData
+                                                                        .course
+                                                                        .courseName
+                                                                }
+                                                            </h3>
+                                                            <p
+                                                                className={
+                                                                    styles.courseSemester
+                                                                }
+                                                            >
+                                                                {
+                                                                    courseData
+                                                                        .course
+                                                                        .semester
+                                                                }
+                                                            </p>
+                                                        </div>
+                                                        <div
                                                             className={
-                                                                styles.courseSemester
+                                                                styles.courseStats
                                                             }
                                                         >
-                                                            {
-                                                                courseData
-                                                                    .course
-                                                                    .semester
-                                                            }
-                                                        </p>
+                                                            <span
+                                                                className={
+                                                                    styles.selectedCount
+                                                                }
+                                                            >
+                                                                {
+                                                                    courseData.totalSelected
+                                                                }{" "}
+                                                                Selected
+                                                            </span>
+                                                        </div>
                                                     </div>
-                                                    <div
-                                                        className={
-                                                            styles.courseStats
-                                                        }
-                                                    >
-                                                        <span
-                                                            className={
-                                                                styles.selectedCount
-                                                            }
-                                                        >
-                                                            {
-                                                                courseData.totalSelected
-                                                            }{" "}
-                                                            Selected
-                                                        </span>
-                                                    </div>
-                                                </div>
 
-                                                {courseData.selectedCandidates
-                                                    .length > 0 ? (
-                                                    <div
-                                                        className={
-                                                            styles.candidatesList
-                                                        }
-                                                    >
-                                                        {courseData.selectedCandidates.map(
-                                                            (
-                                                                selection: any
-                                                            ) => (
-                                                                <div
-                                                                    key={`${selection.application.id}-${selection.candidate.id}-${selection.course.id}`}
-                                                                    className={
-                                                                        styles.candidateItem
-                                                                    }
-                                                                >
+                                                    {courseData
+                                                        .selectedCandidates
+                                                        .length > 0 ? (
+                                                        <div
+                                                            className={
+                                                                styles.candidatesList
+                                                            }
+                                                        >
+                                                            {courseData.selectedCandidates.map(
+                                                                (
+                                                                    selection: any
+                                                                ) => (
                                                                     <div
+                                                                        key={`${selection.application.id}-${selection.candidate.id}-${selection.course.id}`}
                                                                         className={
-                                                                            styles.candidateInfo
+                                                                            styles.candidateItem
                                                                         }
                                                                     >
                                                                         <div
                                                                             className={
-                                                                                styles.candidateAvatar
+                                                                                styles.candidateInfo
                                                                             }
                                                                         >
-                                                                            <UserIcon
-                                                                                className={
-                                                                                    styles.avatarIcon
-                                                                                }
-                                                                            />
-                                                                        </div>
-                                                                        <div
-                                                                            className={
-                                                                                styles.candidateDetails
-                                                                            }
-                                                                        >
-                                                                            <h4
-                                                                                className={
-                                                                                    styles.candidateName
-                                                                                }
-                                                                            >
-                                                                                {formatCandidateDisplayName(
-                                                                                    selection.candidate
-                                                                                )}
-                                                                            </h4>
-                                                                            <p
-                                                                                className={
-                                                                                    styles.candidateEmail
-                                                                                }
-                                                                            >
-                                                                                {
-                                                                                    selection
-                                                                                        .candidate
-                                                                                        .email
-                                                                                }
-                                                                            </p>
                                                                             <div
                                                                                 className={
-                                                                                    styles.candidateMeta
+                                                                                    styles.candidateAvatar
                                                                                 }
                                                                             >
-                                                                                {selection
-                                                                                    .application
-                                                                                    .role && (
-                                                                                    <span
-                                                                                        className={
-                                                                                            styles.roleTag
-                                                                                        }
-                                                                                    >
-                                                                                        {
-                                                                                            selection
-                                                                                                .application
-                                                                                                .role
-                                                                                                .roleName
-                                                                                        }
-                                                                                    </span>
-                                                                                )}
-                                                                                <span
+                                                                                <UserIcon
                                                                                     className={
-                                                                                        styles.selectionDate
+                                                                                        styles.avatarIcon
+                                                                                    }
+                                                                                />
+                                                                            </div>
+                                                                            <div
+                                                                                className={
+                                                                                    styles.candidateDetails
+                                                                                }
+                                                                            >
+                                                                                <h4
+                                                                                    className={
+                                                                                        styles.candidateName
                                                                                     }
                                                                                 >
-                                                                                    Selected:{" "}
-                                                                                    {formatDate(
-                                                                                        selection.selectedAt
+                                                                                    {formatCandidateDisplayName(
+                                                                                        selection.candidate
                                                                                     )}
-                                                                                </span>
+                                                                                </h4>
+                                                                                <p
+                                                                                    className={
+                                                                                        styles.candidateEmail
+                                                                                    }
+                                                                                >
+                                                                                    {
+                                                                                        selection
+                                                                                            .candidate
+                                                                                            .email
+                                                                                    }
+                                                                                </p>
+                                                                                <div
+                                                                                    className={
+                                                                                        styles.candidateMeta
+                                                                                    }
+                                                                                >
+                                                                                    {selection
+                                                                                        .application
+                                                                                        .role && (
+                                                                                        <span
+                                                                                            className={
+                                                                                                styles.roleTag
+                                                                                            }
+                                                                                        >
+                                                                                            {
+                                                                                                selection
+                                                                                                    .application
+                                                                                                    .role
+                                                                                                    .roleName
+                                                                                            }
+                                                                                        </span>
+                                                                                    )}
+                                                                                    <span
+                                                                                        className={
+                                                                                            styles.selectionDate
+                                                                                        }
+                                                                                    >
+                                                                                        Selected:{" "}
+                                                                                        {formatDate(
+                                                                                            selection.selectedAt
+                                                                                        )}
+                                                                                    </span>
+                                                                                </div>
                                                                             </div>
                                                                         </div>
-                                                                    </div>
-                                                                    <div
-                                                                        className={
-                                                                            styles.selectionMeta
-                                                                        }
-                                                                    >
-                                                                        <p
+                                                                        <div
                                                                             className={
-                                                                                styles.selectedBy
+                                                                                styles.selectionMeta
                                                                             }
                                                                         >
-                                                                            Selected
-                                                                            by:{" "}
-                                                                            {formatLecturerDisplayName(
-                                                                                {
-                                                                                    ...selection.selectedBy,
-                                                                                    userType: "lecturer",
+                                                                            <p
+                                                                                className={
+                                                                                    styles.selectedBy
                                                                                 }
-                                                                            )}
-                                                                        </p>
+                                                                            >
+                                                                                Selected
+                                                                                by:{" "}
+                                                                                {formatLecturerDisplayName(
+                                                                                    {
+                                                                                        ...selection.selectedBy,
+                                                                                        userType:
+                                                                                            "lecturer",
+                                                                                    }
+                                                                                )}
+                                                                            </p>
+                                                                        </div>
                                                                     </div>
-                                                                </div>
-                                                            )
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <div
-                                                        className={
-                                                            styles.emptyState
-                                                        }
-                                                    >
-                                                        <ExclamationTriangleIcon
+                                                                )
+                                                            )}
+                                                        </div>
+                                                    ) : (
+                                                        <div
                                                             className={
-                                                                styles.emptyIcon
+                                                                styles.emptyState
                                                             }
-                                                        />
-                                                        <p>
-                                                            No candidates
-                                                            selected for this
-                                                            course
-                                                        </p>
-                                                    </div>
-                                                )}
-                                            </div>
-                                        )
-                                    )}
-                                </div>
+                                                        >
+                                                            <ExclamationTriangleIcon
+                                                                className={
+                                                                    styles.emptyIcon
+                                                                }
+                                                            />
+                                                            <p>
+                                                                No candidates
+                                                                selected for
+                                                                this course
+                                                            </p>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )
+                                        )}
+                                    </div>
+                                    <PaginationBar
+                                        page={perCoursePage.page}
+                                        pageSize={perCoursePage.pageSize}
+                                        totalCount={perCoursePage.totalCount}
+                                        totalPages={perCoursePage.totalPages}
+                                        loading={candidatesPerCourseLoading}
+                                        onPageChange={setPage}
+                                    />
+                                </>
                             )}
                         </div>
                     )}
@@ -404,180 +460,193 @@ export default function ReportsPage() {
                                 />
                             )}
 
-                            {multipleSelectionsData?.getCandidatesWithMultipleSelections && (
-                                <div className={styles.candidatesGrid}>
-                                    {multipleSelectionsData
-                                        .getCandidatesWithMultipleSelections
-                                        .length > 0 ? (
-                                        multipleSelectionsData.getCandidatesWithMultipleSelections.map(
-                                            (candidateData: any) => (
-                                                <div
-                                                    key={
-                                                        candidateData.candidate
-                                                            .id
-                                                    }
-                                                    className={
-                                                        styles.multipleSelectionCard
-                                                    }
-                                                >
+                            {multiplePage && (
+                                <>
+                                    <div className={styles.candidatesGrid}>
+                                        {multiplePage.items.length > 0 ? (
+                                            multiplePage.items.map(
+                                                (candidateData: any) => (
                                                     <div
+                                                        key={
+                                                            candidateData
+                                                                .candidate.id
+                                                        }
                                                         className={
-                                                            styles.candidateHeader
+                                                            styles.multipleSelectionCard
                                                         }
                                                     >
                                                         <div
                                                             className={
-                                                                styles.candidateInfo
+                                                                styles.candidateHeader
                                                             }
                                                         >
                                                             <div
                                                                 className={
-                                                                    styles.candidateAvatar
+                                                                    styles.candidateInfo
                                                                 }
                                                             >
-                                                                <UserIcon
+                                                                <div
                                                                     className={
-                                                                        styles.avatarIcon
+                                                                        styles.candidateAvatar
                                                                     }
-                                                                />
+                                                                >
+                                                                    <UserIcon
+                                                                        className={
+                                                                            styles.avatarIcon
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                                <div
+                                                                    className={
+                                                                        styles.candidateDetails
+                                                                    }
+                                                                >
+                                                                    <h3
+                                                                        className={
+                                                                            styles.candidateName
+                                                                        }
+                                                                    >
+                                                                        {formatCandidateDisplayName(
+                                                                            candidateData.candidate
+                                                                        )}
+                                                                    </h3>
+                                                                    <p
+                                                                        className={
+                                                                            styles.candidateEmail
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            candidateData
+                                                                                .candidate
+                                                                                .email
+                                                                        }
+                                                                    </p>
+                                                                </div>
                                                             </div>
                                                             <div
                                                                 className={
-                                                                    styles.candidateDetails
+                                                                    styles.selectionBadge
                                                                 }
                                                             >
-                                                                <h3
+                                                                <span
                                                                     className={
-                                                                        styles.candidateName
-                                                                    }
-                                                                >
-                                                                    {formatCandidateDisplayName(
-                                                                        candidateData.candidate
-                                                                    )}
-                                                                </h3>
-                                                                <p
-                                                                    className={
-                                                                        styles.candidateEmail
+                                                                        styles.selectionCount
                                                                     }
                                                                 >
                                                                     {
-                                                                        candidateData
-                                                                            .candidate
-                                                                            .email
-                                                                    }
-                                                                </p>
+                                                                        candidateData.totalSelections
+                                                                    }{" "}
+                                                                    Selections
+                                                                </span>
                                                             </div>
                                                         </div>
+
                                                         <div
                                                             className={
-                                                                styles.selectionBadge
+                                                                styles.selectionsList
                                                             }
                                                         >
-                                                            <span
-                                                                className={
-                                                                    styles.selectionCount
-                                                                }
-                                                            >
-                                                                {
-                                                                    candidateData.totalSelections
-                                                                }{" "}
-                                                                Selections
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div
-                                                        className={
-                                                            styles.selectionsList
-                                                        }
-                                                    >
-                                                        {candidateData.selections.map(
-                                                            (
-                                                                selection: any,
-                                                                index: number
-                                                            ) => (
-                                                                <div
-                                                                    key={`${selection.course.id}-${index}`}
-                                                                    className={
-                                                                        styles.selectionItem
-                                                                    }
-                                                                >
+                                                            {candidateData.selections.map(
+                                                                (
+                                                                    selection: any,
+                                                                    index: number
+                                                                ) => (
                                                                     <div
+                                                                        key={`${selection.course.id}-${index}`}
                                                                         className={
-                                                                            styles.selectionInfo
+                                                                            styles.selectionItem
                                                                         }
                                                                     >
-                                                                        <h4
-                                                                            className={
-                                                                                styles.courseName
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                selection
-                                                                                    .course
-                                                                                    .courseCode
-                                                                            }{" "}
-                                                                            -{" "}
-                                                                            {
-                                                                                selection
-                                                                                    .course
-                                                                                    .courseName
-                                                                            }
-                                                                        </h4>
                                                                         <div
                                                                             className={
-                                                                                styles.selectionMeta
+                                                                                styles.selectionInfo
                                                                             }
                                                                         >
-                                                                            {selection
-                                                                                .application
-                                                                                .role && (
-                                                                                <span
-                                                                                    className={
-                                                                                        styles.roleTag
-                                                                                    }
-                                                                                >
-                                                                                    {
-                                                                                        selection
-                                                                                            .application
-                                                                                            .role
-                                                                                            .roleName
-                                                                                    }
-                                                                                </span>
-                                                                            )}
-                                                                            <span
+                                                                            <h4
                                                                                 className={
-                                                                                    styles.selectionDate
+                                                                                    styles.courseName
                                                                                 }
                                                                             >
-                                                                                {formatDate(
-                                                                                    selection.selectedAt
+                                                                                {
+                                                                                    selection
+                                                                                        .course
+                                                                                        .courseCode
+                                                                                }{" "}
+                                                                                -{" "}
+                                                                                {
+                                                                                    selection
+                                                                                        .course
+                                                                                        .courseName
+                                                                                }
+                                                                            </h4>
+                                                                            <div
+                                                                                className={
+                                                                                    styles.selectionMeta
+                                                                                }
+                                                                            >
+                                                                                {selection
+                                                                                    .application
+                                                                                    .role && (
+                                                                                    <span
+                                                                                        className={
+                                                                                            styles.roleTag
+                                                                                        }
+                                                                                    >
+                                                                                        {
+                                                                                            selection
+                                                                                                .application
+                                                                                                .role
+                                                                                                .roleName
+                                                                                        }
+                                                                                    </span>
                                                                                 )}
-                                                                            </span>
+                                                                                <span
+                                                                                    className={
+                                                                                        styles.selectionDate
+                                                                                    }
+                                                                                >
+                                                                                    {formatDate(
+                                                                                        selection.selectedAt
+                                                                                    )}
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                            )
-                                                        )}
+                                                                )
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                )
                                             )
-                                        )
-                                    ) : (
-                                        <div className={styles.emptyState}>
-                                            <CheckCircleIcon
-                                                className={styles.emptyIcon}
-                                            />
-                                            <h3>
-                                                No Multiple Selections Found
-                                            </h3>
-                                            <p>
-                                                No candidates have been selected
-                                                for more than 3 courses
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
+                                        ) : (
+                                            <div
+                                                className={styles.emptyState}
+                                            >
+                                                <CheckCircleIcon
+                                                    className={
+                                                        styles.emptyIcon
+                                                    }
+                                                />
+                                                <h3>
+                                                    No Multiple Selections Found
+                                                </h3>
+                                                <p>
+                                                    No candidates have been
+                                                    selected for more than 3
+                                                    courses
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <PaginationBar
+                                        page={multiplePage.page}
+                                        pageSize={multiplePage.pageSize}
+                                        totalCount={multiplePage.totalCount}
+                                        totalPages={multiplePage.totalPages}
+                                        loading={multipleSelectionsLoading}
+                                        onPageChange={setPage}
+                                    />
+                                </>
                             )}
                         </div>
                     )}
@@ -601,186 +670,199 @@ export default function ReportsPage() {
                                 />
                             )}
 
-                            {unselectedCandidatesData?.getUnselectedCandidates && (
-                                <div className={styles.candidatesGrid}>
-                                    {unselectedCandidatesData
-                                        .getUnselectedCandidates.length > 0 ? (
-                                        unselectedCandidatesData.getUnselectedCandidates.map(
-                                            (candidateData: any) => (
-                                                <div
-                                                    key={
-                                                        candidateData.candidate
-                                                            .id
-                                                    }
-                                                    className={
-                                                        styles.unselectedCard
-                                                    }
-                                                >
+                            {unselectedPage && (
+                                <>
+                                    <div className={styles.candidatesGrid}>
+                                        {unselectedPage.items.length > 0 ? (
+                                            unselectedPage.items.map(
+                                                (candidateData: any) => (
                                                     <div
+                                                        key={
+                                                            candidateData
+                                                                .candidate.id
+                                                        }
                                                         className={
-                                                            styles.candidateHeader
+                                                            styles.unselectedCard
                                                         }
                                                     >
                                                         <div
                                                             className={
-                                                                styles.candidateInfo
+                                                                styles.candidateHeader
                                                             }
                                                         >
                                                             <div
                                                                 className={
-                                                                    styles.candidateAvatar
+                                                                    styles.candidateInfo
                                                                 }
                                                             >
-                                                                <UserIcon
+                                                                <div
                                                                     className={
-                                                                        styles.avatarIcon
+                                                                        styles.candidateAvatar
                                                                     }
-                                                                />
+                                                                >
+                                                                    <UserIcon
+                                                                        className={
+                                                                            styles.avatarIcon
+                                                                        }
+                                                                    />
+                                                                </div>
+                                                                <div
+                                                                    className={
+                                                                        styles.candidateDetails
+                                                                    }
+                                                                >
+                                                                    <h3
+                                                                        className={
+                                                                            styles.candidateName
+                                                                        }
+                                                                    >
+                                                                        {formatCandidateDisplayName(
+                                                                            candidateData.candidate
+                                                                        )}
+                                                                    </h3>
+                                                                    <p
+                                                                        className={
+                                                                            styles.candidateEmail
+                                                                        }
+                                                                    >
+                                                                        {
+                                                                            candidateData
+                                                                                .candidate
+                                                                                .email
+                                                                        }
+                                                                    </p>
+                                                                </div>
                                                             </div>
                                                             <div
                                                                 className={
-                                                                    styles.candidateDetails
+                                                                    styles.applicationBadge
                                                                 }
                                                             >
-                                                                <h3
+                                                                <span
                                                                     className={
-                                                                        styles.candidateName
-                                                                    }
-                                                                >
-                                                                    {formatCandidateDisplayName(
-                                                                        candidateData.candidate
-                                                                    )}
-                                                                </h3>
-                                                                <p
-                                                                    className={
-                                                                        styles.candidateEmail
+                                                                        styles.applicationCount
                                                                     }
                                                                 >
                                                                     {
-                                                                        candidateData
-                                                                            .candidate
-                                                                            .email
-                                                                    }
-                                                                </p>
+                                                                        candidateData.totalApplications
+                                                                    }{" "}
+                                                                    Applications
+                                                                </span>
                                                             </div>
                                                         </div>
+
                                                         <div
                                                             className={
-                                                                styles.applicationBadge
+                                                                styles.applicationsList
                                                             }
                                                         >
-                                                            <span
-                                                                className={
-                                                                    styles.applicationCount
-                                                                }
-                                                            >
-                                                                {
-                                                                    candidateData.totalApplications
-                                                                }{" "}
-                                                                Applications
-                                                            </span>
-                                                        </div>
-                                                    </div>
-
-                                                    <div
-                                                        className={
-                                                            styles.applicationsList
-                                                        }
-                                                    >
-                                                        {candidateData.applications.map(
-                                                            (
-                                                                application: any
-                                                            ) => (
-                                                                <div
-                                                                    key={
-                                                                        application.id
-                                                                    }
-                                                                    className={
-                                                                        styles.applicationItem
-                                                                    }
-                                                                >
+                                                            {candidateData.applications.map(
+                                                                (
+                                                                    application: any
+                                                                ) => (
                                                                     <div
+                                                                        key={
+                                                                            application.id
+                                                                        }
                                                                         className={
-                                                                            styles.applicationInfo
+                                                                            styles.applicationItem
                                                                         }
                                                                     >
-                                                                        <h4
-                                                                            className={
-                                                                                styles.courseName
-                                                                            }
-                                                                        >
-                                                                            {
-                                                                                application
-                                                                                    .course
-                                                                                    .courseCode
-                                                                            }{" "}
-                                                                            -{" "}
-                                                                            {
-                                                                                application
-                                                                                    .course
-                                                                                    .courseName
-                                                                            }
-                                                                        </h4>
                                                                         <div
                                                                             className={
-                                                                                styles.applicationMeta
+                                                                                styles.applicationInfo
                                                                             }
                                                                         >
-                                                                            {application.role && (
-                                                                                <span
-                                                                                    className={
-                                                                                        styles.roleTag
-                                                                                    }
-                                                                                >
-                                                                                    {
-                                                                                        application
-                                                                                            .role
-                                                                                            .roleName
-                                                                                    }
-                                                                                </span>
-                                                                            )}
-                                                                            <span
+                                                                            <h4
                                                                                 className={
-                                                                                    styles.statusTag
+                                                                                    styles.courseName
                                                                                 }
                                                                             >
                                                                                 {
-                                                                                    application.status
+                                                                                    application
+                                                                                        .course
+                                                                                        .courseCode
+                                                                                }{" "}
+                                                                                -{" "}
+                                                                                {
+                                                                                    application
+                                                                                        .course
+                                                                                        .courseName
                                                                                 }
-                                                                            </span>
-                                                                            <span
+                                                                            </h4>
+                                                                            <div
                                                                                 className={
-                                                                                    styles.applicationDate
+                                                                                    styles.applicationMeta
                                                                                 }
                                                                             >
-                                                                                Applied:{" "}
-                                                                                {formatDate(
-                                                                                    application.appliedAt
+                                                                                {application.role && (
+                                                                                    <span
+                                                                                        className={
+                                                                                            styles.roleTag
+                                                                                        }
+                                                                                    >
+                                                                                        {
+                                                                                            application
+                                                                                                .role
+                                                                                                .roleName
+                                                                                        }
+                                                                                    </span>
                                                                                 )}
-                                                                            </span>
+                                                                                <span
+                                                                                    className={
+                                                                                        styles.statusTag
+                                                                                    }
+                                                                                >
+                                                                                    {
+                                                                                        application.status
+                                                                                    }
+                                                                                </span>
+                                                                                <span
+                                                                                    className={
+                                                                                        styles.applicationDate
+                                                                                    }
+                                                                                >
+                                                                                    Applied:{" "}
+                                                                                    {formatDate(
+                                                                                        application.appliedAt
+                                                                                    )}
+                                                                                </span>
+                                                                            </div>
                                                                         </div>
                                                                     </div>
-                                                                </div>
-                                                            )
-                                                        )}
+                                                                )
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
+                                                )
                                             )
-                                        )
-                                    ) : (
-                                        <div className={styles.emptyState}>
-                                            <CheckCircleIcon
-                                                className={styles.emptyIcon}
-                                            />
-                                            <h3>All Candidates Selected</h3>
-                                            <p>
-                                                All candidates who have applied
-                                                have been selected for at least
-                                                one course
-                                            </p>
-                                        </div>
-                                    )}
-                                </div>
+                                        ) : (
+                                            <div
+                                                className={styles.emptyState}
+                                            >
+                                                <CheckCircleIcon
+                                                    className={
+                                                        styles.emptyIcon
+                                                    }
+                                                />
+                                                <h3>All Candidates Selected</h3>
+                                                <p>
+                                                    All candidates who have
+                                                    applied have been selected
+                                                    for at least one course
+                                                </p>
+                                            </div>
+                                        )}
+                                    </div>
+                                    <PaginationBar
+                                        page={unselectedPage.page}
+                                        pageSize={unselectedPage.pageSize}
+                                        totalCount={unselectedPage.totalCount}
+                                        totalPages={unselectedPage.totalPages}
+                                        loading={unselectedCandidatesLoading}
+                                        onPageChange={setPage}
+                                    />
+                                </>
                             )}
                         </div>
                     )}

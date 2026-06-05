@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import {
-    GET_ALL_USERS,
+    GET_USERS,
     GET_USER_STATS,
     BLOCK_USER,
     UNBLOCK_USER,
@@ -22,6 +22,9 @@ import {
 import styles from "./users-management.module.css";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { getUserDisplayName } from "@/shared/utils/personDisplayName";
+import PaginationBar from "@/shared/components/common/PaginationBar/PaginationBar";
+
+const PAGE_SIZE = 20;
 
 interface User {
     id: number;
@@ -37,6 +40,7 @@ interface User {
 export default function UsersManagement() {
     const [selectedFilter, setSelectedFilter] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
+    const [page, setPage] = useState(1);
     const debouncedSearchTerm = useDebouncedValue(searchTerm, 320);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
@@ -50,11 +54,25 @@ export default function UsersManagement() {
         }
     }, []);
 
+    useEffect(() => {
+        setPage(1);
+    }, [selectedFilter, debouncedSearchTerm]);
+
     const {
         data: usersData,
         loading: usersLoading,
         refetch: refetchUsers,
-    } = useQuery(GET_ALL_USERS);
+    } = useQuery(GET_USERS, {
+        variables: {
+            input: {
+                page,
+                pageSize: PAGE_SIZE,
+                search: debouncedSearchTerm || null,
+                filter: selectedFilter,
+            },
+        },
+        fetchPolicy: "cache-and-network",
+    });
     const { data: statsData, refetch: refetchStats } = useQuery(GET_USER_STATS);
 
     const [blockUser] = useMutation(BLOCK_USER, {
@@ -80,27 +98,9 @@ export default function UsersManagement() {
         },
     });
 
-    const users = usersData?.getAllUsers || [];
+    const userPage = usersData?.getUsers;
+    const filteredUsers = userPage?.items || [];
     const stats = statsData?.getUserStats;
-
-    // Filter users based on selected filter and search term
-    const filteredUsers = users.filter((user: User) => {
-        const matchesFilter =
-            selectedFilter === "all" ||
-            (selectedFilter === "blocked" && user.isBlocked) ||
-            (selectedFilter === "active" && !user.isBlocked) ||
-            selectedFilter === user.userType.toLowerCase();
-
-        const matchesSearch =
-            user.fullName
-                .toLowerCase()
-                .includes(debouncedSearchTerm.toLowerCase()) ||
-            user.email
-                .toLowerCase()
-                .includes(debouncedSearchTerm.toLowerCase());
-
-        return matchesFilter && matchesSearch;
-    });
 
     const isAdminAccount = (userType: string) =>
         userType?.toLowerCase() === "admin";
@@ -530,6 +530,16 @@ export default function UsersManagement() {
                                       ))}
                             </tbody>
                         </table>
+                        {userPage && (
+                            <PaginationBar
+                                page={userPage.page}
+                                pageSize={userPage.pageSize}
+                                totalCount={userPage.totalCount}
+                                totalPages={userPage.totalPages}
+                                loading={usersLoading}
+                                onPageChange={setPage}
+                            />
+                        )}
                     </div>
 
                     {filteredUsers.length === 0 && !usersLoading && (

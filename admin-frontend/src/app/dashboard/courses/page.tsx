@@ -11,7 +11,7 @@ import Toast from "@/shared/components/common/Toast/Toast";
 import { useToast } from "@/shared/hooks/useToast";
 import { formatLecturerDisplayName } from "@/shared/utils/personDisplayName";
 import {
-    GET_ALL_COURSES,
+    GET_COURSES,
     GET_UNASSIGNED_LECTURERS,
     CREATE_COURSE,
     UPDATE_COURSE,
@@ -33,6 +33,9 @@ import {
 } from "@heroicons/react/24/outline";
 import styles from "./courses-management.module.css";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import PaginationBar from "@/shared/components/common/PaginationBar/PaginationBar";
+
+const PAGE_SIZE = 12;
 
 interface Course {
     id: number;
@@ -57,10 +60,11 @@ interface Course {
             email: string;
         } | null;
     }>;
-    applications: Array<{
+    applications?: Array<{
         id: number;
         status: string;
     }>;
+    applicationCount?: number;
 }
 
 interface Lecturer {
@@ -107,6 +111,7 @@ export default function CoursesManagement() {
     const [showAssignModal, setShowAssignModal] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
+    const [page, setPage] = useState(1);
     const debouncedSearchTerm = useDebouncedValue(searchTerm, 320);
     const [formData, setFormData] = useState<CourseFormData>({
         courseCode: "",
@@ -121,12 +126,25 @@ export default function CoursesManagement() {
     // Toast hook
     const { toast, showError, showSuccess, hideToast } = useToast();
 
+    useEffect(() => {
+        setPage(1);
+    }, [debouncedSearchTerm]);
+
     const {
         data: coursesData,
         loading: coursesLoading,
         error: coursesError,
         refetch: refetchCourses,
-    } = useQuery(GET_ALL_COURSES);
+    } = useQuery(GET_COURSES, {
+        variables: {
+            input: {
+                page,
+                pageSize: PAGE_SIZE,
+                search: debouncedSearchTerm || null,
+            },
+        },
+        fetchPolicy: "cache-and-network",
+    });
 
     // Real-time course updates subscription
     const { data: courseUpdateData } = useSubscription(
@@ -255,21 +273,10 @@ export default function CoursesManagement() {
         },
     });
 
-    const courses = coursesData?.getAllCourses || [];
+    const coursePage = coursesData?.getCourses;
+    const courses = coursePage?.items || [];
+    const filteredCourses = courses;
     const lecturers = lecturersData?.getUnassignedLecturers || [];
-
-    const filteredCourses = courses.filter(
-        (course: Course) =>
-            course.courseCode
-                .toLowerCase()
-                .includes(debouncedSearchTerm.toLowerCase()) ||
-            course.courseName
-                .toLowerCase()
-                .includes(debouncedSearchTerm.toLowerCase()) ||
-            course.semester
-                .toLowerCase()
-                .includes(debouncedSearchTerm.toLowerCase())
-    );
 
     const resetForm = () => {
         setFormData({
@@ -448,7 +455,7 @@ export default function CoursesManagement() {
                                 No courses found
                             </p>
                             <p className="text-gray-400">
-                                Courses data: {JSON.stringify(coursesData)}
+                                Try adjusting your search criteria.
                             </p>
                         </div>
                     ) : (
@@ -543,7 +550,7 @@ export default function CoursesManagement() {
                                     </div>
                                     <div className={styles.courseStat}>
                                         <h4 className={styles.courseStatValue}>
-                                            {course.applications?.length || 0}
+                                            {course.applicationCount ?? course.applications?.length ?? 0}
                                         </h4>
                                         <p className={styles.courseStatLabel}>
                                             Applications
@@ -636,6 +643,17 @@ export default function CoursesManagement() {
                         ))
                     )}
                 </div>
+
+                {coursePage && coursePage.totalCount > 0 && (
+                    <PaginationBar
+                        page={coursePage.page}
+                        pageSize={coursePage.pageSize}
+                        totalCount={coursePage.totalCount}
+                        totalPages={coursePage.totalPages}
+                        loading={coursesLoading}
+                        onPageChange={setPage}
+                    />
+                )}
 
                 {filteredCourses.length === 0 && !coursesLoading && (
                     <div className={styles.emptyState}>

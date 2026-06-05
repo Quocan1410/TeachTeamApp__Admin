@@ -103,6 +103,9 @@ export class Course {
     @Field(() => Int, { nullable: true })
     availableLabAssistants?: number;
 
+    @Field(() => Int, { nullable: true })
+    applicationCount?: number;
+
     // Virtual properties
     @Field()
     get displayName(): string {

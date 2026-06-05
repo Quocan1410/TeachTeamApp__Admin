@@ -6,9 +6,15 @@ import {
     Int,
     ObjectType,
     Field,
+    InputType,
     Ctx,
     UseMiddleware,
 } from "type-graphql";
+import { Brackets } from "typeorm";
+import {
+    normalizePagination,
+    paginatedResult,
+} from "../utils/pagination";
 import { AdminAuthMiddleware } from "../middleware/AdminAuthMiddleware";
 import { User, UserType } from "../types/User";
 import { AppDataSource } from "../config/database";
@@ -39,6 +45,40 @@ class UserStats {
 
     @Field(() => Int)
     blockedUsers: number;
+}
+
+@InputType()
+class UserListInput {
+    @Field(() => Int, { defaultValue: 1 })
+    page: number;
+
+    @Field(() => Int, { defaultValue: 20 })
+    pageSize: number;
+
+    @Field({ nullable: true })
+    search?: string;
+
+    /** all | active | blocked | candidate | lecturer | admin */
+    @Field({ nullable: true, defaultValue: "all" })
+    filter?: string;
+}
+
+@ObjectType()
+class UserPage {
+    @Field(() => [User])
+    items: User[];
+
+    @Field(() => Int)
+    totalCount: number;
+
+    @Field(() => Int)
+    page: number;
+
+    @Field(() => Int)
+    pageSize: number;
+
+    @Field(() => Int)
+    totalPages: number;
 }
 
 @ObjectType()
@@ -120,6 +160,51 @@ export class UserResolver {
         return await userRepository.find({
             order: { createdAt: "DESC" },
         });
+    }
+
+    @Query(() => UserPage)
+    async getUsers(@Arg("input") input: UserListInput): Promise<UserPage> {
+        const userRepository = AppDataSource.getRepository(User);
+        const { skip, take, page, pageSize } = normalizePagination(
+            input.page,
+            input.pageSize
+        );
+        const filter = (input.filter ?? "all").toLowerCase();
+        const search = input.search?.trim();
+
+        const qb = userRepository
+            .createQueryBuilder("user")
+            .orderBy("user.createdAt", "DESC");
+
+        if (filter === "active") {
+            qb.andWhere("user.isBlocked = :blocked", { blocked: false });
+        } else if (filter === "blocked") {
+            qb.andWhere("user.isBlocked = :blocked", { blocked: true });
+        } else if (
+            filter === UserType.CANDIDATE ||
+            filter === UserType.LECTURER ||
+            filter === UserType.ADMIN
+        ) {
+            qb.andWhere("user.userType = :userType", { userType: filter });
+        }
+
+        if (search) {
+            const term = `%${search}%`;
+            qb.andWhere(
+                new Brackets((sub) => {
+                    sub.where("user.email LIKE :term", { term })
+                        .orWhere("user.firstName LIKE :term", { term })
+                        .orWhere("user.lastName LIKE :term", { term });
+                })
+            );
+        }
+
+        const [items, totalCount] = await qb
+            .skip(skip)
+            .take(take)
+            .getManyAndCount();
+
+        return paginatedResult(items, totalCount, page, pageSize);
     }
 
     @Query(() => [User])

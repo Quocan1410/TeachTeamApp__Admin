@@ -42,6 +42,27 @@ export const GET_ALL_USERS = gql`
     }
 `;
 
+export const GET_USERS = gql`
+    query GetUsers($input: UserListInput!) {
+        getUsers(input: $input) {
+            items {
+                id
+                email
+                firstName
+                lastName
+                userType
+                isBlocked
+                createdAt
+                fullName
+            }
+            totalCount
+            page
+            pageSize
+            totalPages
+        }
+    }
+`;
+
 export const GET_USER_STATS = gql`
     query GetUserStats {
         getUserStats {
@@ -131,6 +152,44 @@ export const GET_ALL_COURSES = gql`
     }
 `;
 
+export const GET_COURSES = gql`
+    query GetCourses($input: CourseListInput!) {
+        getCourses(input: $input) {
+            items {
+                id
+                courseCode
+                courseName
+                semester
+                description
+                maxTutors
+                maxLabAssistants
+                applicationDeadline
+                selectedTutors
+                selectedLabAssistants
+                availableTutors
+                availableLabAssistants
+                applicationCount
+                createdAt
+                displayName
+                courseAssignments {
+                    id
+                    lecturer {
+                        id
+                        firstName
+                        lastName
+                        email
+                    }
+                    assignedAt
+                }
+            }
+            totalCount
+            page
+            pageSize
+            totalPages
+        }
+    }
+`;
+
 export const GET_UNASSIGNED_LECTURERS = gql`
     query GetUnassignedLecturers($courseId: Int) {
         getUnassignedLecturers(courseId: $courseId) {
@@ -191,6 +250,150 @@ export const DELETE_COURSE = gql`
 `;
 
 // Report Queries
+export const GET_REPORT_SUMMARY = gql`
+    query GetReportSummary {
+        getReportSummary {
+            totalSelectedCandidates
+            multipleSelectionsCount
+            unselectedCandidatesCount
+        }
+    }
+`;
+
+export const GET_CANDIDATES_CHOSEN_PER_COURSE_PAGINATED = gql`
+    query GetCandidatesChosenPerCoursePaginated($input: ReportListInput!) {
+        getCandidatesChosenPerCoursePaginated(input: $input) {
+            items {
+                course {
+                    id
+                    courseCode
+                    courseName
+                    semester
+                }
+                selectedCandidates {
+                    candidate {
+                        id
+                        firstName
+                        lastName
+                        email
+                        fullName
+                    }
+                    course {
+                        id
+                        courseCode
+                        courseName
+                    }
+                    selectedAt
+                    selectedBy {
+                        id
+                        firstName
+                        lastName
+                        fullName
+                    }
+                    application {
+                        id
+                        status
+                        role {
+                            id
+                            roleName
+                        }
+                    }
+                }
+                totalSelected
+            }
+            totalCount
+            page
+            pageSize
+            totalPages
+        }
+    }
+`;
+
+export const GET_CANDIDATES_WITH_MULTIPLE_SELECTIONS_PAGINATED = gql`
+    query GetCandidatesWithMultipleSelectionsPaginated($input: ReportListInput!) {
+        getCandidatesWithMultipleSelectionsPaginated(input: $input) {
+            items {
+                candidate {
+                    id
+                    firstName
+                    lastName
+                    email
+                    fullName
+                }
+                selections {
+                    candidate {
+                        id
+                        firstName
+                        lastName
+                        fullName
+                    }
+                    course {
+                        id
+                        courseCode
+                        courseName
+                        semester
+                    }
+                    selectedAt
+                    selectedBy {
+                        id
+                        firstName
+                        lastName
+                        fullName
+                    }
+                    application {
+                        id
+                        role {
+                            id
+                            roleName
+                        }
+                    }
+                }
+                totalSelections
+            }
+            totalCount
+            page
+            pageSize
+            totalPages
+        }
+    }
+`;
+
+export const GET_UNSELECTED_CANDIDATES_PAGINATED = gql`
+    query GetUnselectedCandidatesPaginated($input: ReportListInput!) {
+        getUnselectedCandidatesPaginated(input: $input) {
+            items {
+                candidate {
+                    id
+                    firstName
+                    lastName
+                    email
+                    fullName
+                }
+                applications {
+                    id
+                    status
+                    appliedAt
+                    course {
+                        id
+                        courseCode
+                        courseName
+                        semester
+                    }
+                    role {
+                        id
+                        roleName
+                    }
+                }
+                totalApplications
+            }
+            totalCount
+            page
+            pageSize
+            totalPages
+        }
+    }
+`;
+
 export const GET_CANDIDATES_CHOSEN_PER_COURSE = gql`
     query GetCandidatesChosenPerCourse {
         getCandidatesChosenPerCourse {
@@ -400,6 +603,28 @@ export const GET_ALL_ANNOUNCEMENTS = gql`
             isActive
             createdAt
             updatedAt
+        }
+    }
+`;
+
+export const GET_ANNOUNCEMENTS = gql`
+    query GetAnnouncements($input: AnnouncementListInput!) {
+        getAnnouncements(input: $input) {
+            items {
+                id
+                title
+                body
+                audience
+                startsAt
+                endsAt
+                isActive
+                createdAt
+                updatedAt
+            }
+            totalCount
+            page
+            pageSize
+            totalPages
         }
     }
 `;

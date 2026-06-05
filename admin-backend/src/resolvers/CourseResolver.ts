@@ -9,6 +9,12 @@ import {
     InputType,
     UseMiddleware,
 } from "type-graphql";
+import { Brackets } from "typeorm";
+import {
+    normalizePagination,
+    paginatedResult,
+} from "../utils/pagination";
+import { attachCourseListStats } from "../utils/courseListStats";
 import { AdminAuthMiddleware } from "../middleware/AdminAuthMiddleware";
 import { Course } from "../types/Course";
 import { CourseAssignment } from "../types/CourseAssignment";
@@ -42,6 +48,36 @@ class CourseInput {
 
     @Field({ nullable: true })
     applicationDeadline?: Date;
+}
+
+@InputType()
+class CourseListInput {
+    @Field(() => Int, { defaultValue: 1 })
+    page: number;
+
+    @Field(() => Int, { defaultValue: 20 })
+    pageSize: number;
+
+    @Field({ nullable: true })
+    search?: string;
+}
+
+@ObjectType()
+class CoursePage {
+    @Field(() => [Course])
+    items: Course[];
+
+    @Field(() => Int)
+    totalCount: number;
+
+    @Field(() => Int)
+    page: number;
+
+    @Field(() => Int)
+    pageSize: number;
+
+    @Field(() => Int)
+    totalPages: number;
 }
 
 @ObjectType()
@@ -133,6 +169,38 @@ export class CourseResolver {
         );
 
         return coursesWithAvailablePositions;
+    }
+
+    @Query(() => CoursePage)
+    async getCourses(@Arg("input") input: CourseListInput): Promise<CoursePage> {
+        const courseRepository = AppDataSource.getRepository(Course);
+        const { skip, take, page, pageSize } = normalizePagination(
+            input.page,
+            input.pageSize
+        );
+        const search = input.search?.trim();
+
+        const qb = courseRepository
+            .createQueryBuilder("course")
+            .leftJoinAndSelect("course.courseAssignments", "assignment")
+            .leftJoinAndSelect("assignment.lecturer", "lecturer")
+            .orderBy("course.createdAt", "DESC");
+
+        if (search) {
+            const term = `%${search}%`;
+            qb.andWhere(
+                new Brackets((sub) => {
+                    sub.where("course.courseCode LIKE :term", { term })
+                        .orWhere("course.courseName LIKE :term", { term })
+                        .orWhere("course.semester LIKE :term", { term });
+                })
+            );
+        }
+
+        const [courses, totalCount] = await qb.skip(skip).take(take).getManyAndCount();
+        const items = await attachCourseListStats(courses);
+
+        return paginatedResult(items, totalCount, page, pageSize);
     }
 
     @Query(() => Course, { nullable: true })

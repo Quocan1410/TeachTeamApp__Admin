@@ -1,20 +1,23 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery, useMutation } from "@apollo/client";
 import {
-    GET_ALL_ANNOUNCEMENTS,
+    GET_ANNOUNCEMENTS,
     CREATE_ANNOUNCEMENT,
     UPDATE_ANNOUNCEMENT,
     DELETE_ANNOUNCEMENT,
 } from "@/lib/graphql/queries";
 import { useToast } from "@/shared/hooks/useToast";
+import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
+import PaginationBar from "@/shared/components/common/PaginationBar/PaginationBar";
 import {
     MegaphoneIcon,
     PlusIcon,
     PencilIcon,
     TrashIcon,
+    MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
 import styles from "./announcements-management.module.css";
 
@@ -50,6 +53,8 @@ const emptyForm = (): FormState => ({
     endsAt: "",
     isActive: true,
 });
+
+const PAGE_SIZE = 15;
 
 /** GraphQL enum names (ALL) vs DB values (all) */
 const normalizeAudience = (value: string) => value.toLowerCase();
@@ -88,8 +93,25 @@ export default function AnnouncementsManagement() {
     const [showCreate, setShowCreate] = useState(false);
     const [showEdit, setShowEdit] = useState(false);
     const [selected, setSelected] = useState<AnnouncementRow | null>(null);
+    const [searchTerm, setSearchTerm] = useState("");
+    const [audienceFilter, setAudienceFilter] = useState("all");
+    const [page, setPage] = useState(1);
+    const debouncedSearchTerm = useDebouncedValue(searchTerm, 320);
 
-    const { data, loading, error, refetch } = useQuery(GET_ALL_ANNOUNCEMENTS, {
+    useEffect(() => {
+        setPage(1);
+    }, [debouncedSearchTerm, audienceFilter]);
+
+    const { data, loading, error, refetch } = useQuery(GET_ANNOUNCEMENTS, {
+        variables: {
+            input: {
+                page,
+                pageSize: PAGE_SIZE,
+                search: debouncedSearchTerm || null,
+                audience:
+                    audienceFilter === "all" ? null : audienceFilter,
+            },
+        },
         fetchPolicy: "cache-and-network",
     });
 
@@ -130,7 +152,8 @@ export default function AnnouncementsManagement() {
         onError: () => showError("Delete failed"),
     });
 
-    const rows: AnnouncementRow[] = data?.getAllAnnouncements ?? [];
+    const announcementPage = data?.getAnnouncements;
+    const rows: AnnouncementRow[] = announcementPage?.items ?? [];
 
     const openEdit = (row: AnnouncementRow) => {
         setSelected(row);
@@ -248,6 +271,28 @@ export default function AnnouncementsManagement() {
                 </button>
             </div>
 
+            <div className={styles.filtersRow}>
+                <div className={styles.searchContainer}>
+                    <MagnifyingGlassIcon className={styles.searchIcon} />
+                    <input
+                        type="text"
+                        className={styles.searchInput}
+                        placeholder="Search title or body..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                </div>
+                <select
+                    className={styles.filterSelect}
+                    value={audienceFilter}
+                    onChange={(e) => setAudienceFilter(e.target.value)}
+                >
+                    <option value="all">All audiences</option>
+                    <option value="candidate">Tutors / candidates</option>
+                    <option value="lecturer">Lecturers</option>
+                </select>
+            </div>
+
             <div className={styles.tableContainer}>
                 {loading && rows.length === 0 ? (
                     <p className={styles.loadingState}>Loading announcements…</p>
@@ -333,6 +378,16 @@ export default function AnnouncementsManagement() {
                             ))}
                         </tbody>
                     </table>
+                )}
+                {announcementPage && announcementPage.totalCount > 0 && (
+                    <PaginationBar
+                        page={announcementPage.page}
+                        pageSize={announcementPage.pageSize}
+                        totalCount={announcementPage.totalCount}
+                        totalPages={announcementPage.totalPages}
+                        loading={loading}
+                        onPageChange={setPage}
+                    />
                 )}
             </div>
 

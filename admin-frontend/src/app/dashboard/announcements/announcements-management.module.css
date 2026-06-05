@@ -238,6 +238,53 @@
   font-size: 0.9rem;
 }
 
+.emptyState p {
+  margin: 0.35rem 0 0;
+  font-size: 0.9rem;
+}
+
+.filtersRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  align-items: center;
+}
+
+.searchContainer {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+  max-width: 420px;
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.875rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 1.125rem;
+  height: 1.125rem;
+  color: #94a3b8;
+  pointer-events: none;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.65rem 0.875rem 0.65rem 2.5rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+}
+
+.filterSelect {
+  padding: 0.65rem 0.875rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.5rem;
+  font-size: 0.9375rem;
+  background: #fff;
+}
+
 @media (max-width: 900px) {
   .announcementsPage {
     padding-top: 4.5rem;

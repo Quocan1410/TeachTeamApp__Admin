@@ -17,6 +17,47 @@ import {
 } from "../types/Announcement";
 import { AppDataSource } from "../config/database";
 import type { GraphQLContext } from "../utils/graphqlContext";
+import { Brackets } from "typeorm";
+import {
+    normalizePagination,
+    paginatedResult,
+} from "../utils/pagination";
+
+@InputType()
+class AnnouncementListInput {
+    @Field(() => Int, { defaultValue: 1 })
+    page: number;
+
+    @Field(() => Int, { defaultValue: 20 })
+    pageSize: number;
+
+    @Field({ nullable: true })
+    search?: string;
+
+    @Field(() => AnnouncementAudience, { nullable: true })
+    audience?: AnnouncementAudience;
+
+    @Field({ nullable: true })
+    isActive?: boolean;
+}
+
+@ObjectType()
+class AnnouncementPage {
+    @Field(() => [Announcement])
+    items: Announcement[];
+
+    @Field(() => Int)
+    totalCount: number;
+
+    @Field(() => Int)
+    page: number;
+
+    @Field(() => Int)
+    pageSize: number;
+
+    @Field(() => Int)
+    totalPages: number;
+}
 
 @InputType()
 class AnnouncementInput {
@@ -58,6 +99,50 @@ export class AnnouncementResolver {
     async getAllAnnouncements(): Promise<Announcement[]> {
         const repo = AppDataSource.getRepository(Announcement);
         return repo.find({ order: { createdAt: "DESC" } });
+    }
+
+    @Query(() => AnnouncementPage)
+    async getAnnouncements(
+        @Arg("input") input: AnnouncementListInput
+    ): Promise<AnnouncementPage> {
+        const repo = AppDataSource.getRepository(Announcement);
+        const { skip, take, page, pageSize } = normalizePagination(
+            input.page,
+            input.pageSize
+        );
+        const search = input.search?.trim();
+
+        const qb = repo
+            .createQueryBuilder("announcement")
+            .orderBy("announcement.createdAt", "DESC");
+
+        if (search) {
+            const term = `%${search}%`;
+            qb.andWhere(
+                new Brackets((sub) => {
+                    sub.where("announcement.title LIKE :term", { term }).orWhere(
+                        "announcement.body LIKE :term",
+                        { term }
+                    );
+                })
+            );
+        }
+
+        if (input.audience !== undefined) {
+            qb.andWhere("announcement.audience = :audience", {
+                audience: input.audience,
+            });
+        }
+
+        if (input.isActive !== undefined) {
+            qb.andWhere("announcement.isActive = :isActive", {
+                isActive: input.isActive,
+            });
+        }
+
+        const [items, totalCount] = await qb.skip(skip).take(take).getManyAndCount();
+
+        return paginatedResult(items, totalCount, page, pageSize);
     }
 
     @Query(() => Announcement, { nullable: true })
