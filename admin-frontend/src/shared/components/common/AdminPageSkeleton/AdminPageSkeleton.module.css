@@ -1,0 +1,204 @@
+.root {
+    width: 100%;
+}
+
+.wrapper {
+    width: 100%;
+    min-height: calc(100vh - 5rem);
+    padding: 1rem 0 2rem;
+    background: linear-gradient(
+        135deg,
+        var(--color-bg-primary) 0%,
+        var(--color-bg-secondary) 100%
+    );
+}
+
+.pageContainer {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 1.5rem;
+}
+
+.pulse {
+    position: relative;
+    overflow: hidden;
+    border-radius: 12px;
+    background: var(--color-border, #e5e7eb);
+    border: 1px solid color-mix(in srgb, var(--color-border, #e5e7eb) 80%, #fff 20%);
+}
+
+.pulse::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.45) 45%,
+        transparent 100%
+    );
+    animation: adminSkeletonShimmer 1.35s infinite;
+}
+
+.headerBlock {
+    margin-bottom: 1.5rem;
+    padding-top: 3rem;
+}
+
+.titleLine {
+    width: min(280px, 42%);
+    height: 2rem;
+    margin-bottom: 0.5rem;
+}
+
+.subtitleLine {
+    width: min(420px, 62%);
+    height: 1rem;
+}
+
+.statsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.statCard {
+    height: 96px;
+    border-radius: 16px;
+    background: var(--color-bg-surface, #fff);
+    border: 1px solid var(--color-border, #e5e7eb);
+}
+
+.filterBar {
+    height: 56px;
+    margin-bottom: 1rem;
+    border-radius: 12px;
+}
+
+.cardsGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 1.5rem;
+}
+
+.card {
+    height: 220px;
+    border-radius: 16px;
+    background: var(--color-bg-primary, #fff);
+}
+
+.listCardsColumn {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.listCard {
+    height: 200px;
+    border-radius: 16px;
+    background: var(--color-bg-primary, #fff);
+}
+
+.tablePanel {
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: var(--color-bg-primary, #fff);
+}
+
+.tableHeader {
+    height: 2.75rem;
+    border-radius: 0;
+    background: var(--color-bg-secondary, #f9fafb);
+}
+
+.tableRow {
+    height: 3.25rem;
+    border-radius: 0;
+    margin-top: 1px;
+    background: var(--color-bg-primary, #fff);
+}
+
+.contentGrid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+.contentPanelWide {
+    height: 360px;
+    border-radius: 16px;
+    background: var(--color-bg-primary, #fff);
+}
+
+.contentPanelSide {
+    height: 200px;
+    border-radius: 16px;
+    background: var(--color-bg-primary, #fff);
+}
+
+@keyframes adminSkeletonShimmer {
+    100% {
+        transform: translateX(100%);
+    }
+}
+
+:global(.dark) .wrapper {
+    background: linear-gradient(
+        135deg,
+        var(--color-bg-primary) 0%,
+        var(--color-bg-secondary) 100%
+    );
+}
+
+:global(.dark) .pulse {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+:global(.dark) .pulse::after {
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(255, 255, 255, 0.12) 45%,
+        transparent 100%
+    );
+}
+
+:global(.dark) .statCard,
+:global(.dark) .card,
+:global(.dark) .listCard,
+:global(.dark) .contentPanelWide,
+:global(.dark) .contentPanelSide,
+:global(.dark) .tablePanel {
+    background: var(--color-bg-surface, #1f2937);
+    border-color: var(--color-border, #374151);
+}
+
+:global(.dark) .tableRow {
+    background: var(--color-bg-surface, #1f2937);
+}
+
+@media (min-width: 1024px) {
+    .contentGrid {
+        grid-template-columns: minmax(0, 1fr) 11.5rem;
+        gap: 1rem;
+    }
+
+    .contentPanelSide {
+        height: 360px;
+    }
+}
+
+@media (max-width: 768px) {
+    .pageContainer {
+        padding: 0 1rem;
+    }
+
+    .headerBlock {
+        padding-top: 1rem;
+    }
+}

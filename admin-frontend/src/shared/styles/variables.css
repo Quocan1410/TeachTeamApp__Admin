@@ -35,6 +35,7 @@
     --color-bg-primary: #ffffff;
     --color-bg-secondary: #f9fafb;
     --color-bg-tertiary: #f3f4f6;
+    --color-bg-surface: #ffffff;
     --color-bg-hover: #f3f4f6;
 
     /* Border colors */
@@ -92,6 +93,7 @@
     --color-bg-primary: #111827;
     --color-bg-secondary: #1f2937;
     --color-bg-tertiary: #374151;
+    --color-bg-surface: #1f2937;
     --color-bg-hover: #374151;
 
     /* Border colors */

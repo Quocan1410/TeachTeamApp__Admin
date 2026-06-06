@@ -1,9 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useLayoutEffect, useEffect } from "react";
 import { useMutation } from "@apollo/client";
 import { useRouter } from "next/navigation";
 import { ADMIN_LOGIN } from "@/lib/graphql/queries";
+import {
+    DASHBOARD_PATH,
+    prepareAdminDashboardNavigation,
+} from "@/lib/prepareAdminDashboardNavigation";
 import {
     ADMIN_TOKEN_KEY,
     ADMIN_USER_KEY,
@@ -26,28 +30,67 @@ export default function AdminLogin() {
     const [error, setError] = useState("");
     const [loading, setLoading] = useState(false);
     const [showPassword, setShowPassword] = useState(false);
+    const [sessionChecked, setSessionChecked] = useState(false);
+    const [isNavigating, setIsNavigating] = useState(false);
 
-    // Login success modal state
     const [showLoginSuccess, setShowLoginSuccess] = useState(false);
     const [loggedInUser, setLoggedInUser] = useState<{
         firstName: string;
         lastName: string;
         email: string;
     } | null>(null);
+    const [isDashboardReady, setIsDashboardReady] = useState(false);
 
     const router = useRouter();
     const [adminLogin] = useMutation(ADMIN_LOGIN);
 
-    useEffect(() => {
-        const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
-        const stored = getStoredAdminUser();
-        if (token && stored && isAdminUser(stored)) {
-            router.replace("/dashboard");
-        }
+    useLayoutEffect(() => {
+        let cancelled = false;
+
+        const restoreSession = async () => {
+            const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
+            const stored = getStoredAdminUser();
+            if (token && stored && isAdminUser(stored)) {
+                await prepareAdminDashboardNavigation(router);
+                if (!cancelled) {
+                    router.replace(DASHBOARD_PATH);
+                }
+                return;
+            }
+            if (!cancelled) {
+                setSessionChecked(true);
+            }
+        };
+
+        void restoreSession();
+        return () => {
+            cancelled = true;
+        };
     }, [router]);
+
+    useEffect(() => {
+        if (!showLoginSuccess) return;
+
+        let cancelled = false;
+        setIsDashboardReady(false);
+
+        const prepareDashboard = async () => {
+            await prepareAdminDashboardNavigation(router);
+            if (!cancelled) {
+                setIsDashboardReady(true);
+            }
+        };
+
+        void prepareDashboard();
+        return () => {
+            cancelled = true;
+        };
+    }, [showLoginSuccess, router]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        if (showLoginSuccess) return;
+
         setError("");
         setLoading(true);
 
@@ -66,7 +109,6 @@ export default function AdminLogin() {
                     JSON.stringify(data.adminLogin.user)
                 );
 
-                // Set user data and show success modal
                 setLoggedInUser({
                     firstName: data.adminLogin.user.firstName || "Admin",
                     lastName: data.adminLogin.user.lastName || "",
@@ -76,7 +118,7 @@ export default function AdminLogin() {
             } else {
                 setError(data.adminLogin.message || "Login failed");
             }
-        } catch (err) {
+        } catch {
             setError("An error occurred during login");
         } finally {
             setLoading(false);
@@ -84,19 +126,39 @@ export default function AdminLogin() {
     };
 
     const handleLoginSuccessModalHide = () => {
-        setShowLoginSuccess(false);
-        router.push("/dashboard");
+        setIsNavigating(true);
+        router.replace(DASHBOARD_PATH);
     };
+
+    if (!sessionChecked || isNavigating) {
+        return (
+            <div
+                className={styles.pageContainer}
+                aria-busy="true"
+                aria-live="polite"
+            >
+                <div className={styles.sessionGate}>
+                    <div className={styles.sessionGateSpinner} />
+                    <p className={styles.sessionGateText}>
+                        {isNavigating ? "Opening dashboard..." : "Loading..."}
+                    </p>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.pageContainer}>
-            {/* Dark mode toggle in top right */}
             <div className={styles.darkModeToggle}>
                 <ThemeToggle />
             </div>
 
             <div className={styles.formContainer}>
-                <form onSubmit={handleSubmit} className={styles.form}>
+                <form
+                    onSubmit={handleSubmit}
+                    className={styles.form}
+                    aria-hidden={showLoginSuccess}
+                >
                     <div className={styles.header}>
                         <div className={styles.logoContainer}>
                             <LockClosedIcon className={styles.logoIcon} />
@@ -170,21 +232,16 @@ export default function AdminLogin() {
                     >
                         {loading ? "Signing in..." : "Sign in"}
                     </button>
-
-                    <p className={styles.hintText}>
-                        System administrator sign-in only. Use the account
-                        configured in <code>ADMIN_EMAIL</code>.
-                    </p>
                 </form>
             </div>
 
-            {/* Login Success Modal */}
             {showLoginSuccess && loggedInUser && (
                 <LoginSuccessModal
                     user={loggedInUser}
                     isVisible={showLoginSuccess}
                     onHide={handleLoginSuccessModalHide}
                     duration={3000}
+                    isPreparing={!isDashboardReady}
                 />
             )}
         </div>

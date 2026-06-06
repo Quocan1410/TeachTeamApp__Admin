@@ -195,6 +195,20 @@
     opacity: 1;
 }
 
+/* Remove browser default focus ring (white box after click) */
+.navLink:focus,
+.navLink:focus-visible,
+.navLink.active:focus,
+.navLink.active:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+/* Keyboard focus: subtle highlight, no outline box */
+.navLink:focus-visible:not(.active) {
+    background: rgba(249, 115, 22, 0.1);
+}
+
 /* Header Actions */
 .headerActions {
     display: flex;

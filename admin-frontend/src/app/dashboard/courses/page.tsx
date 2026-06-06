@@ -30,12 +30,17 @@ import {
     ExclamationTriangleIcon,
     XMarkIcon,
     MagnifyingGlassIcon,
+    UserGroupIcon,
+    BeakerIcon,
+    ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
+import AdminPageSkeleton from "@/shared/components/common/AdminPageSkeleton/AdminPageSkeleton";
 import styles from "./courses-management.module.css";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import PaginationBar from "@/shared/components/common/PaginationBar/PaginationBar";
+import UserAvatar from "@/shared/components/common/UserAvatar/UserAvatar";
 
-const PAGE_SIZE = 12;
+const PAGE_SIZE = 6;
 
 interface Course {
     id: number;
@@ -72,6 +77,7 @@ interface Lecturer {
     firstName: string;
     lastName: string;
     email: string;
+    avatarUrl?: string | null;
 }
 
 interface CourseFormData {
@@ -231,17 +237,24 @@ export default function CoursesManagement() {
     });
 
     const [assignLecturer] = useMutation(ASSIGN_LECTURER_TO_COURSE, {
-        onCompleted: () => {
-            refetchCourses();
-            // Refresh lecturers for the current course
-            if (selectedCourse) {
-                getLecturers({
-                    variables: {
-                        courseId: parseInt(selectedCourse.id.toString()),
-                    },
-                });
+        onCompleted: (data) => {
+            if (data.assignLecturerToCourse.success) {
+                refetchCourses();
+                setShowAssignModal(false);
+                setSelectedCourse(null);
+                showSuccess(
+                    data.assignLecturerToCourse.message ||
+                        "Lecturer assigned successfully"
+                );
+            } else {
+                showError(
+                    data.assignLecturerToCourse.message ||
+                        "Failed to assign lecturer"
+                );
             }
-            setShowAssignModal(false);
+        },
+        onError: (error) => {
+            showError(error.message || "Failed to assign lecturer");
         },
     });
 
@@ -249,14 +262,6 @@ export default function CoursesManagement() {
         onCompleted: (data) => {
             if (data.removeLecturerFromCourse.success) {
                 refetchCourses();
-                // Refresh lecturers for the current course
-                if (selectedCourse) {
-                    getLecturers({
-                        variables: {
-                            courseId: parseInt(selectedCourse.id.toString()),
-                        },
-                    });
-                }
                 showSuccess(
                     data.removeLecturerFromCourse.message ||
                         "Lecturer removed successfully"
@@ -277,6 +282,7 @@ export default function CoursesManagement() {
     const courses = coursePage?.items || [];
     const filteredCourses = courses;
     const lecturers = lecturersData?.getUnassignedLecturers || [];
+    const isInitialLoad = coursesLoading && !coursesData;
 
     const resetForm = () => {
         setFormData({
@@ -381,13 +387,34 @@ export default function CoursesManagement() {
     };
 
     const openAssignModal = (course: Course) => {
+        const assignedCount = course.courseAssignments?.length ?? 0;
+        if (assignedCount > 0) {
+            showError("This course already has an assigned lecturer");
+            return;
+        }
+
         setSelectedCourse(course);
         setShowAssignModal(true);
-        // Fetch available lecturers for this specific course
         getLecturers({
             variables: { courseId: parseInt(course.id.toString()) },
         });
     };
+
+    if (isInitialLoad) {
+        return (
+            <div className={styles.coursesManagement}>
+                <div className={styles.managementContainer}>
+                    <AdminPageSkeleton
+                        variant="cards"
+                        count={6}
+                        showHeader
+                        showFilters
+                        gridClassName={styles.coursesGrid}
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.coursesManagement}>
@@ -411,15 +438,17 @@ export default function CoursesManagement() {
 
                 {/* Search */}
                 <div className={styles.searchSection}>
-                    <div className={styles.searchContainer}>
-                        <MagnifyingGlassIcon className={styles.searchIcon} />
-                        <input
-                            type="text"
-                            placeholder="Search courses..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className={styles.searchInput}
-                        />
+                    <div className={styles.searchHeader}>
+                        <div className={styles.searchContainer}>
+                            <MagnifyingGlassIcon className={styles.searchIcon} />
+                            <input
+                                type="text"
+                                placeholder="Search courses..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className={styles.searchInput}
+                            />
+                        </div>
                     </div>
                 </div>
 
@@ -433,23 +462,7 @@ export default function CoursesManagement() {
 
                 {/* Courses Grid */}
                 <div className={styles.coursesGrid}>
-                    {coursesLoading ? (
-                        [...Array(6)].map((_, i) => (
-                            <div key={i} className={styles.courseCard}>
-                                <div className={styles.loadingContainer}>
-                                    <div
-                                        className={styles.loadingSkeleton}
-                                    ></div>
-                                    <div
-                                        className={styles.loadingSkeleton}
-                                    ></div>
-                                    <div
-                                        className={styles.loadingSkeleton}
-                                    ></div>
-                                </div>
-                            </div>
-                        ))
-                    ) : filteredCourses.length === 0 && !coursesLoading ? (
+                    {filteredCourses.length === 0 ? (
                         <div className="col-span-full text-center py-8">
                             <p className="text-gray-500 text-lg">
                                 No courses found
@@ -459,25 +472,39 @@ export default function CoursesManagement() {
                             </p>
                         </div>
                     ) : (
-                        filteredCourses.map((course: Course) => (
+                        filteredCourses.map((course: Course) => {
+                            const tutorFilled =
+                                (course.maxTutors ?? 0) -
+                                (course.availableTutors ??
+                                    course.maxTutors ??
+                                    0);
+                            const labFilled =
+                                (course.maxLabAssistants ?? 0) -
+                                (course.availableLabAssistants ??
+                                    course.maxLabAssistants ??
+                                    0);
+                            const appCount =
+                                course.applicationCount ??
+                                course.applications?.length ??
+                                0;
+                            const assignedLecturers =
+                                course.courseAssignments ?? [];
+                            const assignedCount = assignedLecturers.length;
+                            const hasLecturer = assignedCount > 0;
+                            const lecturerSlots = 1;
+                            const lecturerOverCapacity =
+                                assignedCount > lecturerSlots;
+
+                            return (
                             <div key={course.id} className={styles.courseCard}>
-                                <div className={styles.courseHeader}>
-                                    <div className={styles.courseInfo}>
-                                        <h3 className={styles.courseCode}>
-                                            {course.courseCode}
-                                        </h3>
-                                        <p className={styles.courseName}>
-                                            {course.courseName}
-                                        </p>
-                                        <p className={styles.courseSemester}>
-                                            {course.semester}
-                                        </p>
-                                    </div>
+                                <div className={styles.courseCardHeader}>
+                                    <span className={styles.courseCodeBadge}>
+                                        {course.courseCode}
+                                    </span>
                                     <div className={styles.courseActions}>
-                                        {(!course.courseAssignments ||
-                                            course.courseAssignments.length ===
-                                                0) && (
+                                        {!hasLecturer && (
                                             <button
+                                                type="button"
                                                 onClick={() =>
                                                     openAssignModal(course)
                                                 }
@@ -492,6 +519,7 @@ export default function CoursesManagement() {
                                             </button>
                                         )}
                                         <button
+                                            type="button"
                                             onClick={() =>
                                                 openEditModal(course)
                                             }
@@ -503,6 +531,7 @@ export default function CoursesManagement() {
                                             />
                                         </button>
                                         <button
+                                            type="button"
                                             onClick={() =>
                                                 openDeleteModal(course)
                                             }
@@ -516,60 +545,95 @@ export default function CoursesManagement() {
                                     </div>
                                 </div>
 
-                                {course.description && (
-                                    <p className={styles.courseDescription}>
-                                        {course.description}
+                                <div className={styles.courseBody}>
+                                    <h3 className={styles.courseName}>
+                                        {course.courseName}
+                                    </h3>
+                                    <p className={styles.courseSemester}>
+                                        {course.semester}
                                     </p>
-                                )}
+                                    {course.description && (
+                                        <p className={styles.courseDescription}>
+                                            {course.description}
+                                        </p>
+                                    )}
+                                </div>
 
-                                <div className={styles.courseStats}>
-                                    <div className={styles.courseStat}>
-                                        <h4 className={styles.courseStatValue}>
-                                            {(course.maxTutors ?? 0) -
-                                                (course.availableTutors ??
-                                                    course.maxTutors ??
-                                                    0)}
-                                            /{course.maxTutors}
-                                        </h4>
-                                        <p className={styles.courseStatLabel}>
-                                            Current Applicants/Total Tutors
-                                        </p>
+                                <div className={styles.courseMetrics}>
+                                    <div
+                                        className={`${styles.metricItem} ${styles.metricPurple}`}
+                                    >
+                                        <div className={styles.metricIconWrap}>
+                                            <UserGroupIcon
+                                                className={styles.metricIcon}
+                                            />
+                                        </div>
+                                        <div className={styles.metricInfo}>
+                                            <span className={styles.metricValue}>
+                                                {tutorFilled}/{course.maxTutors}
+                                            </span>
+                                            <span className={styles.metricLabel}>
+                                                Tutors
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className={styles.courseStat}>
-                                        <h4 className={styles.courseStatValue}>
-                                            {(course.maxLabAssistants ?? 0) -
-                                                (course.availableLabAssistants ??
-                                                    course.maxLabAssistants ??
-                                                    0)}
-                                            /{course.maxLabAssistants}
-                                        </h4>
-                                        <p className={styles.courseStatLabel}>
-                                            Current Applicants/Total Lab
-                                            Assistants
-                                        </p>
+                                    <div
+                                        className={`${styles.metricItem} ${styles.metricBlue}`}
+                                    >
+                                        <div className={styles.metricIconWrap}>
+                                            <BeakerIcon
+                                                className={styles.metricIcon}
+                                            />
+                                        </div>
+                                        <div className={styles.metricInfo}>
+                                            <span className={styles.metricValue}>
+                                                {labFilled}/
+                                                {course.maxLabAssistants}
+                                            </span>
+                                            <span className={styles.metricLabel}>
+                                                Lab
+                                            </span>
+                                        </div>
                                     </div>
-                                    <div className={styles.courseStat}>
-                                        <h4 className={styles.courseStatValue}>
-                                            {course.applicationCount ?? course.applications?.length ?? 0}
-                                        </h4>
-                                        <p className={styles.courseStatLabel}>
-                                            Applications
-                                        </p>
+                                    <div
+                                        className={`${styles.metricItem} ${styles.metricGreen}`}
+                                    >
+                                        <div className={styles.metricIconWrap}>
+                                            <ClipboardDocumentListIcon
+                                                className={styles.metricIcon}
+                                            />
+                                        </div>
+                                        <div className={styles.metricInfo}>
+                                            <span className={styles.metricValue}>
+                                                {appCount}
+                                            </span>
+                                            <span className={styles.metricLabel}>
+                                                Applications
+                                            </span>
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Assigned Lecturers */}
-                                <div className={styles.courseAssignments}>
-                                    <div className={styles.assignmentsHeader}>
-                                        <h4 className={styles.assignmentsTitle}>
+                                <div className={styles.lecturerSection}>
+                                    <div className={styles.lecturerSectionHeader}>
+                                        <span className={styles.lecturerSectionTitle}>
                                             Assigned Lecturer
-                                            {course.courseAssignments?.length >
-                                                0 && <span> (1/1)</span>}
-                                        </h4>
-                                        {(!course.courseAssignments ||
-                                            course.courseAssignments.length ===
-                                                0) && (
+                                        </span>
+                                        {hasLecturer ? (
+                                            <span
+                                                className={`${
+                                                    styles.lecturerStatusBadge
+                                                } ${
+                                                    lecturerOverCapacity
+                                                        ? styles.lecturerStatusOver
+                                                        : ""
+                                                }`}
+                                            >
+                                                {assignedCount}/{lecturerSlots}
+                                            </span>
+                                        ) : (
                                             <button
+                                                type="button"
                                                 onClick={() =>
                                                     openAssignModal(course)
                                                 }
@@ -579,9 +643,9 @@ export default function CoursesManagement() {
                                             </button>
                                         )}
                                     </div>
-                                    {course.courseAssignments?.length > 0 ? (
+                                    {hasLecturer ? (
                                         <div className={styles.assignmentsList}>
-                                            {course.courseAssignments.map(
+                                            {assignedLecturers.map(
                                                 (assignment) => (
                                                     <div
                                                         key={assignment.id}
@@ -602,7 +666,11 @@ export default function CoursesManagement() {
                                                                     }
                                                                 )
                                                             ) : (
-                                                                <span className="text-red-500 italic">
+                                                                <span
+                                                                    className={
+                                                                        styles.lecturerMissing
+                                                                    }
+                                                                >
                                                                     Lecturer not
                                                                     found
                                                                 </span>
@@ -610,21 +678,21 @@ export default function CoursesManagement() {
                                                         </span>
                                                         {assignment.lecturer && (
                                                             <button
+                                                                type="button"
                                                                 onClick={() =>
                                                                     handleRemoveLecturer(
-                                                                        assignment.lecturer!
+                                                                        assignment
+                                                                            .lecturer!
                                                                             .id,
                                                                         course
                                                                     )
                                                                 }
-                                                                className={
-                                                                    styles.removeButton
-                                                                }
+                                                                className={`${styles.actionButton} ${styles.actionButtonDanger}`}
                                                                 title="Remove lecturer"
                                                             >
                                                                 <UserMinusIcon
                                                                     className={
-                                                                        styles.removeIcon
+                                                                        styles.actionIcon
                                                                     }
                                                                 />
                                                             </button>
@@ -640,22 +708,25 @@ export default function CoursesManagement() {
                                     )}
                                 </div>
                             </div>
-                        ))
+                            );
+                        })
                     )}
                 </div>
 
                 {coursePage && coursePage.totalCount > 0 && (
-                    <PaginationBar
-                        page={coursePage.page}
-                        pageSize={coursePage.pageSize}
-                        totalCount={coursePage.totalCount}
-                        totalPages={coursePage.totalPages}
-                        loading={coursesLoading}
-                        onPageChange={setPage}
-                    />
+                    <div className={styles.coursesPagination}>
+                        <PaginationBar
+                            page={coursePage.page}
+                            pageSize={coursePage.pageSize}
+                            totalCount={coursePage.totalCount}
+                            totalPages={coursePage.totalPages}
+                            loading={isInitialLoad}
+                            onPageChange={setPage}
+                        />
+                    </div>
                 )}
 
-                {filteredCourses.length === 0 && !coursesLoading && (
+                {filteredCourses.length === 0 && (
                     <div className={styles.emptyState}>
                         <AcademicCapIcon className={styles.emptyStateIcon} />
                         <h3 className={styles.emptyStateText}>
@@ -843,156 +914,206 @@ export default function CoursesManagement() {
                 {/* Edit Course Modal */}
                 {showEditModal && selectedCourse && (
                     <div className={styles.modalOverlay}>
-                        <div className={styles.modal}>
+                        <div
+                            className={`${styles.modal} ${styles.modalWide}`}
+                        >
                             <div className={styles.modalHeader}>
-                                <h3 className={styles.modalTitle}>
-                                    Edit Course
-                                </h3>
+                                <div className={styles.modalHeaderText}>
+                                    <span className={styles.modalCourseBadge}>
+                                        {selectedCourse.courseCode}
+                                    </span>
+                                    <h3 className={styles.modalTitle}>
+                                        Edit Course
+                                    </h3>
+                                    <p className={styles.modalSubtitle}>
+                                        {selectedCourse.courseName}
+                                    </p>
+                                </div>
                                 <button
+                                    type="button"
                                     onClick={() => setShowEditModal(false)}
                                     className={styles.closeButton}
+                                    aria-label="Close edit course"
                                 >
                                     <XMarkIcon className={styles.closeIcon} />
                                 </button>
                             </div>
-                            <form
-                                onSubmit={handleUpdateCourse}
-                                className={styles.modalForm}
-                            >
-                                <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>
-                                        Course Code
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.courseCode}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                courseCode: e.target.value,
-                                            })
-                                        }
-                                        className={styles.formInput}
-                                        placeholder="e.g., COSC2758"
-                                    />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>
-                                        Course Name
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.courseName}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                courseName: e.target.value,
-                                            })
-                                        }
-                                        className={styles.formInput}
-                                        placeholder="e.g., Introduction to Computer Science"
-                                    />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>
-                                        Semester
-                                    </label>
-                                    <input
-                                        type="text"
-                                        required
-                                        value={formData.semester}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                semester: e.target.value,
-                                            })
-                                        }
-                                        className={styles.formInput}
-                                        placeholder="e.g., Semester 2 2025"
-                                    />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>
-                                        Description
-                                    </label>
-                                    <textarea
-                                        value={formData.description}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                description: e.target.value,
-                                            })
-                                        }
-                                        className={styles.formTextarea}
-                                        rows={3}
-                                        placeholder="Course description..."
-                                    />
-                                </div>
-                                <div className={styles.formGroup}>
-                                    <label className={styles.formLabel}>
-                                        Application deadline
-                                    </label>
-                                    <input
-                                        type="datetime-local"
-                                        value={formData.applicationDeadline}
-                                        onChange={(e) =>
-                                            setFormData({
-                                                ...formData,
-                                                applicationDeadline:
-                                                    e.target.value,
-                                            })
-                                        }
-                                        className={styles.formInput}
-                                    />
-                                </div>
-                                <div className={styles.formRow}>
-                                    <div className={styles.formGroup}>
-                                        <label className={styles.formLabel}>
-                                            Max Tutors
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            required
-                                            value={formData.maxTutors}
-                                            onChange={(e) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    maxTutors: Number(
-                                                        e.target.value
-                                                    ),
-                                                })
-                                            }
-                                            className={styles.formInput}
-                                        />
+                            <form onSubmit={handleUpdateCourse}>
+                                <div className={styles.modalForm}>
+                                    <div className={styles.formSection}>
+                                        <h4
+                                            className={styles.formSectionTitle}
+                                        >
+                                            Basic information
+                                        </h4>
+                                        <div className={styles.formRow3}>
+                                            <div className={styles.formGroup}>
+                                                <label
+                                                    className={styles.formLabel}
+                                                >
+                                                    Course Code
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={formData.courseCode}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            courseCode:
+                                                                e.target.value,
+                                                        })
+                                                    }
+                                                    className={styles.formInput}
+                                                    placeholder="COSC2758"
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label
+                                                    className={styles.formLabel}
+                                                >
+                                                    Course Name
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={formData.courseName}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            courseName:
+                                                                e.target.value,
+                                                        })
+                                                    }
+                                                    className={styles.formInput}
+                                                    placeholder="Course name"
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label
+                                                    className={styles.formLabel}
+                                                >
+                                                    Semester
+                                                </label>
+                                                <input
+                                                    type="text"
+                                                    required
+                                                    value={formData.semester}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            semester:
+                                                                e.target.value,
+                                                        })
+                                                    }
+                                                    className={styles.formInput}
+                                                    placeholder="Sem 2 2026"
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>
+                                                Description
+                                            </label>
+                                            <textarea
+                                                value={formData.description}
+                                                onChange={(e) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        description:
+                                                            e.target.value,
+                                                    })
+                                                }
+                                                className={styles.formTextarea}
+                                                rows={3}
+                                                placeholder="Brief course summary..."
+                                            />
+                                        </div>
                                     </div>
-                                    <div className={styles.formGroup}>
-                                        <label className={styles.formLabel}>
-                                            Max Lab Assistants
-                                        </label>
-                                        <input
-                                            type="number"
-                                            min="0"
-                                            required
-                                            value={formData.maxLabAssistants}
-                                            onChange={(e) =>
-                                                setFormData({
-                                                    ...formData,
-                                                    maxLabAssistants: Number(
-                                                        e.target.value
-                                                    ),
-                                                })
-                                            }
-                                            className={styles.formInput}
-                                        />
+
+                                    <div className={styles.formSection}>
+                                        <h4
+                                            className={styles.formSectionTitle}
+                                        >
+                                            Capacity & deadline
+                                        </h4>
+                                        <div className={styles.formRow}>
+                                            <div className={styles.formGroup}>
+                                                <label
+                                                    className={styles.formLabel}
+                                                >
+                                                    Max Tutors
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    required
+                                                    value={formData.maxTutors}
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            maxTutors: Number(
+                                                                e.target.value
+                                                            ),
+                                                        })
+                                                    }
+                                                    className={styles.formInput}
+                                                />
+                                            </div>
+                                            <div className={styles.formGroup}>
+                                                <label
+                                                    className={styles.formLabel}
+                                                >
+                                                    Max Lab Assistants
+                                                </label>
+                                                <input
+                                                    type="number"
+                                                    min="0"
+                                                    required
+                                                    value={
+                                                        formData.maxLabAssistants
+                                                    }
+                                                    onChange={(e) =>
+                                                        setFormData({
+                                                            ...formData,
+                                                            maxLabAssistants:
+                                                                Number(
+                                                                    e.target
+                                                                        .value
+                                                                ),
+                                                        })
+                                                    }
+                                                    className={styles.formInput}
+                                                />
+                                            </div>
+                                        </div>
+                                        <div className={styles.formGroup}>
+                                            <label className={styles.formLabel}>
+                                                Application deadline
+                                            </label>
+                                            <input
+                                                type="datetime-local"
+                                                value={
+                                                    formData.applicationDeadline
+                                                }
+                                                onChange={(e) =>
+                                                    setFormData({
+                                                        ...formData,
+                                                        applicationDeadline:
+                                                            e.target.value,
+                                                    })
+                                                }
+                                                className={styles.formInput}
+                                            />
+                                        </div>
                                     </div>
                                 </div>
                                 <div className={styles.modalActions}>
                                     <button
                                         type="button"
-                                        onClick={() => setShowEditModal(false)}
+                                        onClick={() =>
+                                            setShowEditModal(false)
+                                        }
                                         className={styles.modalButtonSecondary}
                                     >
                                         Cancel
@@ -1001,7 +1122,7 @@ export default function CoursesManagement() {
                                         type="submit"
                                         className={styles.modalButtonPrimary}
                                     >
-                                        Update Course
+                                        Save Changes
                                     </button>
                                 </div>
                             </form>
@@ -1014,55 +1135,60 @@ export default function CoursesManagement() {
                     <div className={styles.modalOverlay}>
                         <div className={styles.modal}>
                             <div className={styles.modalHeader}>
-                                <h3 className={styles.modalTitle}>
-                                    Delete Course
-                                </h3>
+                                <ExclamationTriangleIcon
+                                    className={styles.modalDangerIcon}
+                                />
+                                <div className={styles.modalHeaderText}>
+                                    <h3 className={styles.modalTitle}>
+                                        Delete Course
+                                    </h3>
+                                    <p className={styles.modalSubtitle}>
+                                        {selectedCourse.courseCode}
+                                    </p>
+                                </div>
                                 <button
+                                    type="button"
                                     onClick={() => setShowDeleteModal(false)}
                                     className={styles.closeButton}
+                                    aria-label="Close delete course"
                                 >
                                     <XMarkIcon className={styles.closeIcon} />
                                 </button>
                             </div>
-                            <div className={styles.modalForm}>
-                                <div className="text-center mb-6">
-                                    <div className={styles.deleteWarningIcon}>
-                                        <ExclamationTriangleIcon className="h-6 w-6 text-red-600" />
-                                    </div>
-                                    <p className="text-gray-600 dark:text-gray-300">
-                                        Are you sure you want to delete{" "}
-                                        <strong className="text-gray-900 dark:text-white">
-                                            {selectedCourse.courseCode} -{" "}
-                                            {selectedCourse.courseName}
-                                        </strong>
-                                        ?
+                            <div className={styles.deleteModalBody}>
+                                <p className={styles.deleteModalText}>
+                                    Are you sure you want to delete{" "}
+                                    <strong>
+                                        {selectedCourse.courseCode} —{" "}
+                                        {selectedCourse.courseName}
+                                    </strong>
+                                    ? This action cannot be undone.
+                                </p>
+                                <div className={styles.deleteNote}>
+                                    <p className={styles.deleteNoteText}>
+                                        <strong>Note:</strong> Courses with
+                                        active applications (pending or
+                                        selected) cannot be deleted. Handle all
+                                        active applications first, then try
+                                        again.
                                     </p>
-                                    <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-md">
-                                        <p className="text-sm text-amber-800 dark:text-amber-200">
-                                            <strong>Note:</strong> Courses with
-                                            active applications (pending or
-                                            selected) cannot be deleted. Please
-                                            handle all active applications
-                                            first, then try again.
-                                        </p>
-                                    </div>
                                 </div>
-                                <div className={styles.modalActions}>
-                                    <button
-                                        onClick={() =>
-                                            setShowDeleteModal(false)
-                                        }
-                                        className={styles.modalButtonSecondary}
-                                    >
-                                        Cancel
-                                    </button>
-                                    <button
-                                        onClick={handleDeleteCourse}
-                                        className={styles.modalButtonDanger}
-                                    >
-                                        Delete
-                                    </button>
-                                </div>
+                            </div>
+                            <div className={styles.modalActions}>
+                                <button
+                                    type="button"
+                                    onClick={() => setShowDeleteModal(false)}
+                                    className={styles.modalButtonSecondary}
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={handleDeleteCourse}
+                                    className={styles.modalButtonDanger}
+                                >
+                                    Delete
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -1085,7 +1211,11 @@ export default function CoursesManagement() {
                                 </button>
                             </div>
                             <div className={styles.modalForm}>
-                                {lecturers.length > 0 ? (
+                                {lecturersLoading ? (
+                                    <div className={styles.emptyLecturers}>
+                                        <p>Loading lecturers...</p>
+                                    </div>
+                                ) : lecturers.length > 0 ? (
                                     <div className={styles.lecturersList}>
                                         {lecturers.map((lecturer: Lecturer) => (
                                             <div
@@ -1094,28 +1224,51 @@ export default function CoursesManagement() {
                                             >
                                                 <div
                                                     className={
-                                                        styles.lecturerInfo
+                                                        styles.lecturerItemMain
                                                     }
                                                 >
-                                                    <p
+                                                    <UserAvatar
+                                                        firstName={
+                                                            lecturer.firstName
+                                                        }
+                                                        lastName={
+                                                            lecturer.lastName
+                                                        }
+                                                        email={lecturer.email}
+                                                        avatarUrl={
+                                                            lecturer.avatarUrl
+                                                        }
+                                                        size="md"
+                                                    />
+                                                    <div
                                                         className={
-                                                            styles.lecturerName
+                                                            styles.lecturerInfo
                                                         }
                                                     >
-                                                        {formatLecturerDisplayName({
-                                                            ...lecturer,
-                                                            userType: "lecturer",
-                                                        })}
-                                                    </p>
-                                                    <p
-                                                        className={
-                                                            styles.lecturerEmail
-                                                        }
-                                                    >
-                                                        {lecturer.email}
-                                                    </p>
+                                                        <p
+                                                            className={
+                                                                styles.lecturerName
+                                                            }
+                                                        >
+                                                            {formatLecturerDisplayName(
+                                                                {
+                                                                    ...lecturer,
+                                                                    userType:
+                                                                        "lecturer",
+                                                                }
+                                                            )}
+                                                        </p>
+                                                        <p
+                                                            className={
+                                                                styles.lecturerEmail
+                                                            }
+                                                        >
+                                                            {lecturer.email}
+                                                        </p>
+                                                    </div>
                                                 </div>
                                                 <button
+                                                    type="button"
                                                     onClick={() =>
                                                         handleAssignLecturer(
                                                             lecturer.id
@@ -1134,11 +1287,12 @@ export default function CoursesManagement() {
                                     <div className={styles.emptyLecturers}>
                                         <UserPlusIcon className="mx-auto h-12 w-12 text-gray-400 mb-4" />
                                         <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-                                            No available lecturers
+                                            No lecturers available
                                         </h3>
                                         <p className="text-gray-600 dark:text-gray-300">
-                                            All lecturers are already assigned
-                                            to courses.
+                                            There are no active lecturers to
+                                            assign, or this course already has
+                                            a lecturer.
                                         </p>
                                     </div>
                                 )}

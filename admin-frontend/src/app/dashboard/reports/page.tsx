@@ -13,22 +13,21 @@ import {
     formatLecturerDisplayName,
 } from "@/shared/utils/personDisplayName";
 import PaginationBar from "@/shared/components/common/PaginationBar/PaginationBar";
+import UserAvatar from "@/shared/components/common/UserAvatar/UserAvatar";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import {
-    DocumentChartBarIcon,
     UserGroupIcon,
     ExclamationTriangleIcon,
     CheckCircleIcon,
-    PrinterIcon,
-    UserIcon,
     AcademicCapIcon,
     MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
+import AdminPageSkeleton from "@/shared/components/common/AdminPageSkeleton/AdminPageSkeleton";
 import styles from "./reports.module.css";
 
 type ReportTab = "candidates-per-course" | "multiple-selections" | "unselected";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 3;
 
 export default function ReportsPage() {
     const [activeTab, setActiveTab] = useState<ReportTab>(
@@ -57,6 +56,7 @@ export default function ReportsPage() {
     } = useQuery(GET_CANDIDATES_CHOSEN_PER_COURSE_PAGINATED, {
         variables: { input: listInput },
         skip: activeTab !== "candidates-per-course",
+        fetchPolicy: "cache-and-network",
     });
 
     const {
@@ -66,6 +66,7 @@ export default function ReportsPage() {
     } = useQuery(GET_CANDIDATES_WITH_MULTIPLE_SELECTIONS_PAGINATED, {
         variables: { input: listInput },
         skip: activeTab !== "multiple-selections",
+        fetchPolicy: "cache-and-network",
     });
 
     const {
@@ -75,6 +76,7 @@ export default function ReportsPage() {
     } = useQuery(GET_UNSELECTED_CANDIDATES_PAGINATED, {
         variables: { input: listInput },
         skip: activeTab !== "unselected",
+        fetchPolicy: "cache-and-network",
     });
 
     const summary = summaryData?.getReportSummary;
@@ -82,19 +84,22 @@ export default function ReportsPage() {
     const tabs = [
         {
             id: "candidates-per-course" as ReportTab,
-            name: "Candidates Per Course",
+            name: "Selected by Course",
+            hint: "Who was picked for each course, by which lecturer, and when.",
             icon: AcademicCapIcon,
             count: summary?.totalSelectedCandidates ?? 0,
         },
         {
             id: "multiple-selections" as ReportTab,
-            name: "Multiple Selections",
+            name: "Over-selected",
+            hint: "Candidates selected more than 3 times — review for overlap or imbalance.",
             icon: UserGroupIcon,
             count: summary?.multipleSelectionsCount ?? 0,
         },
         {
             id: "unselected" as ReportTab,
-            name: "Unselected Candidates",
+            name: "Applied, Not Selected",
+            hint: "Candidates who applied but have not been selected for any course yet.",
             icon: ExclamationTriangleIcon,
             count: summary?.unselectedCandidatesCount ?? 0,
         },
@@ -107,9 +112,12 @@ export default function ReportsPage() {
     const unselectedPage =
         unselectedCandidatesData?.getUnselectedCandidatesPaginated;
 
-    const handlePrint = () => {
-        window.print();
-    };
+    const isPerCourseInitialLoad =
+        candidatesPerCourseLoading && !candidatesPerCourseData;
+    const isMultipleInitialLoad =
+        multipleSelectionsLoading && !multipleSelectionsData;
+    const isUnselectedInitialLoad =
+        unselectedCandidatesLoading && !unselectedCandidatesData;
 
     const formatDate = (dateString: string) => {
         return new Date(dateString).toLocaleDateString("en-AU", {
@@ -121,12 +129,25 @@ export default function ReportsPage() {
         });
     };
 
-    const LoadingSpinner = () => (
-        <div className={styles.loadingContainer}>
-            <div className={styles.spinner}></div>
-            <p>Loading report data...</p>
-        </div>
-    );
+    const formatSelectionDate = (dateString: string) => {
+        const date = new Date(dateString);
+        if (Number.isNaN(date.getTime())) return "—";
+
+        const datePart = date.toLocaleDateString("en-AU", {
+            day: "numeric",
+            month: "long",
+            year: "numeric",
+        });
+        const timePart = date
+            .toLocaleTimeString("en-AU", {
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: true,
+            })
+            .toLowerCase();
+
+        return `${datePart}, ${timePart}`;
+    };
 
     const ErrorMessage = ({ message }: { message: string }) => (
         <div className={styles.errorContainer}>
@@ -140,7 +161,7 @@ export default function ReportsPage() {
             <MagnifyingGlassIcon className={styles.searchIcon} />
             <input
                 type="text"
-                placeholder="Search reports..."
+                placeholder="Search courses or candidates..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className={styles.searchInput}
@@ -151,76 +172,76 @@ export default function ReportsPage() {
     return (
         <div className={styles.reportsPage}>
             <div className={styles.reportsContainer}>
-                <div className={styles.pageHeader}>
+                <div className={styles.headerSection}>
                     <div className={styles.headerContent}>
-                        <div className={styles.headerText}>
-                            <h1 className={styles.pageTitle}>
-                                <DocumentChartBarIcon
-                                    className={styles.titleIcon}
-                                />
-                                Admin Reports
-                            </h1>
-                            <p className={styles.pageSubtitle}>
-                                Comprehensive candidate selection analytics and
-                                reports
-                            </p>
+                        <h1 className={styles.title}>Selection Overview</h1>
+                        <p className={styles.subtitle}>
+                            Track who was selected, who was missed, and
+                            overlapping picks across courses
+                        </p>
+                    </div>
+                </div>
+
+                <div className={styles.filtersSection}>
+                    <div className={styles.filtersHeader}>
+                        <div className={styles.tabsList}>
+                            {tabs.map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    type="button"
+                                    onClick={() => setActiveTab(tab.id)}
+                                    className={`${styles.tabButton} ${
+                                        activeTab === tab.id
+                                            ? styles.active
+                                            : ""
+                                    }`}
+                                >
+                                    <tab.icon className={styles.tabIcon} />
+                                    <span className={styles.tabName}>
+                                        {tab.name}
+                                    </span>
+                                    <span className={styles.tabCount}>
+                                        {tab.count}
+                                    </span>
+                                </button>
+                            ))}
                         </div>
-                        <button
-                            onClick={handlePrint}
-                            className={styles.printButton}
-                            aria-label="Print Report"
-                        >
-                            <PrinterIcon className={styles.printIcon} />
-                            Print Report
-                        </button>
+                        <SearchBar />
                     </div>
+                    <p className={styles.tabHint}>
+                        {tabs.find((tab) => tab.id === activeTab)?.hint}
+                    </p>
                 </div>
-
-                <div className={styles.tabsContainer}>
-                    <div className={styles.tabsList}>
-                        {tabs.map((tab) => (
-                            <button
-                                key={tab.id}
-                                onClick={() => setActiveTab(tab.id)}
-                                className={`${styles.tabButton} ${
-                                    activeTab === tab.id ? styles.active : ""
-                                }`}
-                            >
-                                <tab.icon className={styles.tabIcon} />
-                                <span className={styles.tabName}>
-                                    {tab.name}
-                                </span>
-                                <span className={styles.tabCount}>
-                                    {tab.count}
-                                </span>
-                            </button>
-                        ))}
-                    </div>
-                </div>
-
-                <SearchBar />
 
                 <div className={styles.reportContent}>
                     {activeTab === "candidates-per-course" && (
                         <div className={styles.reportSection}>
                             <div className={styles.sectionHeader}>
                                 <h2 className={styles.sectionTitle}>
-                                    Candidates Chosen for Each Course
+                                    Selected by Course
                                 </h2>
                                 <p className={styles.sectionDescription}>
-                                    Overview of selected candidates per course
-                                    with selection details
+                                    Selected tutors and lab assistants per
+                                    course, with lecturer and timestamp
                                 </p>
                             </div>
 
-                            {candidatesPerCourseLoading && <LoadingSpinner />}
+                            {isPerCourseInitialLoad ? (
+                                <AdminPageSkeleton
+                                    variant="list-cards"
+                                    count={PAGE_SIZE}
+                                    showHeader={false}
+                                    showFilters={false}
+                                    gridClassName={styles.coursesGrid}
+                                />
+                            ) : null}
                             {candidatesPerCourseError && (
                                 <ErrorMessage
                                     message={candidatesPerCourseError.message}
                                 />
                             )}
 
-                            {perCoursePage && (
+                            {perCoursePage && !isPerCourseInitialLoad && (
                                 <>
                                     <div className={styles.coursesGrid}>
                                         {perCoursePage.items.map(
@@ -228,64 +249,65 @@ export default function ReportsPage() {
                                                 <div
                                                     key={courseData.course.id}
                                                     className={
-                                                        styles.courseCard
+                                                        styles.selectionCourseCard
                                                     }
                                                 >
                                                     <div
                                                         className={
-                                                            styles.courseHeader
+                                                            styles.selectionCourseHeader
                                                         }
                                                     >
                                                         <div
                                                             className={
-                                                                styles.courseInfo
+                                                                styles.selectionCourseIdentity
                                                             }
                                                         >
-                                                            <h3
+                                                            <span
                                                                 className={
-                                                                    styles.courseTitle
+                                                                    styles.courseCodeBadge
                                                                 }
                                                             >
                                                                 {
                                                                     courseData
                                                                         .course
                                                                         .courseCode
-                                                                }{" "}
-                                                                -{" "}
-                                                                {
-                                                                    courseData
-                                                                        .course
-                                                                        .courseName
                                                                 }
-                                                            </h3>
-                                                            <p
-                                                                className={
-                                                                    styles.courseSemester
-                                                                }
-                                                            >
-                                                                {
-                                                                    courseData
-                                                                        .course
-                                                                        .semester
-                                                                }
-                                                            </p>
+                                                            </span>
+                                                            <div>
+                                                                <h3
+                                                                    className={
+                                                                        styles.selectionCourseName
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        courseData
+                                                                            .course
+                                                                            .courseName
+                                                                    }
+                                                                </h3>
+                                                                <p
+                                                                    className={
+                                                                        styles.courseSemester
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        courseData
+                                                                            .course
+                                                                            .semester
+                                                                    }
+                                                                </p>
+                                                            </div>
                                                         </div>
-                                                        <div
+                                                        <span
                                                             className={
-                                                                styles.courseStats
+                                                                styles.selectedCountBadge
                                                             }
                                                         >
-                                                            <span
-                                                                className={
-                                                                    styles.selectedCount
-                                                                }
-                                                            >
-                                                                {
-                                                                    courseData.totalSelected
-                                                                }{" "}
-                                                                Selected
-                                                            </span>
-                                                        </div>
+                                                            {
+                                                                courseData.totalSelected
+                                                            }{" "}
+                                                            selected
+                                                        </span>
                                                     </div>
 
                                                     {courseData
@@ -311,17 +333,32 @@ export default function ReportsPage() {
                                                                                 styles.candidateInfo
                                                                             }
                                                                         >
-                                                                            <div
-                                                                                className={
-                                                                                    styles.candidateAvatar
+                                                                            <UserAvatar
+                                                                                firstName={
+                                                                                    selection
+                                                                                        .candidate
+                                                                                        .firstName
                                                                                 }
-                                                                            >
-                                                                                <UserIcon
-                                                                                    className={
-                                                                                        styles.avatarIcon
-                                                                                    }
-                                                                                />
-                                                                            </div>
+                                                                                lastName={
+                                                                                    selection
+                                                                                        .candidate
+                                                                                        .lastName
+                                                                                }
+                                                                                email={
+                                                                                    selection
+                                                                                        .candidate
+                                                                                        .email
+                                                                                }
+                                                                                avatarUrl={
+                                                                                    selection
+                                                                                        .candidate
+                                                                                        .avatarUrl
+                                                                                }
+                                                                                size="sm"
+                                                                                className={
+                                                                                    styles.selectionCandidateAvatar
+                                                                                }
+                                                                            />
                                                                             <div
                                                                                 className={
                                                                                     styles.candidateDetails
@@ -354,10 +391,11 @@ export default function ReportsPage() {
                                                                                 >
                                                                                     {selection
                                                                                         .application
-                                                                                        .role && (
+                                                                                        .role
+                                                                                        ?.roleName && (
                                                                                         <span
                                                                                             className={
-                                                                                                styles.roleTag
+                                                                                                styles.selectionRoleTag
                                                                                             }
                                                                                         >
                                                                                             {
@@ -368,22 +406,25 @@ export default function ReportsPage() {
                                                                                             }
                                                                                         </span>
                                                                                     )}
-                                                                                    <span
+                                                                                    <time
                                                                                         className={
                                                                                             styles.selectionDate
                                                                                         }
+                                                                                        dateTime={
+                                                                                            selection.selectedAt
+                                                                                        }
                                                                                     >
                                                                                         Selected:{" "}
-                                                                                        {formatDate(
+                                                                                        {formatSelectionDate(
                                                                                             selection.selectedAt
                                                                                         )}
-                                                                                    </span>
+                                                                                    </time>
                                                                                 </div>
                                                                             </div>
                                                                         </div>
-                                                                        <div
+                                                                        <aside
                                                                             className={
-                                                                                styles.selectionMeta
+                                                                                styles.selectedByMeta
                                                                             }
                                                                         >
                                                                             <p
@@ -393,15 +434,17 @@ export default function ReportsPage() {
                                                                             >
                                                                                 Selected
                                                                                 by:{" "}
-                                                                                {formatLecturerDisplayName(
-                                                                                    {
-                                                                                        ...selection.selectedBy,
-                                                                                        userType:
-                                                                                            "lecturer",
-                                                                                    }
-                                                                                )}
+                                                                                {selection.selectedBy
+                                                                                    ? formatLecturerDisplayName(
+                                                                                          {
+                                                                                              ...selection.selectedBy,
+                                                                                              userType:
+                                                                                                  "lecturer",
+                                                                                          }
+                                                                                      )
+                                                                                    : "Unknown lecturer"}
                                                                             </p>
-                                                                        </div>
+                                                                        </aside>
                                                                     </div>
                                                                 )
                                                             )}
@@ -428,14 +471,16 @@ export default function ReportsPage() {
                                             )
                                         )}
                                     </div>
-                                    <PaginationBar
-                                        page={perCoursePage.page}
-                                        pageSize={perCoursePage.pageSize}
-                                        totalCount={perCoursePage.totalCount}
-                                        totalPages={perCoursePage.totalPages}
-                                        loading={candidatesPerCourseLoading}
-                                        onPageChange={setPage}
-                                    />
+                                    <div className={styles.reportsPagination}>
+                                        <PaginationBar
+                                            page={perCoursePage.page}
+                                            pageSize={perCoursePage.pageSize}
+                                            totalCount={perCoursePage.totalCount}
+                                            totalPages={perCoursePage.totalPages}
+                                            loading={isPerCourseInitialLoad}
+                                            onPageChange={setPage}
+                                        />
+                                    </div>
                                 </>
                             )}
                         </div>
@@ -445,22 +490,30 @@ export default function ReportsPage() {
                         <div className={styles.reportSection}>
                             <div className={styles.sectionHeader}>
                                 <h2 className={styles.sectionTitle}>
-                                    Candidates with Multiple Selections (3+)
+                                    Over-selected Candidates
                                 </h2>
                                 <p className={styles.sectionDescription}>
-                                    Candidates who have been selected for more
-                                    than 3 courses
+                                    Candidates selected for more than 3 courses
+                                    or roles
                                 </p>
                             </div>
 
-                            {multipleSelectionsLoading && <LoadingSpinner />}
+                            {isMultipleInitialLoad ? (
+                                <AdminPageSkeleton
+                                    variant="list-cards"
+                                    count={PAGE_SIZE}
+                                    showHeader={false}
+                                    showFilters={false}
+                                    gridClassName={styles.candidatesGrid}
+                                />
+                            ) : null}
                             {multipleSelectionsError && (
                                 <ErrorMessage
                                     message={multipleSelectionsError.message}
                                 />
                             )}
 
-                            {multiplePage && (
+                            {multiplePage && !isMultipleInitialLoad && (
                                 <>
                                     <div className={styles.candidatesGrid}>
                                         {multiplePage.items.length > 0 ? (
@@ -485,17 +538,32 @@ export default function ReportsPage() {
                                                                     styles.candidateInfo
                                                                 }
                                                             >
-                                                                <div
-                                                                    className={
-                                                                        styles.candidateAvatar
+                                                                <UserAvatar
+                                                                    firstName={
+                                                                        candidateData
+                                                                            .candidate
+                                                                            .firstName
                                                                     }
-                                                                >
-                                                                    <UserIcon
-                                                                        className={
-                                                                            styles.avatarIcon
-                                                                        }
-                                                                    />
-                                                                </div>
+                                                                    lastName={
+                                                                        candidateData
+                                                                            .candidate
+                                                                            .lastName
+                                                                    }
+                                                                    email={
+                                                                        candidateData
+                                                                            .candidate
+                                                                            .email
+                                                                    }
+                                                                    avatarUrl={
+                                                                        candidateData
+                                                                            .candidate
+                                                                            .avatarUrl
+                                                                    }
+                                                                    size="sm"
+                                                                    className={
+                                                                        styles.selectionCandidateAvatar
+                                                                    }
+                                                                />
                                                                 <div
                                                                     className={
                                                                         styles.candidateDetails
@@ -523,22 +591,16 @@ export default function ReportsPage() {
                                                                     </p>
                                                                 </div>
                                                             </div>
-                                                            <div
+                                                            <span
                                                                 className={
-                                                                    styles.selectionBadge
+                                                                    styles.selectionsCountBadge
                                                                 }
                                                             >
-                                                                <span
-                                                                    className={
-                                                                        styles.selectionCount
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        candidateData.totalSelections
-                                                                    }{" "}
-                                                                    Selections
-                                                                </span>
-                                                            </div>
+                                                                {
+                                                                    candidateData.totalSelections
+                                                                }{" "}
+                                                                selections
+                                                            </span>
                                                         </div>
 
                                                         <div
@@ -581,15 +643,16 @@ export default function ReportsPage() {
                                                                             </h4>
                                                                             <div
                                                                                 className={
-                                                                                    styles.selectionMeta
+                                                                                    styles.selectionItemMeta
                                                                                 }
                                                                             >
                                                                                 {selection
                                                                                     .application
-                                                                                    .role && (
+                                                                                    .role
+                                                                                    ?.roleName && (
                                                                                     <span
                                                                                         className={
-                                                                                            styles.roleTag
+                                                                                            styles.selectionRoleTag
                                                                                         }
                                                                                     >
                                                                                         {
@@ -600,16 +663,37 @@ export default function ReportsPage() {
                                                                                         }
                                                                                     </span>
                                                                                 )}
-                                                                                <span
+                                                                            </div>
+                                                                            <time
+                                                                                className={
+                                                                                    styles.selectionItemDate
+                                                                                }
+                                                                                dateTime={
+                                                                                    selection.selectedAt
+                                                                                }
+                                                                            >
+                                                                                Selected:{" "}
+                                                                                {formatSelectionDate(
+                                                                                    selection.selectedAt
+                                                                                )}
+                                                                            </time>
+                                                                            {selection.selectedBy && (
+                                                                                <p
                                                                                     className={
-                                                                                        styles.selectionDate
+                                                                                        styles.selectionItemSelectedBy
                                                                                     }
                                                                                 >
-                                                                                    {formatDate(
-                                                                                        selection.selectedAt
+                                                                                    Selected
+                                                                                    by:{" "}
+                                                                                    {formatLecturerDisplayName(
+                                                                                        {
+                                                                                            ...selection.selectedBy,
+                                                                                            userType:
+                                                                                                "lecturer",
+                                                                                        }
                                                                                     )}
-                                                                                </span>
-                                                                            </div>
+                                                                                </p>
+                                                                            )}
                                                                         </div>
                                                                     </div>
                                                                 )
@@ -638,14 +722,16 @@ export default function ReportsPage() {
                                             </div>
                                         )}
                                     </div>
-                                    <PaginationBar
-                                        page={multiplePage.page}
-                                        pageSize={multiplePage.pageSize}
-                                        totalCount={multiplePage.totalCount}
-                                        totalPages={multiplePage.totalPages}
-                                        loading={multipleSelectionsLoading}
-                                        onPageChange={setPage}
-                                    />
+                                    <div className={styles.reportsPagination}>
+                                        <PaginationBar
+                                            page={multiplePage.page}
+                                            pageSize={multiplePage.pageSize}
+                                            totalCount={multiplePage.totalCount}
+                                            totalPages={multiplePage.totalPages}
+                                            loading={isMultipleInitialLoad}
+                                            onPageChange={setPage}
+                                        />
+                                    </div>
                                 </>
                             )}
                         </div>
@@ -655,22 +741,30 @@ export default function ReportsPage() {
                         <div className={styles.reportSection}>
                             <div className={styles.sectionHeader}>
                                 <h2 className={styles.sectionTitle}>
-                                    Unselected Candidates
+                                    Applied, Not Selected
                                 </h2>
                                 <p className={styles.sectionDescription}>
-                                    Candidates who have applied but have not
-                                    been selected for any courses
+                                    Candidates with applications but no
+                                    selection on any course yet
                                 </p>
                             </div>
 
-                            {unselectedCandidatesLoading && <LoadingSpinner />}
+                            {isUnselectedInitialLoad ? (
+                                <AdminPageSkeleton
+                                    variant="list-cards"
+                                    count={PAGE_SIZE}
+                                    showHeader={false}
+                                    showFilters={false}
+                                    gridClassName={styles.candidatesGrid}
+                                />
+                            ) : null}
                             {unselectedCandidatesError && (
                                 <ErrorMessage
                                     message={unselectedCandidatesError.message}
                                 />
                             )}
 
-                            {unselectedPage && (
+                            {unselectedPage && !isUnselectedInitialLoad && (
                                 <>
                                     <div className={styles.candidatesGrid}>
                                         {unselectedPage.items.length > 0 ? (
@@ -695,17 +789,32 @@ export default function ReportsPage() {
                                                                     styles.candidateInfo
                                                                 }
                                                             >
-                                                                <div
-                                                                    className={
-                                                                        styles.candidateAvatar
+                                                                <UserAvatar
+                                                                    firstName={
+                                                                        candidateData
+                                                                            .candidate
+                                                                            .firstName
                                                                     }
-                                                                >
-                                                                    <UserIcon
-                                                                        className={
-                                                                            styles.avatarIcon
-                                                                        }
-                                                                    />
-                                                                </div>
+                                                                    lastName={
+                                                                        candidateData
+                                                                            .candidate
+                                                                            .lastName
+                                                                    }
+                                                                    email={
+                                                                        candidateData
+                                                                            .candidate
+                                                                            .email
+                                                                    }
+                                                                    avatarUrl={
+                                                                        candidateData
+                                                                            .candidate
+                                                                            .avatarUrl
+                                                                    }
+                                                                    size="sm"
+                                                                    className={
+                                                                        styles.selectionCandidateAvatar
+                                                                    }
+                                                                />
                                                                 <div
                                                                     className={
                                                                         styles.candidateDetails
@@ -733,22 +842,16 @@ export default function ReportsPage() {
                                                                     </p>
                                                                 </div>
                                                             </div>
-                                                            <div
+                                                            <span
                                                                 className={
-                                                                    styles.applicationBadge
+                                                                    styles.applicationsCountBadge
                                                                 }
                                                             >
-                                                                <span
-                                                                    className={
-                                                                        styles.applicationCount
-                                                                    }
-                                                                >
-                                                                    {
-                                                                        candidateData.totalApplications
-                                                                    }{" "}
-                                                                    Applications
-                                                                </span>
-                                                            </div>
+                                                                {
+                                                                    candidateData.totalApplications
+                                                                }{" "}
+                                                                applications
+                                                            </span>
                                                         </div>
 
                                                         <div
@@ -798,7 +901,7 @@ export default function ReportsPage() {
                                                                                 {application.role && (
                                                                                     <span
                                                                                         className={
-                                                                                            styles.roleTag
+                                                                                            styles.selectionRoleTag
                                                                                         }
                                                                                     >
                                                                                         {
@@ -810,24 +913,27 @@ export default function ReportsPage() {
                                                                                 )}
                                                                                 <span
                                                                                     className={
-                                                                                        styles.statusTag
+                                                                                        styles.applicationStatusTag
                                                                                     }
                                                                                 >
                                                                                     {
                                                                                         application.status
                                                                                     }
                                                                                 </span>
-                                                                                <span
-                                                                                    className={
-                                                                                        styles.applicationDate
-                                                                                    }
-                                                                                >
-                                                                                    Applied:{" "}
-                                                                                    {formatDate(
-                                                                                        application.appliedAt
-                                                                                    )}
-                                                                                </span>
                                                                             </div>
+                                                                            <time
+                                                                                className={
+                                                                                    styles.applicationDate
+                                                                                }
+                                                                                dateTime={
+                                                                                    application.appliedAt
+                                                                                }
+                                                                            >
+                                                                                Applied:{" "}
+                                                                                {formatSelectionDate(
+                                                                                    application.appliedAt
+                                                                                )}
+                                                                            </time>
                                                                         </div>
                                                                     </div>
                                                                 )
@@ -854,14 +960,16 @@ export default function ReportsPage() {
                                             </div>
                                         )}
                                     </div>
-                                    <PaginationBar
-                                        page={unselectedPage.page}
-                                        pageSize={unselectedPage.pageSize}
-                                        totalCount={unselectedPage.totalCount}
-                                        totalPages={unselectedPage.totalPages}
-                                        loading={unselectedCandidatesLoading}
-                                        onPageChange={setPage}
-                                    />
+                                    <div className={styles.reportsPagination}>
+                                        <PaginationBar
+                                            page={unselectedPage.page}
+                                            pageSize={unselectedPage.pageSize}
+                                            totalCount={unselectedPage.totalCount}
+                                            totalPages={unselectedPage.totalPages}
+                                            loading={isUnselectedInitialLoad}
+                                            onPageChange={setPage}
+                                        />
+                                    </div>
                                 </>
                             )}
                         </div>

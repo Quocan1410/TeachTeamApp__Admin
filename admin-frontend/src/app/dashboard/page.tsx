@@ -1,8 +1,11 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useQuery } from "@apollo/client";
 import Link from "next/link";
 import { GET_USER_STATS, GET_ALL_COURSES } from "@/lib/graphql/queries";
+import { formatLecturerDisplayName } from "@/shared/utils/personDisplayName";
+import PaginationBar from "@/shared/components/common/PaginationBar/PaginationBar";
 import {
     UsersIcon,
     AcademicCapIcon,
@@ -11,13 +14,71 @@ import {
     DocumentChartBarIcon,
     MegaphoneIcon,
 } from "@heroicons/react/24/outline";
+import AdminPageSkeleton from "@/shared/components/common/AdminPageSkeleton/AdminPageSkeleton";
 import styles from "./admin-dashboard.module.css";
 
+type DashboardCourse = {
+    id: number;
+    courseCode: string;
+    courseName: string;
+    semester: string;
+    applicationDeadline?: string | null;
+    maxTutors: number;
+    maxLabAssistants: number;
+    selectedTutors?: number;
+    selectedLabAssistants?: number;
+    availableTutors?: number;
+    availableLabAssistants?: number;
+    courseAssignments?: Array<{
+        lecturer?: {
+            firstName: string;
+            lastName: string;
+            email: string;
+        } | null;
+    }>;
+    applications?: Array<{ id: number }>;
+};
+
+const QUICK_ACTIONS = [
+    { href: "/dashboard/users", label: "Users", icon: UsersIcon },
+    { href: "/dashboard/courses", label: "Courses", icon: AcademicCapIcon },
+    { href: "/dashboard/reports", label: "Selections", icon: DocumentChartBarIcon },
+    {
+        href: "/dashboard/announcements",
+        label: "Announcements",
+        icon: MegaphoneIcon,
+    },
+] as const;
+
+const COURSE_PAGE_SIZE = 6;
+
+const formatDeadline = (iso?: string | null) => {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return "—";
+    return d.toLocaleDateString("en-AU", {
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+    });
+};
+
+const getLecturerLabel = (course: DashboardCourse) => {
+    const lecturer = course.courseAssignments?.[0]?.lecturer;
+    if (!lecturer) return "Unassigned";
+    return formatLecturerDisplayName({ ...lecturer, userType: "lecturer" });
+};
+
 export default function Dashboard() {
+    const [coursePage, setCoursePage] = useState(1);
+
     const { data: userStats, loading: userStatsLoading } =
         useQuery(GET_USER_STATS);
     const { data: coursesData, loading: coursesLoading } =
         useQuery(GET_ALL_COURSES);
+
+    const isInitialLoad =
+        (userStatsLoading && !userStats) || (coursesLoading && !coursesData);
 
     const stats = [
         {
@@ -46,7 +107,35 @@ export default function Dashboard() {
         },
     ];
 
-    const courses = coursesData?.getAllCourses || [];
+    const courses: DashboardCourse[] = coursesData?.getAllCourses || [];
+    const courseTotalPages = Math.max(
+        1,
+        Math.ceil(courses.length / COURSE_PAGE_SIZE)
+    );
+    const paginatedCourses = courses.slice(
+        (coursePage - 1) * COURSE_PAGE_SIZE,
+        coursePage * COURSE_PAGE_SIZE
+    );
+
+    useEffect(() => {
+        if (coursePage > courseTotalPages) {
+            setCoursePage(courseTotalPages);
+        }
+    }, [coursePage, courseTotalPages]);
+
+    if (isInitialLoad) {
+        return (
+            <div className={styles.adminDashboard}>
+                <div className={styles.dashboardContainer}>
+                    <AdminPageSkeleton
+                        variant="dashboard"
+                        showHeader
+                        showFilters={false}
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.adminDashboard}>
@@ -61,6 +150,7 @@ export default function Dashboard() {
                     </div>
                 </div>
 
+                <>
                 {/* Stats Grid */}
                 <div className={styles.statsGrid}>
                     {stats.map((stat) => (
@@ -77,15 +167,7 @@ export default function Dashboard() {
                                 <div className={styles.statInfo}>
                                     <div className={styles.statHeader}>
                                         <h3 className={styles.statValue}>
-                                            {userStatsLoading ? (
-                                                <div
-                                                    className={
-                                                        styles.loadingSkeleton
-                                                    }
-                                                ></div>
-                                            ) : (
-                                                stat.value
-                                            )}
+                                            {stat.value}
                                         </h3>
                                     </div>
                                     <p className={styles.statLabel}>
@@ -99,210 +181,341 @@ export default function Dashboard() {
 
                 {/* Main Content Grid */}
                 <div className={styles.contentGrid}>
-                    {/* Courses Overview */}
-                    <div className={styles.contentCard}>
+                    {/* Courses Overview — wider */}
+                    <div
+                        className={`${styles.contentCard} ${styles.coursesCard}`}
+                    >
                         <div className={styles.cardHeader}>
-                            <h3 className={styles.cardTitle}>
-                                Courses Overview
-                            </h3>
-                            <div className={styles.cardBadge}>
-                                {courses.length} Total
+                            <div>
+                                <h3 className={styles.cardTitle}>
+                                    Courses Overview
+                                </h3>
+                                <p className={styles.cardSubtitle}>
+                                    Capacity, assignments, and application load
+                                </p>
+                            </div>
+                            <div className={styles.cardHeaderMeta}>
+                                <div className={styles.cardBadge}>
+                                    {courses.length} courses
+                                </div>
+                                <Link
+                                    href="/dashboard/courses"
+                                    className={styles.viewAllLink}
+                                >
+                                    Manage all
+                                </Link>
                             </div>
                         </div>
                         <div className={styles.cardContent}>
-                            {coursesLoading ? (
-                                <div className={styles.loadingContainer}>
-                                    {[...Array(3)].map((_, i) => (
-                                        <div
-                                            key={i}
-                                            className={styles.loadingItem}
-                                        >
-                                            <div
-                                                className={
-                                                    styles.loadingSkeleton
-                                                }
-                                            ></div>
-                                            <div
-                                                className={
-                                                    styles.loadingSkeletonSmall
-                                                }
-                                            ></div>
-                                        </div>
-                                    ))}
+                            {courses.length === 0 ? (
+                                <div className={styles.emptyState}>
+                                    <AcademicCapIcon
+                                        className={styles.emptyIcon}
+                                    />
+                                    <p className={styles.emptyText}>
+                                        No courses yet
+                                    </p>
                                 </div>
                             ) : (
-                                <div className={styles.coursesList}>
-                                    {courses.map((course: any) => (
-                                        <div
-                                            key={course.id}
-                                            className={styles.courseItem}
-                                        >
-                                            <div className={styles.courseInfo}>
-                                                <h4
+                                <div className={styles.coursesTablePanel}>
+                                    <div className={styles.coursesTableWrap}>
+                                        <table className={styles.coursesTable}>
+                                            <colgroup>
+                                                <col
+                                                    className={styles.colCourse}
+                                                />
+                                                <col
                                                     className={
-                                                        styles.courseTitle
+                                                        styles.colLecturer
                                                     }
-                                                >
-                                                    {course.courseCode} -{" "}
-                                                    {course.courseName}
-                                                </h4>
-                                                <p
+                                                />
+                                                <col
+                                                    className={styles.colApps}
+                                                />
+                                                <col
+                                                    className={styles.colTutors}
+                                                />
+                                                <col
+                                                    className={styles.colLab}
+                                                />
+                                                <col
                                                     className={
-                                                        styles.courseSemester
+                                                        styles.colDeadline
                                                     }
-                                                >
-                                                    {course.semester}
-                                                </p>
-                                            </div>
-                                            <div className={styles.courseStats}>
-                                                <div
-                                                    className={
-                                                        styles.courseStat
-                                                    }
-                                                >
-                                                    <span
+                                                />
+                                            </colgroup>
+                                            <thead>
+                                                <tr>
+                                                    <th>Course</th>
+                                                    <th>Lecturer</th>
+                                                    <th
                                                         className={
-                                                            styles.courseStatValue
+                                                            styles.thCompact
                                                         }
                                                     >
-                                                        {course
-                                                            .courseAssignments
-                                                            ?.length || 0}
-                                                    </span>
-                                                    <span
+                                                        Applications
+                                                    </th>
+                                                    <th
                                                         className={
-                                                            styles.courseStatLabel
+                                                            styles.thCompact
                                                         }
                                                     >
-                                                        lecturers
-                                                    </span>
-                                                </div>
-                                                <div
-                                                    className={
-                                                        styles.courseStat
+                                                        Tutors
+                                                    </th>
+                                                    <th
+                                                        className={
+                                                            styles.thCompact
+                                                        }
+                                                    >
+                                                        Lab
+                                                    </th>
+                                                    <th
+                                                        className={
+                                                            styles.thDeadline
+                                                        }
+                                                    >
+                                                        Deadline
+                                                    </th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {paginatedCourses.map(
+                                                    (course, index) => {
+                                                        const rowStripe =
+                                                            ((coursePage - 1) *
+                                                                COURSE_PAGE_SIZE +
+                                                                index) %
+                                                                2 ===
+                                                            0
+                                                                ? styles.rowEven
+                                                                : styles.rowOdd;
+                                                const appCount =
+                                                    course.applications
+                                                        ?.length ?? 0;
+                                                const tutorFilled =
+                                                    course.selectedTutors ?? 0;
+                                                const labFilled =
+                                                    course.selectedLabAssistants ??
+                                                    0;
+                                                const tutorOpen =
+                                                    course.availableTutors ??
+                                                    Math.max(
+                                                        0,
+                                                        course.maxTutors -
+                                                            tutorFilled
+                                                    );
+                                                const labOpen =
+                                                    course.availableLabAssistants ??
+                                                    Math.max(
+                                                        0,
+                                                        course.maxLabAssistants -
+                                                            labFilled
+                                                    );
+
+                                                return (
+                                                    <tr
+                                                        key={course.id}
+                                                        className={rowStripe}
+                                                    >
+                                                        <td
+                                                            className={
+                                                                styles.courseCell
+                                                            }
+                                                        >
+                                                            <span
+                                                                className={
+                                                                    styles.courseCode
+                                                                }
+                                                            >
+                                                                {
+                                                                    course.courseCode
+                                                                }
+                                                            </span>
+                                                            <span
+                                                                className={
+                                                                    styles.courseName
+                                                                }
+                                                            >
+                                                                {
+                                                                    course.courseName
+                                                                }
+                                                            </span>
+                                                            <span
+                                                                className={
+                                                                    styles.courseSemester
+                                                                }
+                                                            >
+                                                                {
+                                                                    course.semester
+                                                                }
+                                                            </span>
+                                                        </td>
+                                                        <td
+                                                            className={
+                                                                styles.cellLecturer
+                                                            }
+                                                        >
+                                                            <span
+                                                                className={`${
+                                                                    styles.cellTruncate
+                                                                } ${
+                                                                    course
+                                                                        .courseAssignments
+                                                                        ?.length
+                                                                        ? styles.lecturerAssigned
+                                                                        : styles.lecturerMissing
+                                                                }`}
+                                                                title={getLecturerLabel(
+                                                                    course
+                                                                )}
+                                                            >
+                                                                {getLecturerLabel(
+                                                                    course
+                                                                )}
+                                                            </span>
+                                                        </td>
+                                                        <td
+                                                            className={
+                                                                styles.cellNumeric
+                                                            }
+                                                        >
+                                                            <span
+                                                                className={
+                                                                    styles.metricPill
+                                                                }
+                                                            >
+                                                                {appCount}
+                                                            </span>
+                                                        </td>
+                                                        <td
+                                                            className={
+                                                                styles.cellNumeric
+                                                            }
+                                                        >
+                                                            <span
+                                                                className={
+                                                                    styles.slotLine
+                                                                }
+                                                            >
+                                                                <span
+                                                                    className={
+                                                                        styles.slotText
+                                                                    }
+                                                                >
+                                                                    {tutorFilled}/
+                                                                    {
+                                                                        course.maxTutors
+                                                                    }
+                                                                </span>
+                                                                <span
+                                                                    className={
+                                                                        styles.slotSep
+                                                                    }
+                                                                >
+                                                                    ·
+                                                                </span>
+                                                                <span
+                                                                    className={
+                                                                        styles.slotOpenInline
+                                                                    }
+                                                                >
+                                                                    {tutorOpen}{" "}
+                                                                    open
+                                                                </span>
+                                                            </span>
+                                                        </td>
+                                                        <td
+                                                            className={
+                                                                styles.cellNumeric
+                                                            }
+                                                        >
+                                                            <span
+                                                                className={
+                                                                    styles.slotLine
+                                                                }
+                                                            >
+                                                                <span
+                                                                    className={
+                                                                        styles.slotText
+                                                                    }
+                                                                >
+                                                                    {labFilled}/
+                                                                    {
+                                                                        course.maxLabAssistants
+                                                                    }
+                                                                </span>
+                                                                <span
+                                                                    className={
+                                                                        styles.slotSep
+                                                                    }
+                                                                >
+                                                                    ·
+                                                                </span>
+                                                                <span
+                                                                    className={
+                                                                        styles.slotOpenInline
+                                                                    }
+                                                                >
+                                                                    {labOpen}{" "}
+                                                                    open
+                                                                </span>
+                                                            </span>
+                                                        </td>
+                                                        <td
+                                                            className={
+                                                                styles.cellDeadline
+                                                            }
+                                                        >
+                                                            {formatDeadline(
+                                                                course.applicationDeadline
+                                                            )}
+                                                        </td>
+                                                    </tr>
+                                                );
                                                     }
-                                                >
-                                                    <span
-                                                        className={
-                                                            styles.courseStatValue
-                                                        }
-                                                    >
-                                                        {course.applications
-                                                            ?.length || 0}
-                                                    </span>
-                                                    <span
-                                                        className={
-                                                            styles.courseStatLabel
-                                                        }
-                                                    >
-                                                        applications
-                                                    </span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
-                                    {courses.length === 0 && (
-                                        <div className={styles.emptyState}>
-                                            <AcademicCapIcon
-                                                className={styles.emptyIcon}
-                                            />
-                                            <p className={styles.emptyText}>
-                                                No courses available
-                                            </p>
-                                        </div>
-                                    )}
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                    <div className={styles.coursesPagination}>
+                                        <PaginationBar
+                                            page={coursePage}
+                                            pageSize={COURSE_PAGE_SIZE}
+                                            totalCount={courses.length}
+                                            totalPages={courseTotalPages}
+                                            loading={coursesLoading}
+                                            onPageChange={setCoursePage}
+                                        />
+                                    </div>
                                 </div>
                             )}
                         </div>
                     </div>
 
-                    {/* Quick Actions */}
-                    <div className={styles.contentCard}>
-                        <div className={styles.cardHeader}>
-                            <h3 className={styles.cardTitle}>Quick Actions</h3>
-                        </div>
-                        <div className={styles.cardContent}>
-                            <div className={styles.actionsList}>
+                    {/* Quick Actions — compact sidebar */}
+                    <aside
+                        className={`${styles.contentCard} ${styles.actionsCard}`}
+                    >
+                        <h3 className={styles.actionsHeading}>More Actions</h3>
+                        <nav className={styles.actionsList}>
+                            {QUICK_ACTIONS.map((action) => (
                                 <Link
-                                    href="/dashboard/users"
+                                    key={action.href}
+                                    href={action.href}
                                     className={styles.actionItem}
                                 >
-                                    <div className={styles.actionIcon}>
-                                        <UsersIcon
-                                            className={styles.actionIconSvg}
-                                        />
-                                    </div>
-                                    <div className={styles.actionContent}>
-                                        <h4 className={styles.actionTitle}>
-                                            Manage Users
-                                        </h4>
-                                        <p className={styles.actionDescription}>
-                                            Block/unblock and delete users
-                                        </p>
-                                    </div>
-                                    <div className={styles.actionArrow}>→</div>
+                                    <action.icon
+                                        className={styles.actionIconSvg}
+                                    />
+                                    <span className={styles.actionTitle}>
+                                        {action.label}
+                                    </span>
                                 </Link>
-                                <Link
-                                    href="/dashboard/courses"
-                                    className={styles.actionItem}
-                                >
-                                    <div className={styles.actionIcon}>
-                                        <AcademicCapIcon
-                                            className={styles.actionIconSvg}
-                                        />
-                                    </div>
-                                    <div className={styles.actionContent}>
-                                        <h4 className={styles.actionTitle}>
-                                            Manage Courses
-                                        </h4>
-                                        <p className={styles.actionDescription}>
-                                            CRUD courses and assign lecturers
-                                        </p>
-                                    </div>
-                                    <div className={styles.actionArrow}>→</div>
-                                </Link>
-                                <Link
-                                    href="/dashboard/reports"
-                                    className={styles.actionItem}
-                                >
-                                    <div className={styles.actionIcon}>
-                                        <DocumentChartBarIcon
-                                            className={styles.actionIconSvg}
-                                        />
-                                    </div>
-                                    <div className={styles.actionContent}>
-                                        <h4 className={styles.actionTitle}>
-                                            Reports
-                                        </h4>
-                                        <p className={styles.actionDescription}>
-                                            Selection analytics (read-only)
-                                        </p>
-                                    </div>
-                                    <div className={styles.actionArrow}>→</div>
-                                </Link>
-                                <Link
-                                    href="/dashboard/announcements"
-                                    className={styles.actionItem}
-                                >
-                                    <div className={styles.actionIcon}>
-                                        <MegaphoneIcon
-                                            className={styles.actionIconSvg}
-                                        />
-                                    </div>
-                                    <div className={styles.actionContent}>
-                                        <h4 className={styles.actionTitle}>
-                                            Announcements
-                                        </h4>
-                                        <p className={styles.actionDescription}>
-                                            Platform banners for main app
-                                        </p>
-                                    </div>
-                                    <div className={styles.actionArrow}>→</div>
-                                </Link>
-                            </div>
-                        </div>
-                    </div>
+                            ))}
+                        </nav>
+                    </aside>
                 </div>
+                </>
             </div>
         </div>
     );

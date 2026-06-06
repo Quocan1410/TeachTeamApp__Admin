@@ -197,6 +197,7 @@ export const GET_UNASSIGNED_LECTURERS = gql`
             firstName
             lastName
             email
+            avatarUrl
         }
     }
 `;
@@ -277,6 +278,7 @@ export const GET_CANDIDATES_CHOSEN_PER_COURSE_PAGINATED = gql`
                         lastName
                         email
                         fullName
+                        avatarUrl
                     }
                     course {
                         id
@@ -289,6 +291,7 @@ export const GET_CANDIDATES_CHOSEN_PER_COURSE_PAGINATED = gql`
                         firstName
                         lastName
                         fullName
+                        email
                     }
                     application {
                         id
@@ -319,6 +322,7 @@ export const GET_CANDIDATES_WITH_MULTIPLE_SELECTIONS_PAGINATED = gql`
                     lastName
                     email
                     fullName
+                    avatarUrl
                 }
                 selections {
                     candidate {
@@ -339,6 +343,7 @@ export const GET_CANDIDATES_WITH_MULTIPLE_SELECTIONS_PAGINATED = gql`
                         firstName
                         lastName
                         fullName
+                        email
                     }
                     application {
                         id
@@ -368,6 +373,7 @@ export const GET_UNSELECTED_CANDIDATES_PAGINATED = gql`
                     lastName
                     email
                     fullName
+                    avatarUrl
                 }
                 applications {
                     id

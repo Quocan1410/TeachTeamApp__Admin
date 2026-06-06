@@ -233,25 +233,22 @@ export class CourseResolver {
         @Arg("courseId", () => Int, { nullable: true }) courseId?: number
     ): Promise<User[]> {
         const userRepository = AppDataSource.getRepository(User);
+        const assignmentRepository =
+            AppDataSource.getRepository(CourseAssignment);
 
         if (courseId) {
-            // Check if this course already has a lecturer assigned
-            const assignmentRepository =
-                AppDataSource.getRepository(CourseAssignment);
-            const existingAssignment = await assignmentRepository.findOne({
+            const courseHasLecturer = await assignmentRepository.exist({
                 where: { courseId },
             });
 
-            // If course already has a lecturer, return empty array
-            if (existingAssignment) {
+            if (courseHasLecturer) {
                 return [];
             }
         }
 
-        // Return all lecturers if course has no lecturer assigned
         return await userRepository.find({
-            where: { userType: UserType.LECTURER },
-            order: { createdAt: "DESC" },
+            where: { userType: UserType.LECTURER, isBlocked: false },
+            order: { lastName: "ASC", firstName: "ASC" },
         });
     }
 
@@ -448,7 +445,6 @@ export class CourseResolver {
             const assignmentRepository =
                 AppDataSource.getRepository(CourseAssignment);
 
-            // Verify lecturer exists and is a lecturer
             const lecturer = await userRepository.findOne({
                 where: { id: lecturerId, userType: UserType.LECTURER },
             });
@@ -460,7 +456,13 @@ export class CourseResolver {
                 };
             }
 
-            // Verify course exists
+            if (lecturer.isBlocked) {
+                return {
+                    success: false,
+                    message: "Cannot assign a blocked lecturer",
+                };
+            }
+
             const course = await courseRepository.findOne({
                 where: { id: courseId },
             });
@@ -471,7 +473,17 @@ export class CourseResolver {
                 };
             }
 
-            // Check if assignment already exists
+            const courseAlreadyAssigned = await assignmentRepository.exist({
+                where: { courseId },
+            });
+
+            if (courseAlreadyAssigned) {
+                return {
+                    success: false,
+                    message: "This course already has an assigned lecturer",
+                };
+            }
+
             const existingAssignment = await assignmentRepository.findOne({
                 where: { lecturerId, courseId },
             });

@@ -18,7 +18,15 @@ import {
     PencilIcon,
     TrashIcon,
     MagnifyingGlassIcon,
+    CheckCircleIcon,
+    XCircleIcon,
+    XMarkIcon,
+    UsersIcon,
+    UserGroupIcon,
+    AcademicCapIcon,
 } from "@heroicons/react/24/outline";
+import type { ComponentType, SVGProps } from "react";
+import AdminPageSkeleton from "@/shared/components/common/AdminPageSkeleton/AdminPageSkeleton";
 import styles from "./announcements-management.module.css";
 
 const Toast = dynamic(
@@ -54,20 +62,93 @@ const emptyForm = (): FormState => ({
     isActive: true,
 });
 
-const PAGE_SIZE = 15;
+const PAGE_SIZE = 5;
 
-/** GraphQL enum names (ALL) vs DB values (all) */
+const AUDIENCE_FILTERS = [
+    { id: "all", label: "All audiences" },
+    { id: "candidate", label: "Tutors / candidates" },
+    { id: "lecturer", label: "Lecturers" },
+] as const;
+
 const normalizeAudience = (value: string) => value.toLowerCase();
 
-const audienceLabel = (value: string) => {
+/** GraphQL enum names (CANDIDATE) vs DB values (candidate) */
+const toGraphqlAudience = (
+    value: string
+): "ALL" | "CANDIDATE" | "LECTURER" => {
     switch (normalizeAudience(value)) {
         case "candidate":
-            return "Tutors / candidates";
+            return "CANDIDATE";
         case "lecturer":
-            return "Lecturers";
+            return "LECTURER";
         default:
-            return "All users";
+            return "ALL";
     }
+};
+
+const toGraphqlAudienceFilter = (value: string): "CANDIDATE" | "LECTURER" | null => {
+    switch (normalizeAudience(value)) {
+        case "candidate":
+            return "CANDIDATE";
+        case "lecturer":
+            return "LECTURER";
+        default:
+            return null;
+    }
+};
+
+type AudienceDisplay = {
+    label: string;
+    chipClass: string;
+    Icon: ComponentType<SVGProps<SVGSVGElement>>;
+};
+
+const getAudienceDisplay = (value: string): AudienceDisplay => {
+    switch (normalizeAudience(value)) {
+        case "candidate":
+            return {
+                label: "Candidates",
+                chipClass: styles.audienceChipCandidate,
+                Icon: UserGroupIcon,
+            };
+        case "lecturer":
+            return {
+                label: "Lecturers",
+                chipClass: styles.audienceChipLecturer,
+                Icon: AcademicCapIcon,
+            };
+        default:
+            return {
+                label: "Everyone",
+                chipClass: styles.audienceChipAll,
+                Icon: UsersIcon,
+            };
+    }
+};
+
+function AudienceCell({ audience }: { audience: string }) {
+    const { label, chipClass, Icon } = getAudienceDisplay(audience);
+
+    return (
+        <span className={`${styles.tablePill} ${chipClass}`}>
+            <Icon className={styles.tablePillIcon} aria-hidden />
+            {label}
+        </span>
+    );
+}
+
+const formatWindow = (startsAt?: string | null, endsAt?: string | null) => {
+    const fmt = (iso?: string | null) => {
+        if (!iso) return "—";
+        return new Date(iso).toLocaleString("en-AU", {
+            day: "numeric",
+            month: "short",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit",
+        });
+    };
+    return `${fmt(startsAt)} → ${fmt(endsAt)}`;
 };
 
 const toLocalInput = (iso?: string | null) => {
@@ -81,7 +162,7 @@ const toLocalInput = (iso?: string | null) => {
 const buildInput = (form: FormState) => ({
     title: form.title.trim(),
     body: form.body.trim(),
-    audience: normalizeAudience(form.audience),
+    audience: toGraphqlAudience(form.audience),
     isActive: form.isActive,
     startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : null,
     endsAt: form.endsAt ? new Date(form.endsAt).toISOString() : null,
@@ -108,8 +189,7 @@ export default function AnnouncementsManagement() {
                 page,
                 pageSize: PAGE_SIZE,
                 search: debouncedSearchTerm || null,
-                audience:
-                    audienceFilter === "all" ? null : audienceFilter,
+                audience: toGraphqlAudienceFilter(audienceFilter),
             },
         },
         fetchPolicy: "cache-and-network",
@@ -154,6 +234,12 @@ export default function AnnouncementsManagement() {
 
     const announcementPage = data?.getAnnouncements;
     const rows: AnnouncementRow[] = announcementPage?.items ?? [];
+    const isInitialLoad = loading && !data;
+
+    const openCreate = () => {
+        setForm(emptyForm());
+        setShowCreate(true);
+    };
 
     const openEdit = (row: AnnouncementRow) => {
         setSelected(row);
@@ -168,77 +254,219 @@ export default function AnnouncementsManagement() {
         setShowEdit(true);
     };
 
+    const handleDelete = (row: AnnouncementRow) => {
+        if (window.confirm(`Delete "${row.title}"?`)) {
+            deleteAnnouncement({ variables: { id: Number(row.id) } });
+        }
+    };
+
+    const closeModal = () => {
+        setShowCreate(false);
+        setShowEdit(false);
+    };
+
     const renderFormFields = () => (
         <>
-            <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Title</label>
-                <input
-                    className={styles.formInput}
-                    value={form.title}
-                    onChange={(e) => setForm({ ...form, title: e.target.value })}
-                    required
-                />
-            </div>
-            <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Body</label>
-                <textarea
-                    className={styles.formTextarea}
-                    rows={4}
-                    value={form.body}
-                    onChange={(e) => setForm({ ...form, body: e.target.value })}
-                    required
-                />
-            </div>
-            <div className={styles.formGroup}>
-                <label className={styles.formLabel}>Audience</label>
-                <select
-                    className={styles.formInput}
-                    value={form.audience}
-                    onChange={(e) =>
-                        setForm({ ...form, audience: e.target.value })
-                    }
-                >
-                    <option value="all">All users</option>
-                    <option value="candidate">Tutors / candidates</option>
-                    <option value="lecturer">Lecturers</option>
-                </select>
-            </div>
-            <div className={styles.formRow}>
+            <div className={styles.formSection}>
+                <h3 className={styles.formSectionTitle}>Content</h3>
                 <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Starts at</label>
+                    <label className={styles.formLabel} htmlFor="ann-title">
+                        Title
+                    </label>
                     <input
-                        type="datetime-local"
+                        id="ann-title"
                         className={styles.formInput}
-                        value={form.startsAt}
+                        value={form.title}
                         onChange={(e) =>
-                            setForm({ ...form, startsAt: e.target.value })
+                            setForm({ ...form, title: e.target.value })
                         }
+                        placeholder="e.g. Application deadline reminder"
+                        required
                     />
                 </div>
                 <div className={styles.formGroup}>
-                    <label className={styles.formLabel}>Ends at</label>
-                    <input
-                        type="datetime-local"
-                        className={styles.formInput}
-                        value={form.endsAt}
+                    <label className={styles.formLabel} htmlFor="ann-body">
+                        Message
+                    </label>
+                    <textarea
+                        id="ann-body"
+                        className={styles.formTextarea}
+                        rows={4}
+                        value={form.body}
                         onChange={(e) =>
-                            setForm({ ...form, endsAt: e.target.value })
+                            setForm({ ...form, body: e.target.value })
                         }
+                        placeholder="Short banner text shown below the title on the main app"
+                        required
                     />
                 </div>
             </div>
-            <label className={styles.formLabel}>
-                <input
-                    type="checkbox"
-                    checked={form.isActive}
-                    onChange={(e) =>
-                        setForm({ ...form, isActive: e.target.checked })
-                    }
-                />{" "}
-                Active
-            </label>
+
+            <div className={styles.formSection}>
+                <h3 className={styles.formSectionTitle}>
+                    Audience &amp; schedule
+                </h3>
+                <div className={styles.formGroup}>
+                    <label className={styles.formLabel} htmlFor="ann-audience">
+                        Audience
+                    </label>
+                    <select
+                        id="ann-audience"
+                        className={styles.formSelect}
+                        value={form.audience}
+                        onChange={(e) =>
+                            setForm({ ...form, audience: e.target.value })
+                        }
+                    >
+                        <option value="all">All users</option>
+                        <option value="candidate">Tutors / candidates</option>
+                        <option value="lecturer">Lecturers</option>
+                    </select>
+                    <p className={styles.formHint}>
+                        Only the selected user type will see this banner.
+                    </p>
+                </div>
+                <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                        <label className={styles.formLabel} htmlFor="ann-starts">
+                            Starts at
+                        </label>
+                        <input
+                            id="ann-starts"
+                            type="datetime-local"
+                            className={styles.formInput}
+                            value={form.startsAt}
+                            onChange={(e) =>
+                                setForm({ ...form, startsAt: e.target.value })
+                            }
+                        />
+                    </div>
+                    <div className={styles.formGroup}>
+                        <label className={styles.formLabel} htmlFor="ann-ends">
+                            Ends at
+                        </label>
+                        <input
+                            id="ann-ends"
+                            type="datetime-local"
+                            className={styles.formInput}
+                            value={form.endsAt}
+                            onChange={(e) =>
+                                setForm({ ...form, endsAt: e.target.value })
+                            }
+                        />
+                    </div>
+                </div>
+                <p className={styles.formHint}>
+                    Leave blank to show immediately with no end date.
+                </p>
+            </div>
+
+            <div className={styles.formSection}>
+                <h3 className={styles.formSectionTitle}>Visibility</h3>
+                <div className={styles.activeToggleRow}>
+                    <div className={styles.activeToggleCopy}>
+                        <span className={styles.activeToggleLabel}>
+                            Active
+                        </span>
+                        <span className={styles.activeToggleHint}>
+                            Inactive announcements are hidden from the main app.
+                        </span>
+                    </div>
+                    <button
+                        type="button"
+                        role="switch"
+                        aria-checked={form.isActive}
+                        className={`${styles.toggleSwitch} ${
+                            form.isActive ? styles.toggleSwitchOn : ""
+                        }`}
+                        onClick={() =>
+                            setForm({ ...form, isActive: !form.isActive })
+                        }
+                    >
+                        <span className={styles.toggleKnob} />
+                    </button>
+                </div>
+            </div>
         </>
     );
+
+    const renderAnnouncementModal = (
+        mode: "create" | "edit",
+        onSubmit: (e: React.FormEvent) => void
+    ) => (
+        <div
+            className={styles.modalOverlay}
+            onClick={closeModal}
+            role="presentation"
+        >
+            <div
+                className={styles.modal}
+                onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="announcement-modal-title"
+            >
+                <div className={styles.modalHeader}>
+                    <div className={styles.modalHeaderText}>
+                        <span className={styles.modalBadge}>Banner</span>
+                        <h2
+                            id="announcement-modal-title"
+                            className={styles.modalTitle}
+                        >
+                            {mode === "create"
+                                ? "Create announcement"
+                                : "Edit announcement"}
+                        </h2>
+                        <p className={styles.modalSubtitle}>
+                            Shown as a banner on the main app for the selected
+                            audience.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        className={styles.closeButton}
+                        onClick={closeModal}
+                        aria-label="Close"
+                    >
+                        <XMarkIcon className={styles.closeIcon} />
+                    </button>
+                </div>
+                <form onSubmit={onSubmit} className={styles.modalForm}>
+                    {renderFormFields()}
+                    <div className={styles.modalActions}>
+                        <button
+                            type="button"
+                            className={styles.modalButtonSecondary}
+                            onClick={closeModal}
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            className={styles.modalButtonPrimary}
+                        >
+                            {mode === "create" ? "Create" : "Save changes"}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    );
+
+    if (isInitialLoad) {
+        return (
+            <div className={styles.announcementsPage}>
+                <div className={styles.managementContainer}>
+                    <AdminPageSkeleton
+                        variant="management"
+                        count={6}
+                        showHeader
+                        showFilters
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.announcementsPage}>
@@ -248,217 +476,302 @@ export default function AnnouncementsManagement() {
                 visible={toast.visible}
                 onClose={hideToast}
             />
-            <div className={styles.pageHeader}>
-                <div>
-                    <h1 className={styles.pageTitle}>
-                        <MegaphoneIcon className={styles.pageTitleIcon} />
-                        Announcements
-                    </h1>
-                    <p className={styles.pageSubtitle}>
-                        Banners shown on the main app (tutor / lecturer)
-                    </p>
-                </div>
-                <button
-                    type="button"
-                    className={styles.createButton}
-                    onClick={() => {
-                        setForm(emptyForm());
-                        setShowCreate(true);
-                    }}
-                >
-                    <PlusIcon className={styles.buttonIcon} />
-                    New announcement
-                </button>
-            </div>
 
-            <div className={styles.filtersRow}>
-                <div className={styles.searchContainer}>
-                    <MagnifyingGlassIcon className={styles.searchIcon} />
-                    <input
-                        type="text"
-                        className={styles.searchInput}
-                        placeholder="Search title or body..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+            <div className={styles.managementContainer}>
+                <div className={styles.headerSection}>
+                    <div className={styles.headerContent}>
+                        <h1 className={styles.title}>
+                            <MegaphoneIcon className={styles.titleIcon} />
+                            Announcements
+                        </h1>
+                        <p className={styles.subtitle}>
+                            Banners shown on the main app (tutor / lecturer)
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        className={styles.createButton}
+                        onClick={openCreate}
+                    >
+                        <PlusIcon className={styles.buttonIcon} />
+                        New announcement
+                    </button>
                 </div>
-                <select
-                    className={styles.filterSelect}
-                    value={audienceFilter}
-                    onChange={(e) => setAudienceFilter(e.target.value)}
-                >
-                    <option value="all">All audiences</option>
-                    <option value="candidate">Tutors / candidates</option>
-                    <option value="lecturer">Lecturers</option>
-                </select>
-            </div>
 
-            <div className={styles.tableContainer}>
-                {loading && rows.length === 0 ? (
-                    <p className={styles.loadingState}>Loading announcements…</p>
-                ) : error ? (
-                    <div className={styles.errorState}>
-                        <p>Could not load announcements.</p>
-                        <p>{error.message}</p>
-                        <button
-                            type="button"
-                            className={styles.createButton}
-                            style={{ marginTop: "1rem" }}
-                            onClick={() => refetch()}
-                        >
-                            Retry
-                        </button>
+                <div className={styles.filtersSection}>
+                    <div className={styles.filtersHeader}>
+                        <div className={styles.filtersContainer}>
+                            <div className={styles.filterTabs}>
+                                {AUDIENCE_FILTERS.map((filter) => (
+                                    <button
+                                        key={filter.id}
+                                        type="button"
+                                        className={`${styles.filterTab} ${
+                                            audienceFilter === filter.id
+                                                ? styles.active
+                                                : ""
+                                        }`}
+                                        onClick={() =>
+                                            setAudienceFilter(filter.id)
+                                        }
+                                    >
+                                        {filter.label}
+                                    </button>
+                                ))}
+                            </div>
+                            <div className={styles.searchContainer}>
+                                <MagnifyingGlassIcon
+                                    className={styles.searchIcon}
+                                />
+                                <input
+                                    type="text"
+                                    className={styles.searchInput}
+                                    placeholder="Search title or body..."
+                                    value={searchTerm}
+                                    onChange={(e) =>
+                                        setSearchTerm(e.target.value)
+                                    }
+                                />
+                            </div>
+                        </div>
                     </div>
-                ) : rows.length === 0 ? (
-                    <div className={styles.emptyState}>
-                        <p>No announcements yet</p>
-                        <p>Create one to show a banner on the main app.</p>
+                </div>
+
+                <div className={styles.listPanel}>
+                    <div className={styles.panelHeader}>
+                        <h2 className={styles.panelTitle}>All announcements</h2>
+                        <span className={styles.panelBadge}>
+                            {announcementPage?.totalCount ?? 0} total
+                        </span>
                     </div>
-                ) : (
-                    <table className={styles.table}>
-                        <thead>
-                            <tr>
-                                <th>Title</th>
-                                <th>Audience</th>
-                                <th>Active</th>
-                                <th>Window</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {rows.map((row) => (
-                                <tr key={row.id}>
-                                    <td>{row.title}</td>
-                                    <td>{audienceLabel(row.audience)}</td>
-                                    <td>{row.isActive ? "Yes" : "No"}</td>
-                                    <td>
-                                        {row.startsAt
-                                            ? new Date(
-                                                  row.startsAt
-                                              ).toLocaleString()
-                                            : "—"}{" "}
-                                        →{" "}
-                                        {row.endsAt
-                                            ? new Date(
-                                                  row.endsAt
-                                              ).toLocaleString()
-                                            : "—"}
-                                    </td>
-                                    <td>
-                                        <button
-                                            type="button"
-                                            className={styles.actionButton}
-                                            onClick={() => openEdit(row)}
-                                            aria-label={`Edit ${row.title}`}
-                                        >
-                                            <PencilIcon width={18} />
-                                        </button>
-                                        <button
-                                            type="button"
-                                            className={`${styles.actionButton} ${styles.actionButtonDanger}`}
-                                            onClick={() => {
-                                                if (
-                                                    window.confirm(
-                                                        "Delete this announcement?"
-                                                    )
-                                                ) {
-                                                    deleteAnnouncement({
-                                                        variables: {
-                                                            id: Number(row.id),
-                                                        },
-                                                    });
+
+                    {error ? (
+                        <div className={styles.errorState}>
+                            <p>Could not load announcements.</p>
+                            <p>{error.message}</p>
+                            <button
+                                type="button"
+                                className={styles.createButton}
+                                style={{ marginTop: "1rem" }}
+                                onClick={() => refetch()}
+                            >
+                                Retry
+                            </button>
+                        </div>
+                    ) : rows.length === 0 ? (
+                        <div className={styles.emptyState}>
+                            <MegaphoneIcon className={styles.emptyStateIcon} />
+                            <p className={styles.emptyStateTitle}>
+                                No announcements yet
+                            </p>
+                            <p className={styles.emptyStateText}>
+                                Create one to show a banner on the main app.
+                            </p>
+                            <button
+                                type="button"
+                                className={styles.createButton}
+                                onClick={openCreate}
+                            >
+                                <PlusIcon className={styles.buttonIcon} />
+                                Create announcement
+                            </button>
+                        </div>
+                    ) : (
+                        <>
+                            <div className={styles.tableWrapper}>
+                                <table className={styles.table}>
+                                    <thead className={styles.tableHeaderRow}>
+                                        <tr>
+                                            <th
+                                                className={
+                                                    styles.tableHeaderCell
                                                 }
-                                            }}
-                                            aria-label={`Delete ${row.title}`}
-                                        >
-                                            <TrashIcon width={18} />
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                )}
-                {announcementPage && announcementPage.totalCount > 0 && (
-                    <PaginationBar
-                        page={announcementPage.page}
-                        pageSize={announcementPage.pageSize}
-                        totalCount={announcementPage.totalCount}
-                        totalPages={announcementPage.totalPages}
-                        loading={loading}
-                        onPageChange={setPage}
-                    />
-                )}
+                                            >
+                                                Announcement
+                                            </th>
+                                            <th
+                                                className={`${styles.tableHeaderCell} ${styles.tableHeaderCellCenter}`}
+                                            >
+                                                Audience
+                                            </th>
+                                            <th
+                                                className={`${styles.tableHeaderCell} ${styles.tableHeaderCellCenter}`}
+                                            >
+                                                Status
+                                            </th>
+                                            <th
+                                                className={
+                                                    styles.tableHeaderCell
+                                                }
+                                            >
+                                                Schedule
+                                            </th>
+                                            <th
+                                                className={
+                                                    styles.tableHeaderCell
+                                                }
+                                            >
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {rows.map((row) => (
+                                            <tr
+                                                key={row.id}
+                                                className={styles.tableRow}
+                                            >
+                                                <td
+                                                    className={`${styles.tableCell} ${styles.titleCell}`}
+                                                >
+                                                    <p
+                                                        className={
+                                                            styles.announcementTitle
+                                                        }
+                                                    >
+                                                        {row.title}
+                                                    </p>
+                                                    <p
+                                                        className={
+                                                            styles.announcementPreview
+                                                        }
+                                                    >
+                                                        {row.body}
+                                                    </p>
+                                                </td>
+                                                <td
+                                                    className={`${styles.tableCell} ${styles.tableCellCenter} ${styles.badgeCell}`}
+                                                >
+                                                    <AudienceCell
+                                                        audience={row.audience}
+                                                    />
+                                                </td>
+                                                <td
+                                                    className={`${styles.tableCell} ${styles.tableCellCenter} ${styles.badgeCell}`}
+                                                >
+                                                    <span
+                                                        className={`${styles.tablePill} ${
+                                                            row.isActive
+                                                                ? styles.statusActive
+                                                                : styles.statusInactive
+                                                        }`}
+                                                    >
+                                                        {row.isActive ? (
+                                                            <CheckCircleIcon
+                                                                className={
+                                                                    styles.tablePillIcon
+                                                                }
+                                                            />
+                                                        ) : (
+                                                            <XCircleIcon
+                                                                className={
+                                                                    styles.tablePillIcon
+                                                                }
+                                                            />
+                                                        )}
+                                                        {row.isActive
+                                                            ? "Active"
+                                                            : "Inactive"}
+                                                    </span>
+                                                </td>
+                                                <td
+                                                    className={`${styles.tableCell} ${styles.windowCell}`}
+                                                >
+                                                    {formatWindow(
+                                                        row.startsAt,
+                                                        row.endsAt
+                                                    )}
+                                                </td>
+                                                <td
+                                                    className={`${styles.tableCell} ${styles.actionsCell}`}
+                                                >
+                                                    <div
+                                                        className={
+                                                            styles.actionsContainer
+                                                        }
+                                                    >
+                                                        <button
+                                                            type="button"
+                                                            className={
+                                                                styles.actionButton
+                                                            }
+                                                            onClick={() =>
+                                                                openEdit(row)
+                                                            }
+                                                            aria-label={`Edit ${row.title}`}
+                                                        >
+                                                            <PencilIcon
+                                                                className={
+                                                                    styles.actionIcon
+                                                                }
+                                                            />
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            className={`${styles.actionButton} ${styles.actionButtonDanger}`}
+                                                            onClick={() =>
+                                                                handleDelete(
+                                                                    row
+                                                                )
+                                                            }
+                                                            aria-label={`Delete ${row.title}`}
+                                                        >
+                                                            <TrashIcon
+                                                                className={
+                                                                    styles.actionIcon
+                                                                }
+                                                            />
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            {announcementPage &&
+                                announcementPage.totalCount > 0 && (
+                                    <div className={styles.paginationWrap}>
+                                        <PaginationBar
+                                            page={announcementPage.page}
+                                            pageSize={
+                                                announcementPage.pageSize
+                                            }
+                                            totalCount={
+                                                announcementPage.totalCount
+                                            }
+                                            totalPages={
+                                                announcementPage.totalPages
+                                            }
+                                            loading={loading && !!data}
+                                            onPageChange={setPage}
+                                        />
+                                    </div>
+                                )}
+                        </>
+                    )}
+                </div>
             </div>
 
-            {showCreate && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modal}>
-                        <h2>Create announcement</h2>
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                createAnnouncement({
-                                    variables: { input: buildInput(form) },
-                                });
-                            }}
-                        >
-                            {renderFormFields()}
-                            <div className={styles.modalActions}>
-                                <button
-                                    type="button"
-                                    className={styles.modalButtonSecondary}
-                                    onClick={() => setShowCreate(false)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className={styles.modalButtonPrimary}
-                                >
-                                    Create
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            {showCreate &&
+                renderAnnouncementModal("create", (e) => {
+                    e.preventDefault();
+                    createAnnouncement({
+                        variables: { input: buildInput(form) },
+                    });
+                })}
 
-            {showEdit && selected && (
-                <div className={styles.modalOverlay}>
-                    <div className={styles.modal}>
-                        <h2>Edit announcement</h2>
-                        <form
-                            onSubmit={(e) => {
-                                e.preventDefault();
-                                updateAnnouncement({
-                                    variables: {
-                                        id: Number(selected.id),
-                                        input: buildInput(form),
-                                    },
-                                });
-                            }}
-                        >
-                            {renderFormFields()}
-                            <div className={styles.modalActions}>
-                                <button
-                                    type="button"
-                                    className={styles.modalButtonSecondary}
-                                    onClick={() => setShowEdit(false)}
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className={styles.modalButtonPrimary}
-                                >
-                                    Save
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            )}
+            {showEdit &&
+                selected &&
+                renderAnnouncementModal("edit", (e) => {
+                    e.preventDefault();
+                    updateAnnouncement({
+                        variables: {
+                            id: Number(selected.id),
+                            input: buildInput(form),
+                        },
+                    });
+                })}
         </div>
     );
 }

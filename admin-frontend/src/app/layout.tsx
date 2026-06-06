@@ -24,7 +24,7 @@ export default function RootLayout({
             >
                 <ThemeProvider>
                     <ApolloWrapper>
-                        <main className="flex-grow">{children}</main>
+                        <div className="flex-grow">{children}</div>
                     </ApolloWrapper>
                 </ThemeProvider>
             </body>

@@ -77,7 +77,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ user, onLogout }) => {
         { name: "Users", href: "/dashboard/users", icon: UsersIcon },
         { name: "Courses", href: "/dashboard/courses", icon: AcademicCapIcon },
         {
-            name: "Reports",
+            name: "Selections",
             href: "/dashboard/reports",
             icon: DocumentChartBarIcon,
         },

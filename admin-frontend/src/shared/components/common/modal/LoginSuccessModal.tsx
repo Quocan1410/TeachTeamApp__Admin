@@ -14,7 +14,8 @@ interface LoginSuccessModalProps {
   user: User;
   isVisible: boolean;
   onHide: () => void;
-  duration?: number; // Duration to show the modal in milliseconds
+  duration?: number;
+  isPreparing?: boolean;
 }
 
 export const LoginSuccessModal: React.FC<LoginSuccessModalProps> = ({
@@ -22,41 +23,53 @@ export const LoginSuccessModal: React.FC<LoginSuccessModalProps> = ({
   isVisible,
   onHide,
   duration = 3000,
+  isPreparing = false,
 }) => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [showFireworks, setShowFireworks] = useState(false);
 
   const handleHide = useCallback(() => {
-    setIsAnimating(false);
+    if (isPreparing) return;
     setShowFireworks(false);
-    
-    // Wait for exit animation before calling onHide
-    setTimeout(() => {
-      onHide();
-    }, 300);
-  }, [onHide]);
+    onHide();
+  }, [isPreparing, onHide]);
 
-  const handleContinueClick = () => {
+  const handleContinueClick = useCallback(() => {
+    if (isPreparing) return;
     setShowFireworks(true);
-    // Hide fireworks after a short duration, then close modal
     setTimeout(() => {
       handleHide();
     }, 1500);
-  };
+  }, [handleHide, isPreparing]);
 
-  // Start animation when modal becomes visible
   useEffect(() => {
     if (isVisible) {
       setIsAnimating(true);
-      
-      // Auto-hide after duration
-      const timer = setTimeout(() => {
-        handleHide();
-      }, duration);
-
-      return () => clearTimeout(timer);
     }
-  }, [isVisible, duration, handleHide]);
+  }, [isVisible]);
+
+  useEffect(() => {
+    if (!isVisible || isPreparing) return;
+
+    const timer = setTimeout(() => {
+      handleContinueClick();
+    }, duration);
+
+    return () => clearTimeout(timer);
+  }, [isVisible, isPreparing, duration, handleContinueClick]);
+
+  useEffect(() => {
+    if (!isVisible) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Enter") return;
+      event.preventDefault();
+      handleContinueClick();
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [isVisible, handleContinueClick]);
 
   const getWelcomeMessage = () => {
     return `Welcome back, ${getUserDisplayName(user, "Admin")}!`;
@@ -68,63 +81,67 @@ export const LoginSuccessModal: React.FC<LoginSuccessModalProps> = ({
 
   return (
     <>
-      {/* Modal Overlay */}
-      <div 
+      <div
         className={`${styles.modalOverlay} ${isAnimating ? styles.visible : styles.hidden}`}
-        onClick={handleHide}
+        onClick={isPreparing ? undefined : handleHide}
       >
-        {/* Modal Content */}
-        <div 
-          className={`${styles.modalContent} ${isAnimating ? styles.animated : ''}`}
+        <div
+          className={`${styles.modalContent} ${isAnimating ? styles.animated : ""}`}
           onClick={(e) => e.stopPropagation()}
         >
-          {/* Success Icon with Enhanced Checkmark */}
           <div className={styles.successIcon}>
             <div className={styles.checkmark}>
               <svg viewBox="0 0 52 52" className={styles.checkmarkSvg}>
-                <circle 
-                  className={styles.checkmarkCircle} 
-                  cx="26" 
-                  cy="26" 
-                  r="25" 
+                <circle
+                  className={styles.checkmarkCircle}
+                  cx="26"
+                  cy="26"
+                  r="25"
                   fill="none"
                 />
-                <path 
-                  className={styles.checkmarkCheck} 
-                  fill="none" 
+                <path
+                  className={styles.checkmarkCheck}
+                  fill="none"
                   d="m14.1 27.2l7.1 7.2 16.7-16.8"
                 />
               </svg>
             </div>
-            {/* Pulse rings for enhanced effect */}
             <div className={styles.pulseRing}></div>
-            <div className={styles.pulseRing} style={{ animationDelay: '0.3s' }}></div>
+            <div
+              className={styles.pulseRing}
+              style={{ animationDelay: "0.3s" }}
+            ></div>
           </div>
 
-          {/* Simplified Message Section */}
           <div className={styles.messageSection}>
             <h2 className={styles.welcomeTitle}>Success!</h2>
             <h3 className={styles.welcomeMessage}>{getWelcomeMessage()}</h3>
           </div>
 
-          {/* Continue Button with Fireworks Effect */}
           <div className={styles.buttonContainer}>
             <button
-              className={`${styles.continueButton} ${showFireworks ? styles.fireworksActive : ''}`}
+              type="button"
+              className={`${styles.continueButton} ${showFireworks ? styles.fireworksActive : ""}`}
               onClick={handleContinueClick}
               aria-label="Continue to dashboard"
+              disabled={isPreparing}
+              autoFocus={!isPreparing}
             >
-              <span className={styles.buttonText}>Continue</span>
+              <span className={styles.buttonText}>
+                {isPreparing ? "Preparing dashboard..." : "Continue"}
+              </span>
               {showFireworks && (
                 <div className={styles.fireworksContainer}>
                   {[...Array(8)].map((_, i) => (
-                    <div 
-                      key={i} 
-                      className={styles.firework} 
-                      style={{ 
-                        '--angle': `${i * 45}deg`,
-                        '--delay': `${i * 0.1}s` 
-                      } as React.CSSProperties}
+                    <div
+                      key={i}
+                      className={styles.firework}
+                      style={
+                        {
+                          "--angle": `${i * 45}deg`,
+                          "--delay": `${i * 0.1}s`,
+                        } as React.CSSProperties
+                      }
                     />
                   ))}
                 </div>
@@ -137,4 +154,4 @@ export const LoginSuccessModal: React.FC<LoginSuccessModalProps> = ({
   );
 };
 
-export default LoginSuccessModal; 
+export default LoginSuccessModal;

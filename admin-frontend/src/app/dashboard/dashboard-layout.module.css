@@ -1,0 +1,16 @@
+.shell {
+    min-height: 100vh;
+    background: linear-gradient(
+        135deg,
+        var(--color-bg-primary) 0%,
+        var(--color-bg-secondary) 100%
+    );
+}
+
+.main {
+    padding-top: 5rem;
+}
+
+.bootstrapMain {
+    min-height: calc(100vh - 80px);
+}

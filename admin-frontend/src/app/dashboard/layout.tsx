@@ -1,17 +1,13 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@apollo/client";
 import AdminHeader from "../../shared/components/common/Header/AdminHeader";
 import { ADMIN_LOGOUT } from "@/lib/graphql/queries";
-import {
-    ADMIN_TOKEN_KEY,
-    clearAdminSession,
-    getStoredAdminUser,
-    isAdminUser,
-    type StoredAdminUser,
-} from "@/lib/adminSession";
+import { clearAdminSession, type StoredAdminUser } from "@/lib/adminSession";
+import { readAdminSessionUser } from "@/lib/readAdminSessionUser";
+import layoutStyles from "./dashboard-layout.module.css";
 
 export default function DashboardLayout({
     children,
@@ -19,20 +15,19 @@ export default function DashboardLayout({
     children: React.ReactNode;
 }) {
     const [user, setUser] = useState<StoredAdminUser | null>(null);
+    const [ready, setReady] = useState(false);
     const router = useRouter();
     const [adminLogout] = useMutation(ADMIN_LOGOUT);
 
-    useEffect(() => {
-        const token = sessionStorage.getItem(ADMIN_TOKEN_KEY);
-        const stored = getStoredAdminUser();
-
-        if (!token || !stored || !isAdminUser(stored)) {
+    useLayoutEffect(() => {
+        const stored = readAdminSessionUser();
+        if (!stored) {
             clearAdminSession();
             router.replace("/");
-            return;
+        } else {
+            setUser(stored);
         }
-
-        setUser(stored);
+        setReady(true);
     }, [router]);
 
     const handleLogout = async () => {
@@ -45,23 +40,22 @@ export default function DashboardLayout({
         router.replace("/");
     };
 
-    if (!user) {
+    if (!ready) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="animate-spin rounded-full h-16 w-16 border-4 border-orange-500 border-t-transparent"></div>
-                    <p className="text-gray-600 font-medium">
-                        Loading admin panel...
-                    </p>
-                </div>
+            <div className={layoutStyles.shell} aria-busy="true">
+                <main className={layoutStyles.bootstrapMain} />
             </div>
         );
     }
 
+    if (!user) {
+        return <div className={layoutStyles.shell} aria-busy="true" />;
+    }
+
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className={layoutStyles.shell}>
             <AdminHeader user={user} onLogout={handleLogout} />
-            <main className="pt-20">{children}</main>
+            <main className={layoutStyles.main}>{children}</main>
         </div>
     );
 }

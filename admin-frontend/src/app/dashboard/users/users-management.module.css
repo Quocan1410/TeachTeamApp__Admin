@@ -23,7 +23,7 @@
 /* Header Section */
 .headerSection {
     margin-bottom: 2rem;
-    padding-top: 1rem;
+    padding-top: 2.5rem;
 }
 
 .title {
@@ -42,13 +42,11 @@
 }
 
 .subtitle {
-    font-size: 2rem;
-    color: #f97316; /* orange accent */
-    font-weight: bold;
-    margin: 1.5rem 0 0.5rem 0; /* extra top margin */
-    line-height: 1.4;
-    letter-spacing: -0.025em;
-    text-align: center;
+    font-size: 1.125rem;
+    color: var(--color-text-secondary);
+    font-weight: 500;
+    margin: 0;
+    text-align: left;
 }
 
 /* Stats Grid */
@@ -256,8 +254,13 @@
     margin-top: 10px;
     background: var(--color-bg-surface);
     border: 1px solid var(--color-border);
+    border-radius: 0 0 12px 12px;
     overflow: hidden;
     box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+.tableWrapper {
+    overflow-x: auto;
 }
 
 .tableHeader {
@@ -326,12 +329,23 @@
 
 .tableRow {
     border-bottom: 1px solid var(--color-border);
-    transition: all 0.2s ease;
+    transition: background-color 0.15s ease;
+}
+
+.rowEven {
+    background: var(--color-bg-primary);
+}
+
+.rowOdd {
+    background: var(--color-bg-secondary);
 }
 
 .tableRow:hover {
-    background: var(--color-bg-secondary);
-    transform: translateX(2px);
+    background: var(--color-bg-hover) !important;
+}
+
+.table tbody tr:last-child td {
+    border-bottom: none;
 }
 
 .tableCell {
@@ -472,18 +486,22 @@
     background: var(--color-bg-primary);
     color: var(--color-text-secondary);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
     display: flex;
     align-items: center;
     justify-content: center;
     min-width: 38px;
     height: 38px;
+    flex-shrink: 0;
 }
 
 .actionButton:hover {
     background: var(--color-bg-secondary);
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.actionButton:focus,
+.actionButton:focus-visible {
+    outline: none;
 }
 
 .actionButtonDanger {
@@ -492,8 +510,18 @@
 }
 
 .actionButtonDanger:hover {
-    background: rgba(239, 68, 68, 0.1);
+    background: rgba(239, 68, 68, 0.12);
     border-color: #dc2626;
+}
+
+.actionButtonWarning {
+    border-color: #f59e0b;
+    color: #f59e0b;
+}
+
+.actionButtonWarning:hover {
+    background: rgba(245, 158, 11, 0.12);
+    border-color: #d97706;
 }
 
 .actionButtonSuccess {
@@ -502,7 +530,7 @@
 }
 
 .actionButtonSuccess:hover {
-    background: rgba(16, 185, 129, 0.1);
+    background: rgba(16, 185, 129, 0.12);
     border-color: #059669;
 }
 
@@ -539,18 +567,58 @@
     margin: 0.5rem 0;
 }
 
+/* Pagination footer */
+.usersPagination {
+    border-top: 1px solid var(--color-border);
+    background: var(--color-bg-secondary);
+}
+
+.usersPagination > div {
+    padding: 0.75rem 1.25rem;
+    border-top: none;
+}
+
+.usersPagination p,
+.usersPagination span {
+    color: var(--color-text-secondary) !important;
+}
+
+.usersPagination button {
+    padding: 0.4375rem 0.75rem;
+    border: 1px solid var(--color-border) !important;
+    border-radius: 8px;
+    background: var(--color-bg-primary) !important;
+    color: var(--color-text-primary) !important;
+    font-size: 0.8125rem;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.usersPagination button:hover:not(:disabled) {
+    background: var(--color-bg-hover) !important;
+    border-color: var(--color-primary) !important;
+}
+
+.usersPagination button:focus,
+.usersPagination button:focus-visible {
+    outline: none;
+}
+
+.usersPagination button:disabled {
+    opacity: 0.45;
+}
+
 /* Modal Styles */
 .modalOverlay {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.5);
+    inset: 0;
+    background: rgba(0, 0, 0, 0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 50;
+    z-index: 1000;
+    isolation: isolate;
 }
 
 .modal {
@@ -560,7 +628,9 @@
     max-width: 400px;
     width: 90%;
     border: 1px solid var(--color-border);
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+    position: relative;
+    z-index: 1001;
 }
 
 .modalHeader {
@@ -605,8 +675,13 @@
     font-size: 0.875rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
     border: 1px solid transparent;
+}
+
+.modalButton:focus,
+.modalButton:focus-visible {
+    outline: none;
 }
 
 .modalButtonSecondary {
@@ -711,7 +786,23 @@
 }
 
 :global(.dark) .tableRow:hover {
+    background: var(--color-bg-hover) !important;
+}
+
+:global(.dark) .rowEven {
+    background: var(--color-bg-primary);
+}
+
+:global(.dark) .rowOdd {
     background: var(--color-bg-secondary);
+}
+
+:global(.dark) .usersPagination {
+    background: var(--color-bg-secondary);
+}
+
+:global(.dark) .modalOverlay {
+    background: rgba(0, 0, 0, 0.82);
 }
 
 :global(.dark) .tableHeaderCell {
@@ -771,12 +862,42 @@
     background: var(--color-bg-secondary);
 }
 
+:global(.dark) .actionButtonDanger {
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+:global(.dark) .actionButtonDanger:hover {
+    background: rgba(239, 68, 68, 0.15);
+    border-color: #f87171;
+}
+
+:global(.dark) .actionButtonWarning {
+    border-color: #fbbf24;
+    color: #fbbf24;
+}
+
+:global(.dark) .actionButtonWarning:hover {
+    background: rgba(251, 191, 36, 0.12);
+    border-color: #f59e0b;
+}
+
+:global(.dark) .actionButtonSuccess {
+    border-color: #34d399;
+    color: #34d399;
+}
+
+:global(.dark) .actionButtonSuccess:hover {
+    background: rgba(52, 211, 153, 0.12);
+    border-color: #10b981;
+}
+
 :global(.dark) .modalText {
     color: var(--color-text-secondary);
 }
 
 :global(.dark) .subtitle {
-    color: #fb923c; /* lighter orange for dark mode */
+    color: var(--color-text-secondary);
 }
 
 /* Responsive Design */
@@ -862,9 +983,9 @@
     }
 
     .subtitle {
-        font-size: 1.5rem;
+        font-size: 1rem;
         margin-bottom: 0.75rem;
-        text-align: center;
+        text-align: left;
     }
 
     .modal {

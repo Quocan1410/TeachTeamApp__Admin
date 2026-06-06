@@ -19,6 +19,7 @@ import {
     ExclamationTriangleIcon,
     MagnifyingGlassIcon,
 } from "@heroicons/react/24/outline";
+import AdminPageSkeleton from "@/shared/components/common/AdminPageSkeleton/AdminPageSkeleton";
 import styles from "./users-management.module.css";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { getUserDisplayName } from "@/shared/utils/personDisplayName";
@@ -73,7 +74,8 @@ export default function UsersManagement() {
         },
         fetchPolicy: "cache-and-network",
     });
-    const { data: statsData, refetch: refetchStats } = useQuery(GET_USER_STATS);
+    const { data: statsData, loading: statsLoading, refetch: refetchStats } =
+        useQuery(GET_USER_STATS);
 
     const [blockUser] = useMutation(BLOCK_USER, {
         onCompleted: () => {
@@ -101,6 +103,8 @@ export default function UsersManagement() {
     const userPage = usersData?.getUsers;
     const filteredUsers = userPage?.items || [];
     const stats = statsData?.getUserStats;
+    const isInitialLoad =
+        (usersLoading && !usersData) || (statsLoading && !statsData);
 
     const isAdminAccount = (userType: string) =>
         userType?.toLowerCase() === "admin";
@@ -172,6 +176,21 @@ export default function UsersManagement() {
                 return styles.userTypeCandidate;
         }
     };
+
+    if (isInitialLoad) {
+        return (
+            <div className={styles.usersManagement}>
+                <div className={styles.managementContainer}>
+                    <AdminPageSkeleton
+                        variant="management"
+                        count={5}
+                        showHeader
+                        showFilters
+                    />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className={styles.usersManagement}>
@@ -293,6 +312,7 @@ export default function UsersManagement() {
                         <div className={styles.tableHeader}>
                             <h3 className={styles.tableTitle}>Users</h3>
                         </div>
+                        <div className={styles.tableWrapper}>
                         <table className={styles.table}>
                             <thead className={styles.tableHeaderRow}>
                                 <tr>
@@ -314,59 +334,17 @@ export default function UsersManagement() {
                                 </tr>
                             </thead>
                             <tbody>
-                                {usersLoading
-                                    ? [...Array(5)].map((_, i) => (
-                                          <tr
-                                              key={i}
-                                              className={styles.tableRow}
-                                          >
-                                              <td className={styles.tableCell}>
-                                                  <div
-                                                      className={
-                                                          styles.loadingContainer
-                                                      }
-                                                  >
-                                                      <div
-                                                          className={
-                                                              styles.loadingSkeleton
-                                                          }
-                                                      ></div>
-                                                  </div>
-                                              </td>
-                                              <td className={styles.tableCell}>
-                                                  <div
-                                                      className={
-                                                          styles.loadingSkeleton
-                                                      }
-                                                  ></div>
-                                              </td>
-                                              <td className={styles.tableCell}>
-                                                  <div
-                                                      className={
-                                                          styles.loadingSkeleton
-                                                      }
-                                                  ></div>
-                                              </td>
-                                              <td className={styles.tableCell}>
-                                                  <div
-                                                      className={
-                                                          styles.loadingSkeleton
-                                                      }
-                                                  ></div>
-                                              </td>
-                                              <td className={styles.tableCell}>
-                                                  <div
-                                                      className={
-                                                          styles.loadingSkeleton
-                                                      }
-                                                  ></div>
-                                              </td>
-                                          </tr>
-                                      ))
-                                    : filteredUsers.map((user: User) => (
+                                {filteredUsers.map((user: User, index: number) => {
+                                          const rowStripe =
+                                              ((page - 1) * PAGE_SIZE + index) %
+                                                  2 ===
+                                              0
+                                                  ? styles.rowEven
+                                                  : styles.rowOdd;
+                                          return (
                                           <tr
                                               key={user.id}
-                                              className={styles.tableRow}
+                                              className={`${styles.tableRow} ${rowStripe}`}
                                           >
                                               <td className={styles.tableCell}>
                                                   <div
@@ -448,6 +426,7 @@ export default function UsersManagement() {
                                                           user.userType
                                                       ) && (
                                                       <button
+                                                          type="button"
                                                           onClick={() =>
                                                               handleBlockToggle(
                                                                   user
@@ -465,7 +444,7 @@ export default function UsersManagement() {
                                                           } ${
                                                               user.isBlocked
                                                                   ? styles.actionButtonSuccess
-                                                                  : styles.actionButtonDanger
+                                                                  : styles.actionButtonWarning
                                                           } ${
                                                               currentUser &&
                                                               user.id ===
@@ -509,6 +488,7 @@ export default function UsersManagement() {
                                                                   currentUser.id
                                                           ) && (
                                                               <button
+                                                                  type="button"
                                                                   onClick={() =>
                                                                       handleDeleteClick(
                                                                           user
@@ -527,22 +507,26 @@ export default function UsersManagement() {
                                                   </div>
                                               </td>
                                           </tr>
-                                      ))}
+                                      );
+                                      })}
                             </tbody>
                         </table>
+                        </div>
                         {userPage && (
-                            <PaginationBar
-                                page={userPage.page}
-                                pageSize={userPage.pageSize}
-                                totalCount={userPage.totalCount}
-                                totalPages={userPage.totalPages}
-                                loading={usersLoading}
-                                onPageChange={setPage}
-                            />
+                            <div className={styles.usersPagination}>
+                                <PaginationBar
+                                    page={userPage.page}
+                                    pageSize={userPage.pageSize}
+                                    totalCount={userPage.totalCount}
+                                    totalPages={userPage.totalPages}
+                                    loading={isInitialLoad}
+                                    onPageChange={setPage}
+                                />
+                            </div>
                         )}
                     </div>
 
-                    {filteredUsers.length === 0 && !usersLoading && (
+                    {filteredUsers.length === 0 && !isInitialLoad && (
                         <div className={styles.emptyState}>
                             <UsersIcon className={styles.emptyStateIcon} />
                             <h3 className={styles.emptyStateText}>
@@ -576,12 +560,14 @@ export default function UsersManagement() {
                             </div>
                             <div className={styles.modalActions}>
                                 <button
+                                    type="button"
                                     onClick={() => setShowDeleteModal(false)}
                                     className={`${styles.modalButton} ${styles.modalButtonSecondary}`}
                                 >
                                     Cancel
                                 </button>
                                 <button
+                                    type="button"
                                     onClick={handleConfirmDelete}
                                     className={`${styles.modalButton} ${styles.modalButtonDanger}`}
                                 >
