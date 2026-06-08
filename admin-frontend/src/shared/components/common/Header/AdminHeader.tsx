@@ -14,6 +14,8 @@ import {
     ChevronDownIcon,
     DocumentChartBarIcon,
     MegaphoneIcon,
+    Bars3Icon,
+    XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "../../../contexts/ThemeContext";
 import ThemeToggle from "../ThemeToggle/ThemeToggle";
@@ -42,6 +44,7 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ user, onLogout }) => {
     const { isDarkMode, toggleDarkMode, isHydrated } = useTheme();
     const [isScrolled, setIsScrolled] = useState(false);
     const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+    const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -54,6 +57,21 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ user, onLogout }) => {
             window.removeEventListener("scroll", handleScroll);
         };
     }, []);
+
+    useEffect(() => {
+        setIsMobileNavOpen(false);
+    }, [pathname]);
+
+    useEffect(() => {
+        if (!isMobileNavOpen) return;
+
+        const previousOverflow = document.body.style.overflow;
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.body.style.overflow = previousOverflow;
+        };
+    }, [isMobileNavOpen]);
 
     // Close dropdown when clicking outside
     useEffect(() => {
@@ -138,8 +156,8 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ user, onLogout }) => {
                         </Link>
                     </div>
 
-                    {/* Navigation */}
-                    <nav className={styles.mainNav}>
+                    {/* Navigation — desktop */}
+                    <nav className={styles.mainNav} aria-label="Main navigation">
                         <div className={styles.navLinks}>
                             {navigation.map((item) => {
                                 const isActive = pathname === item.href;
@@ -161,6 +179,21 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ user, onLogout }) => {
 
                     {/* Header Actions */}
                     <div className={styles.headerActions}>
+                        <button
+                            type="button"
+                            className={styles.mobileMenuButton}
+                            onClick={() => setIsMobileNavOpen((open) => !open)}
+                            aria-expanded={isMobileNavOpen}
+                            aria-label={
+                                isMobileNavOpen ? "Close menu" : "Open menu"
+                            }
+                        >
+                            {isMobileNavOpen ? (
+                                <XMarkIcon className={styles.mobileMenuIcon} />
+                            ) : (
+                                <Bars3Icon className={styles.mobileMenuIcon} />
+                            )}
+                        </button>
                         <AdminNotificationBell />
                         {/* User Dropdown */}
                         <div className={styles.userDropdown} ref={dropdownRef}>
@@ -341,6 +374,38 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ user, onLogout }) => {
                     </div>
                 </div>
             </div>
+
+            {isMobileNavOpen && (
+                <>
+                    <button
+                        type="button"
+                        className={styles.mobileNavBackdrop}
+                        onClick={() => setIsMobileNavOpen(false)}
+                        aria-label="Close menu"
+                    />
+                    <nav
+                        className={styles.mobileNavDrawer}
+                        aria-label="Mobile navigation"
+                    >
+                        {navigation.map((item) => {
+                            const isActive = pathname === item.href;
+                            return (
+                                <Link
+                                    key={item.name}
+                                    href={item.href}
+                                    className={`${styles.mobileNavLink} ${
+                                        isActive ? styles.active : ""
+                                    }`}
+                                    onClick={() => setIsMobileNavOpen(false)}
+                                >
+                                    <item.icon className={styles.mobileNavIcon} />
+                                    <span>{item.name}</span>
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                </>
+            )}
         </header>
     );
 };

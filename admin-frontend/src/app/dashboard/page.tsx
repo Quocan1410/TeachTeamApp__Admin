@@ -13,6 +13,7 @@ import {
     ExclamationTriangleIcon,
     DocumentChartBarIcon,
     MegaphoneIcon,
+    ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 import AdminPageSkeleton from "@/shared/components/common/AdminPageSkeleton/AdminPageSkeleton";
 import styles from "./admin-dashboard.module.css";
@@ -88,6 +89,12 @@ export default function Dashboard() {
             color: "total",
         },
         {
+            name: "Admins",
+            value: userStats?.getUserStats?.totalAdmins || 0,
+            icon: ShieldCheckIcon,
+            color: "purple",
+        },
+        {
             name: "Candidates",
             value: userStats?.getUserStats?.totalCandidates || 0,
             icon: UserGroupIcon,
@@ -98,6 +105,18 @@ export default function Dashboard() {
             value: userStats?.getUserStats?.totalLecturers || 0,
             icon: AcademicCapIcon,
             color: "pending",
+        },
+        {
+            name: "Courses",
+            value: userStats?.getUserStats?.totalCourses || 0,
+            icon: AcademicCapIcon,
+            color: "blue",
+        },
+        {
+            name: "Announcements",
+            value: userStats?.getUserStats?.totalAnnouncements || 0,
+            icon: MegaphoneIcon,
+            color: "green",
         },
         {
             name: "Blocked Users",

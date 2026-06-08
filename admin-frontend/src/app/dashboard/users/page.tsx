@@ -8,12 +8,16 @@ import {
     BLOCK_USER,
     UNBLOCK_USER,
     DELETE_USER,
+    UPDATE_USER,
+    CREATE_USER,
 } from "@/lib/graphql/queries";
 import {
     UsersIcon,
     ShieldCheckIcon,
     ShieldExclamationIcon,
     TrashIcon,
+    PencilIcon,
+    PlusIcon,
     CheckCircleIcon,
     XCircleIcon,
     ExclamationTriangleIcon,
@@ -24,6 +28,12 @@ import styles from "./users-management.module.css";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import { getUserDisplayName } from "@/shared/utils/personDisplayName";
 import PaginationBar from "@/shared/components/common/PaginationBar/PaginationBar";
+import Toast from "@/shared/components/common/Toast/Toast";
+import { useToast } from "@/shared/hooks/useToast";
+import SortableTableHeader, {
+    toggleSort,
+    type SortDirection,
+} from "@/shared/components/common/SortableTableHeader/SortableTableHeader";
 
 const PAGE_SIZE = 20;
 
@@ -39,12 +49,31 @@ interface User {
 }
 
 export default function UsersManagement() {
+    const { toast, showSuccess, showError, hideToast } = useToast();
     const [selectedFilter, setSelectedFilter] = useState("all");
     const [searchTerm, setSearchTerm] = useState("");
     const [page, setPage] = useState(1);
+    const [sortBy, setSortBy] = useState("createdAt");
+    const [sortDir, setSortDir] = useState<SortDirection>("desc");
     const debouncedSearchTerm = useDebouncedValue(searchTerm, 320);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [showCreateModal, setShowCreateModal] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
+    const [userToEdit, setUserToEdit] = useState<User | null>(null);
+    const [editForm, setEditForm] = useState({
+        firstName: "",
+        lastName: "",
+        userType: "candidate",
+    });
+    const [createForm, setCreateForm] = useState({
+        email: "",
+        password: "",
+        firstName: "",
+        lastName: "",
+        userType: "candidate",
+    });
+    const [createErrors, setCreateErrors] = useState<Record<string, string>>({});
     const [currentUser, setCurrentUser] = useState<User | null>(null);
 
     // Get current user from localStorage
@@ -57,7 +86,13 @@ export default function UsersManagement() {
 
     useEffect(() => {
         setPage(1);
-    }, [selectedFilter, debouncedSearchTerm]);
+    }, [selectedFilter, debouncedSearchTerm, sortBy, sortDir]);
+
+    const handleSort = (key: string) => {
+        const next = toggleSort(key, sortBy, sortDir);
+        setSortBy(next.sortBy);
+        setSortDir(next.sortDir);
+    };
 
     const {
         data: usersData,
@@ -70,6 +105,8 @@ export default function UsersManagement() {
                 pageSize: PAGE_SIZE,
                 search: debouncedSearchTerm || null,
                 filter: selectedFilter,
+                sortBy,
+                sortDir,
             },
         },
         fetchPolicy: "cache-and-network",
@@ -100,6 +137,43 @@ export default function UsersManagement() {
         },
     });
 
+    const [updateUser] = useMutation(UPDATE_USER, {
+        onCompleted: (data) => {
+            if (data.updateUser.success) {
+                showSuccess(data.updateUser.message || "User updated");
+                refetchUsers();
+                refetchStats();
+                setShowEditModal(false);
+                setUserToEdit(null);
+            } else {
+                showError(data.updateUser.message || "Update failed");
+            }
+        },
+        onError: () => showError("Update failed"),
+    });
+
+    const [createUser] = useMutation(CREATE_USER, {
+        onCompleted: (data) => {
+            if (data.createUser.success) {
+                showSuccess(data.createUser.message || "User created");
+                refetchUsers();
+                refetchStats();
+                setShowCreateModal(false);
+                setCreateForm({
+                    email: "",
+                    password: "",
+                    firstName: "",
+                    lastName: "",
+                    userType: "candidate",
+                });
+                setCreateErrors({});
+            } else {
+                showError(data.createUser.message || "Create failed");
+            }
+        },
+        onError: () => showError("Create failed"),
+    });
+
     const userPage = usersData?.getUsers;
     const filteredUsers = userPage?.items || [];
     const stats = statsData?.getUserStats;
@@ -123,20 +197,116 @@ export default function UsersManagement() {
                 const result = await unblockUser({
                     variables: { id: parseInt(user.id.toString()) },
                 });
-                if (!result.data?.unblockUser.success) {
-                    // Silent error handling for production
+                if (result.data?.unblockUser.success) {
+                    showSuccess(
+                        result.data.unblockUser.message ||
+                            "User unblocked successfully"
+                    );
+                } else {
+                    showError(
+                        result.data?.unblockUser.message ||
+                            "Failed to unblock user"
+                    );
                 }
             } else {
                 const result = await blockUser({
                     variables: { id: parseInt(user.id.toString()) },
                 });
-                if (!result.data?.blockUser.success) {
-                    // Silent error handling for production
+                if (result.data?.blockUser.success) {
+                    showSuccess(
+                        result.data.blockUser.message ||
+                            "User blocked successfully"
+                    );
+                } else {
+                    showError(
+                        result.data?.blockUser.message || "Failed to block user"
+                    );
                 }
             }
-        } catch (error) {
-            // Silent error handling for production
+        } catch {
+            showError("Failed to update user status");
         }
+    };
+
+    const handleEditClick = (user: User) => {
+        if (isAdminAccount(user.userType)) return;
+        if (currentUser && user.id === currentUser.id) return;
+        setUserToEdit(user);
+        setEditForm({
+            firstName: user.firstName,
+            lastName: user.lastName,
+            userType: user.userType.toLowerCase(),
+        });
+        setShowEditModal(true);
+    };
+
+    const handleConfirmEdit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!userToEdit) return;
+        if (!editForm.firstName.trim() || !editForm.lastName.trim()) {
+            showError("First and last name are required");
+            return;
+        }
+        await updateUser({
+            variables: {
+                id: parseInt(userToEdit.id.toString(), 10),
+                input: {
+                    firstName: editForm.firstName.trim(),
+                    lastName: editForm.lastName.trim(),
+                    userType: editForm.userType,
+                },
+            },
+        });
+    };
+
+    const validateCreateForm = () => {
+        const errors: Record<string, string> = {};
+        const email = createForm.email.trim().toLowerCase();
+        if (!email) {
+            errors.email = "Email is required";
+        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            errors.email = "Enter a valid email address";
+        } else if (
+            createForm.userType === "candidate" &&
+            !email.endsWith("@candidate.edu.au")
+        ) {
+            errors.email = "Candidate email must end with @candidate.edu.au";
+        } else if (
+            createForm.userType === "lecturer" &&
+            !email.endsWith("@lecturer.edu.au")
+        ) {
+            errors.email = "Lecturer email must end with @lecturer.edu.au";
+        }
+        if (!createForm.password || createForm.password.length < 8) {
+            errors.password = "Password must be at least 8 characters";
+        }
+        if (!createForm.firstName.trim()) {
+            errors.firstName = "First name is required";
+        }
+        if (!createForm.lastName.trim()) {
+            errors.lastName = "Last name is required";
+        }
+        setCreateErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
+
+    const handleConfirmCreate = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!validateCreateForm()) {
+            showError("Please fix the form errors");
+            return;
+        }
+        await createUser({
+            variables: {
+                input: {
+                    email: createForm.email.trim().toLowerCase(),
+                    password: createForm.password,
+                    firstName: createForm.firstName.trim(),
+                    lastName: createForm.lastName.trim(),
+                    userType: createForm.userType.toUpperCase(),
+                },
+            },
+        });
     };
 
     const handleDeleteClick = (user: User) => {
@@ -156,11 +326,21 @@ export default function UsersManagement() {
         if (!userToDelete) return;
 
         try {
-            await deleteUser({
+            const result = await deleteUser({
                 variables: { id: parseInt(userToDelete.id.toString()) },
             });
-        } catch (error) {
-            // Silent error handling for production
+            if (result.data?.deleteUser.success) {
+                showSuccess(
+                    result.data.deleteUser.message ||
+                        "User deleted successfully"
+                );
+            } else {
+                showError(
+                    result.data?.deleteUser.message || "Failed to delete user"
+                );
+            }
+        } catch {
+            showError("Failed to delete user");
         }
     };
 
@@ -197,10 +377,20 @@ export default function UsersManagement() {
             <div className={styles.managementContainer}>
                 {/* Header */}
                 <div className={styles.headerSection}>
-                    <h1 className={styles.title}>User Management</h1>
-                    <p className={styles.subtitle}>
-                        Manage all users in the system
-                    </p>
+                    <div>
+                        <h1 className={styles.title}>User Management</h1>
+                        <p className={styles.subtitle}>
+                            Manage all users in the system
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        className={styles.createUserButton}
+                        onClick={() => setShowCreateModal(true)}
+                    >
+                        <PlusIcon className={styles.actionIcon} />
+                        Create user
+                    </button>
                 </div>
 
                 {/* Stats Cards */}
@@ -316,18 +506,38 @@ export default function UsersManagement() {
                         <table className={styles.table}>
                             <thead className={styles.tableHeaderRow}>
                                 <tr>
-                                    <th className={styles.tableHeaderCell}>
-                                        User
-                                    </th>
-                                    <th className={styles.tableHeaderCell}>
-                                        Type
-                                    </th>
-                                    <th className={styles.tableHeaderCell}>
-                                        Status
-                                    </th>
-                                    <th className={styles.tableHeaderCell}>
-                                        Created
-                                    </th>
+                                    <SortableTableHeader
+                                        label="User"
+                                        sortKey="email"
+                                        activeSortBy={sortBy}
+                                        activeSortDir={sortDir}
+                                        onSort={handleSort}
+                                        className={styles.tableHeaderCell}
+                                    />
+                                    <SortableTableHeader
+                                        label="Type"
+                                        sortKey="userType"
+                                        activeSortBy={sortBy}
+                                        activeSortDir={sortDir}
+                                        onSort={handleSort}
+                                        className={styles.tableHeaderCell}
+                                    />
+                                    <SortableTableHeader
+                                        label="Status"
+                                        sortKey="isBlocked"
+                                        activeSortBy={sortBy}
+                                        activeSortDir={sortDir}
+                                        onSort={handleSort}
+                                        className={styles.tableHeaderCell}
+                                    />
+                                    <SortableTableHeader
+                                        label="Created"
+                                        sortKey="createdAt"
+                                        activeSortBy={sortBy}
+                                        activeSortDir={sortDir}
+                                        onSort={handleSort}
+                                        className={styles.tableHeaderCell}
+                                    />
                                     <th className={styles.tableHeaderCell}>
                                         Actions
                                     </th>
@@ -421,6 +631,34 @@ export default function UsersManagement() {
                                                           styles.actionsContainer
                                                       }
                                                   >
+                                                      {!isAdminAccount(
+                                                          user.userType
+                                                      ) &&
+                                                          !(
+                                                              currentUser &&
+                                                              user.id ===
+                                                                  currentUser.id
+                                                          ) && (
+                                                              <button
+                                                                  type="button"
+                                                                  onClick={() =>
+                                                                      handleEditClick(
+                                                                          user
+                                                                      )
+                                                                  }
+                                                                  className={
+                                                                      styles.actionButton
+                                                                  }
+                                                                  title="Edit user"
+                                                              >
+                                                                  <PencilIcon
+                                                                      className={
+                                                                          styles.actionIcon
+                                                                      }
+                                                                  />
+                                                              </button>
+                                                          )}
+
                                                       {/* Block/Unblock Button — not for admin accounts */}
                                                       {!isAdminAccount(
                                                           user.userType
@@ -539,6 +777,233 @@ export default function UsersManagement() {
                     )}
                 </div>
 
+                {/* Edit User Modal */}
+                {showEditModal && userToEdit && (
+                    <div className={styles.modalOverlay}>
+                        <div className={styles.modal}>
+                            <div className={styles.modalHeader}>
+                                <PencilIcon className={styles.modalIcon} />
+                                <h3 className={styles.modalTitle}>Edit User</h3>
+                            </div>
+                            <form onSubmit={handleConfirmEdit}>
+                                <div className={styles.modalContent}>
+                                    <p className={styles.modalText}>
+                                        Update profile for{" "}
+                                        <strong>
+                                            {getUserDisplayName(userToEdit)}
+                                        </strong>
+                                        .
+                                    </p>
+                                    <div className={styles.editFormGrid}>
+                                        <label className={styles.editLabel}>
+                                            First name
+                                            <input
+                                                className={styles.editInput}
+                                                value={editForm.firstName}
+                                                onChange={(e) =>
+                                                    setEditForm({
+                                                        ...editForm,
+                                                        firstName:
+                                                            e.target.value,
+                                                    })
+                                                }
+                                                required
+                                            />
+                                        </label>
+                                        <label className={styles.editLabel}>
+                                            Last name
+                                            <input
+                                                className={styles.editInput}
+                                                value={editForm.lastName}
+                                                onChange={(e) =>
+                                                    setEditForm({
+                                                        ...editForm,
+                                                        lastName:
+                                                            e.target.value,
+                                                    })
+                                                }
+                                                required
+                                            />
+                                        </label>
+                                        <label className={styles.editLabel}>
+                                            User type
+                                            <select
+                                                className={styles.editInput}
+                                                value={editForm.userType}
+                                                onChange={(e) =>
+                                                    setEditForm({
+                                                        ...editForm,
+                                                        userType:
+                                                            e.target.value,
+                                                    })
+                                                }
+                                            >
+                                                <option value="candidate">
+                                                    Candidate
+                                                </option>
+                                                <option value="lecturer">
+                                                    Lecturer
+                                                </option>
+                                            </select>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className={styles.modalActions}>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowEditModal(false);
+                                            setUserToEdit(null);
+                                        }}
+                                        className={`${styles.modalButton} ${styles.modalButtonSecondary}`}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className={`${styles.modalButton} ${styles.modalButtonPrimary}`}
+                                    >
+                                        Save changes
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
+                {showCreateModal && (
+                    <div className={styles.modalOverlay}>
+                        <div className={styles.modal}>
+                            <div className={styles.modalHeader}>
+                                <PlusIcon className={styles.modalIcon} />
+                                <h3 className={styles.modalTitle}>Create User</h3>
+                            </div>
+                            <form onSubmit={handleConfirmCreate}>
+                                <div className={styles.modalContent}>
+                                    <div className={styles.editFormGrid}>
+                                        <label className={styles.editLabel}>
+                                            Email
+                                            <input
+                                                className={styles.editInput}
+                                                type="email"
+                                                value={createForm.email}
+                                                onChange={(e) =>
+                                                    setCreateForm({
+                                                        ...createForm,
+                                                        email: e.target.value,
+                                                    })
+                                                }
+                                                required
+                                            />
+                                            {createErrors.email && (
+                                                <span className={styles.fieldError}>
+                                                    {createErrors.email}
+                                                </span>
+                                            )}
+                                        </label>
+                                        <label className={styles.editLabel}>
+                                            Password
+                                            <input
+                                                className={styles.editInput}
+                                                type="password"
+                                                value={createForm.password}
+                                                onChange={(e) =>
+                                                    setCreateForm({
+                                                        ...createForm,
+                                                        password: e.target.value,
+                                                    })
+                                                }
+                                                required
+                                            />
+                                            {createErrors.password && (
+                                                <span className={styles.fieldError}>
+                                                    {createErrors.password}
+                                                </span>
+                                            )}
+                                        </label>
+                                        <label className={styles.editLabel}>
+                                            First name
+                                            <input
+                                                className={styles.editInput}
+                                                value={createForm.firstName}
+                                                onChange={(e) =>
+                                                    setCreateForm({
+                                                        ...createForm,
+                                                        firstName: e.target.value,
+                                                    })
+                                                }
+                                                required
+                                            />
+                                            {createErrors.firstName && (
+                                                <span className={styles.fieldError}>
+                                                    {createErrors.firstName}
+                                                </span>
+                                            )}
+                                        </label>
+                                        <label className={styles.editLabel}>
+                                            Last name
+                                            <input
+                                                className={styles.editInput}
+                                                value={createForm.lastName}
+                                                onChange={(e) =>
+                                                    setCreateForm({
+                                                        ...createForm,
+                                                        lastName: e.target.value,
+                                                    })
+                                                }
+                                                required
+                                            />
+                                            {createErrors.lastName && (
+                                                <span className={styles.fieldError}>
+                                                    {createErrors.lastName}
+                                                </span>
+                                            )}
+                                        </label>
+                                        <label className={styles.editLabel}>
+                                            User type
+                                            <select
+                                                className={styles.editInput}
+                                                value={createForm.userType}
+                                                onChange={(e) =>
+                                                    setCreateForm({
+                                                        ...createForm,
+                                                        userType: e.target.value,
+                                                    })
+                                                }
+                                            >
+                                                <option value="candidate">
+                                                    Candidate
+                                                </option>
+                                                <option value="lecturer">
+                                                    Lecturer
+                                                </option>
+                                            </select>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div className={styles.modalActions}>
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowCreateModal(false);
+                                            setCreateErrors({});
+                                        }}
+                                        className={`${styles.modalButton} ${styles.modalButtonSecondary}`}
+                                    >
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        className={`${styles.modalButton} ${styles.modalButtonPrimary}`}
+                                    >
+                                        Create user
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                )}
+
                 {/* Delete Confirmation Modal */}
                 {showDeleteModal && userToDelete && (
                     <div className={styles.modalOverlay}>
@@ -578,6 +1043,12 @@ export default function UsersManagement() {
                     </div>
                 )}
             </div>
+            <Toast
+                message={toast.message}
+                type={toast.type}
+                visible={toast.visible}
+                onClose={hideToast}
+            />
         </div>
     );
 }

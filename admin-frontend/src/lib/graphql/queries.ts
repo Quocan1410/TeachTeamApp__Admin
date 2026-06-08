@@ -71,6 +71,8 @@ export const GET_USER_STATS = gql`
             totalLecturers
             totalAdmins
             blockedUsers
+            totalCourses
+            totalAnnouncements
         }
     }
 `;
@@ -107,6 +109,39 @@ export const DELETE_USER = gql`
         deleteUser(id: $id) {
             success
             message
+        }
+    }
+`;
+
+export const UPDATE_USER = gql`
+    mutation UpdateUser($id: Int!, $input: UpdateUserInput!) {
+        updateUser(id: $id, input: $input) {
+            success
+            message
+            user {
+                id
+                firstName
+                lastName
+                userType
+                fullName
+            }
+        }
+    }
+`;
+
+export const CREATE_USER = gql`
+    mutation CreateUser($input: CreateUserInput!) {
+        createUser(input: $input) {
+            success
+            message
+            user {
+                id
+                email
+                firstName
+                lastName
+                userType
+                fullName
+            }
         }
     }
 `;

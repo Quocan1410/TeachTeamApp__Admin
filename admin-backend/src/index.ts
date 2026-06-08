@@ -76,7 +76,7 @@ async function startServer() {
                 NotificationResolver,
                 AnnouncementResolver,
             ],
-            validate: false,
+            validate: true,
             pubSub: require("./config/pubsub").pubsub,
         });
 

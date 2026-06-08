@@ -1,0 +1,52 @@
+.sortableHeader {
+    padding: 0;
+    white-space: nowrap;
+}
+
+.sortableHeader.center {
+    text-align: center;
+}
+
+.sortButton {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: none;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s ease;
+}
+
+.center .sortButton {
+    justify-content: center;
+}
+
+.sortButton:hover {
+    color: var(--color-primary);
+}
+
+.sortButton.active {
+    color: var(--color-primary);
+}
+
+.sortIcon {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+}
+
+.sortIconMuted {
+    width: 0.875rem;
+    height: 0.875rem;
+    flex-shrink: 0;
+    opacity: 0.35;
+}
+
+.sortButton:hover .sortIconMuted {
+    opacity: 0.7;
+}

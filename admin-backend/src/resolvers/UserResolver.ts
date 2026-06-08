@@ -10,22 +10,33 @@ import {
     Ctx,
     UseMiddleware,
 } from "type-graphql";
+import {
+    IsEmail,
+    IsEnum,
+    IsOptional,
+    MaxLength,
+    MinLength,
+} from "class-validator";
 import { Brackets } from "typeorm";
 import {
     normalizePagination,
     paginatedResult,
 } from "../utils/pagination";
+import { applyEntitySort } from "../utils/sort";
 import { AdminAuthMiddleware } from "../middleware/AdminAuthMiddleware";
 import { User, UserType } from "../types/User";
 import { AppDataSource } from "../config/database";
 import { NotificationService } from "../services/NotificationService";
 import { NotificationType } from "../types/Notification";
+import { Course } from "../types/Course";
+import { Announcement } from "../types/Announcement";
 import { pubsub, SUBSCRIPTION_TOPICS } from "../config/pubsub";
 import {
     CandidateBlockedEvent,
     UserAccountEvent,
 } from "./SubscriptionResolver";
 import { ApplicationService } from "../services/ApplicationService";
+import { UserService } from "../services/UserService";
 import type { CandidateApplicationCleanupResult } from "../services/ApplicationService";
 import type { GraphQLContext } from "../utils/graphqlContext";
 
@@ -45,6 +56,12 @@ class UserStats {
 
     @Field(() => Int)
     blockedUsers: number;
+
+    @Field(() => Int)
+    totalCourses: number;
+
+    @Field(() => Int)
+    totalAnnouncements: number;
 }
 
 @InputType()
@@ -61,6 +78,63 @@ class UserListInput {
     /** all | active | blocked | candidate | lecturer | admin */
     @Field({ nullable: true, defaultValue: "all" })
     filter?: string;
+
+    @Field({ nullable: true })
+    sortBy?: string;
+
+    @Field({ nullable: true })
+    sortDir?: string;
+}
+
+@InputType()
+class CreateUserInput {
+    @Field()
+    @IsEmail()
+    email: string;
+
+    @Field()
+    @MinLength(8)
+    @MaxLength(128)
+    password: string;
+
+    @Field()
+    @MinLength(1)
+    @MaxLength(100)
+    firstName: string;
+
+    @Field()
+    @MinLength(1)
+    @MaxLength(100)
+    lastName: string;
+
+    @Field(() => UserType)
+    @IsEnum(UserType)
+    userType: UserType;
+
+    @Field({ nullable: true })
+    @IsOptional()
+    @MaxLength(10)
+    honorific?: string;
+}
+
+@InputType()
+class UpdateUserInput {
+    @Field({ nullable: true })
+    @IsOptional()
+    @MinLength(1)
+    @MaxLength(100)
+    firstName?: string;
+
+    @Field({ nullable: true })
+    @IsOptional()
+    @MinLength(1)
+    @MaxLength(100)
+    lastName?: string;
+
+    @Field(() => UserType, { nullable: true })
+    @IsOptional()
+    @IsEnum(UserType)
+    userType?: UserType;
 }
 
 @ObjectType()
@@ -172,9 +246,29 @@ export class UserResolver {
         const filter = (input.filter ?? "all").toLowerCase();
         const search = input.search?.trim();
 
-        const qb = userRepository
-            .createQueryBuilder("user")
-            .orderBy("user.createdAt", "DESC");
+        const qb = userRepository.createQueryBuilder("user");
+
+        if (!input.sortBy) {
+            qb.orderBy(
+                "CASE WHEN user.userType = 'admin' THEN 0 ELSE 1 END",
+                "ASC"
+            ).addOrderBy("user.id", "ASC");
+        } else {
+            applyEntitySort(
+                qb,
+                input.sortBy,
+                input.sortDir,
+                {
+                    email: "user.email",
+                    firstName: "user.firstName",
+                    lastName: "user.lastName",
+                    userType: "user.userType",
+                    isBlocked: "user.isBlocked",
+                    createdAt: "user.createdAt",
+                },
+                "createdAt"
+            );
+        }
 
         if (filter === "active") {
             qb.andWhere("user.isBlocked = :blocked", { blocked: false });
@@ -226,12 +320,16 @@ export class UserResolver {
             totalLecturers,
             totalAdmins,
             blockedUsers,
+            totalCourses,
+            totalAnnouncements,
         ] = await Promise.all([
             userRepository.count(),
             userRepository.count({ where: { userType: UserType.CANDIDATE } }),
             userRepository.count({ where: { userType: UserType.LECTURER } }),
             userRepository.count({ where: { userType: UserType.ADMIN } }),
             userRepository.count({ where: { isBlocked: true } }),
+            AppDataSource.getRepository(Course).count(),
+            AppDataSource.getRepository(Announcement).count(),
         ]);
 
         return {
@@ -240,7 +338,47 @@ export class UserResolver {
             totalLecturers,
             totalAdmins,
             blockedUsers,
+            totalCourses,
+            totalAnnouncements,
         };
+    }
+
+    @Mutation(() => UserResponse)
+    async createUser(
+        @Arg("input") input: CreateUserInput
+    ): Promise<UserResponse> {
+        try {
+            const result = await UserService.createUser(input);
+            return {
+                success: result.success,
+                message: result.message,
+                user: result.user,
+            };
+        } catch {
+            return { success: false, message: "Failed to create user" };
+        }
+    }
+
+    @Mutation(() => UserResponse)
+    async updateUser(
+        @Arg("id", () => Int) id: number,
+        @Arg("input") input: UpdateUserInput,
+        @Ctx() ctx: GraphQLContext
+    ): Promise<UserResponse> {
+        try {
+            const result = await UserService.updateUser(
+                id,
+                input,
+                ctx.adminUser?.id
+            );
+            return {
+                success: result.success,
+                message: result.message,
+                user: result.user,
+            };
+        } catch {
+            return { success: false, message: "Failed to update user" };
+        }
     }
 
     @Query(() => User, { nullable: true })

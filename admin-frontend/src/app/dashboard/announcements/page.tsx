@@ -12,6 +12,10 @@ import {
 import { useToast } from "@/shared/hooks/useToast";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import PaginationBar from "@/shared/components/common/PaginationBar/PaginationBar";
+import SortableTableHeader, {
+    toggleSort,
+    type SortDirection,
+} from "@/shared/components/common/SortableTableHeader/SortableTableHeader";
 import {
     MegaphoneIcon,
     PlusIcon,
@@ -69,6 +73,25 @@ const AUDIENCE_FILTERS = [
     { id: "candidate", label: "Tutors / candidates" },
     { id: "lecturer", label: "Lecturers" },
 ] as const;
+
+const STATUS_FILTERS = [
+    { id: "all", label: "All status" },
+    { id: "active", label: "Active" },
+    { id: "inactive", label: "Inactive" },
+] as const;
+
+const toGraphqlIsActiveFilter = (
+    value: string
+): boolean | undefined => {
+    switch (value) {
+        case "active":
+            return true;
+        case "inactive":
+            return false;
+        default:
+            return undefined;
+    }
+};
 
 const normalizeAudience = (value: string) => value.toLowerCase();
 
@@ -176,12 +199,21 @@ export default function AnnouncementsManagement() {
     const [selected, setSelected] = useState<AnnouncementRow | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [audienceFilter, setAudienceFilter] = useState("all");
+    const [statusFilter, setStatusFilter] = useState("all");
     const [page, setPage] = useState(1);
+    const [sortBy, setSortBy] = useState("createdAt");
+    const [sortDir, setSortDir] = useState<SortDirection>("desc");
     const debouncedSearchTerm = useDebouncedValue(searchTerm, 320);
 
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearchTerm, audienceFilter]);
+    }, [debouncedSearchTerm, audienceFilter, statusFilter, sortBy, sortDir]);
+
+    const handleSort = (key: string) => {
+        const next = toggleSort(key, sortBy, sortDir);
+        setSortBy(next.sortBy);
+        setSortDir(next.sortDir);
+    };
 
     const { data, loading, error, refetch } = useQuery(GET_ANNOUNCEMENTS, {
         variables: {
@@ -190,6 +222,9 @@ export default function AnnouncementsManagement() {
                 pageSize: PAGE_SIZE,
                 search: debouncedSearchTerm || null,
                 audience: toGraphqlAudienceFilter(audienceFilter),
+                isActive: toGraphqlIsActiveFilter(statusFilter),
+                sortBy,
+                sortDir,
             },
         },
         fetchPolicy: "cache-and-network",
@@ -519,6 +554,24 @@ export default function AnnouncementsManagement() {
                                     </button>
                                 ))}
                             </div>
+                            <div className={styles.filterTabs}>
+                                {STATUS_FILTERS.map((filter) => (
+                                    <button
+                                        key={filter.id}
+                                        type="button"
+                                        className={`${styles.filterTab} ${
+                                            statusFilter === filter.id
+                                                ? styles.active
+                                                : ""
+                                        }`}
+                                        onClick={() =>
+                                            setStatusFilter(filter.id)
+                                        }
+                                    >
+                                        {filter.label}
+                                    </button>
+                                ))}
+                            </div>
                             <div className={styles.searchContainer}>
                                 <MagnifyingGlassIcon
                                     className={styles.searchIcon}
@@ -582,30 +635,40 @@ export default function AnnouncementsManagement() {
                                 <table className={styles.table}>
                                     <thead className={styles.tableHeaderRow}>
                                         <tr>
-                                            <th
-                                                className={
-                                                    styles.tableHeaderCell
-                                                }
-                                            >
-                                                Announcement
-                                            </th>
-                                            <th
+                                            <SortableTableHeader
+                                                label="Announcement"
+                                                sortKey="title"
+                                                activeSortBy={sortBy}
+                                                activeSortDir={sortDir}
+                                                onSort={handleSort}
+                                                className={styles.tableHeaderCell}
+                                            />
+                                            <SortableTableHeader
+                                                label="Audience"
+                                                sortKey="audience"
+                                                activeSortBy={sortBy}
+                                                activeSortDir={sortDir}
+                                                onSort={handleSort}
                                                 className={`${styles.tableHeaderCell} ${styles.tableHeaderCellCenter}`}
-                                            >
-                                                Audience
-                                            </th>
-                                            <th
+                                                center
+                                            />
+                                            <SortableTableHeader
+                                                label="Status"
+                                                sortKey="isActive"
+                                                activeSortBy={sortBy}
+                                                activeSortDir={sortDir}
+                                                onSort={handleSort}
                                                 className={`${styles.tableHeaderCell} ${styles.tableHeaderCellCenter}`}
-                                            >
-                                                Status
-                                            </th>
-                                            <th
-                                                className={
-                                                    styles.tableHeaderCell
-                                                }
-                                            >
-                                                Schedule
-                                            </th>
+                                                center
+                                            />
+                                            <SortableTableHeader
+                                                label="Schedule"
+                                                sortKey="startsAt"
+                                                activeSortBy={sortBy}
+                                                activeSortDir={sortDir}
+                                                onSort={handleSort}
+                                                className={styles.tableHeaderCell}
+                                            />
                                             <th
                                                 className={
                                                     styles.tableHeaderCell

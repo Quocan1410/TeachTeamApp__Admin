@@ -7,6 +7,7 @@ import { Application } from "../types/Application";
 import { SelectedCandidate } from "../types/SelectedCandidate";
 import { Notification } from "../types/Notification";
 import { Announcement } from "../types/Announcement";
+import { UserSecurityAnswer } from "../types/UserSecurityAnswer";
 import bcrypt from "bcryptjs";
 import { getAdminEmail, getAdminSeedPassword } from "../utils/adminConfig";
 import { loadAdminRepoEnv } from "./loadEnv";
@@ -31,6 +32,7 @@ export const AppDataSource = new DataSource({
         SelectedCandidate,
         Notification,
         Announcement,
+        UserSecurityAnswer,
     ],
     // Connection options for Cloud MySQL
     extra: {

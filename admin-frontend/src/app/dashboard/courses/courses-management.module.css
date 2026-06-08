@@ -98,6 +98,49 @@
     padding: 1.5rem;
 }
 
+.searchRow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    align-items: center;
+}
+
+.searchRow .searchContainer {
+    flex: 1;
+    min-width: 220px;
+}
+
+.sortControl {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+}
+
+.sortLabel {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--color-text-secondary);
+    white-space: nowrap;
+}
+
+.sortSelect {
+    padding: 0.625rem 0.75rem;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    font-size: 0.875rem;
+    background: var(--color-bg-primary);
+    color: var(--color-text-primary);
+    cursor: pointer;
+    min-width: 180px;
+}
+
+.sortSelect:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
 .searchContainer {
     position: relative;
     width: 100%;

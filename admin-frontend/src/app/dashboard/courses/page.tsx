@@ -118,6 +118,8 @@ export default function CoursesManagement() {
     const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
     const [searchTerm, setSearchTerm] = useState("");
     const [page, setPage] = useState(1);
+    const [sortBy, setSortBy] = useState("createdAt");
+    const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
     const debouncedSearchTerm = useDebouncedValue(searchTerm, 320);
     const [formData, setFormData] = useState<CourseFormData>({
         courseCode: "",
@@ -134,7 +136,7 @@ export default function CoursesManagement() {
 
     useEffect(() => {
         setPage(1);
-    }, [debouncedSearchTerm]);
+    }, [debouncedSearchTerm, sortBy, sortDir]);
 
     const {
         data: coursesData,
@@ -147,6 +149,8 @@ export default function CoursesManagement() {
                 page,
                 pageSize: PAGE_SIZE,
                 search: debouncedSearchTerm || null,
+                sortBy,
+                sortDir,
             },
         },
         fetchPolicy: "cache-and-network",
@@ -201,18 +205,42 @@ export default function CoursesManagement() {
     ] = useLazyQuery(GET_UNASSIGNED_LECTURERS);
 
     const [createCourse] = useMutation(CREATE_COURSE, {
-        onCompleted: () => {
-            refetchCourses();
-            setShowCreateModal(false);
-            resetForm();
+        onCompleted: (data) => {
+            if (data.createCourse.success) {
+                refetchCourses();
+                setShowCreateModal(false);
+                resetForm();
+                showSuccess(
+                    data.createCourse.message || "Course created successfully"
+                );
+            } else {
+                showError(
+                    data.createCourse.message || "Failed to create course"
+                );
+            }
+        },
+        onError: (error) => {
+            showError(error.message || "Failed to create course");
         },
     });
 
     const [updateCourse] = useMutation(UPDATE_COURSE, {
-        onCompleted: () => {
-            refetchCourses();
-            setShowEditModal(false);
-            resetForm();
+        onCompleted: (data) => {
+            if (data.updateCourse.success) {
+                refetchCourses();
+                setShowEditModal(false);
+                resetForm();
+                showSuccess(
+                    data.updateCourse.message || "Course updated successfully"
+                );
+            } else {
+                showError(
+                    data.updateCourse.message || "Failed to update course"
+                );
+            }
+        },
+        onError: (error) => {
+            showError(error.message || "Failed to update course");
         },
     });
 
@@ -439,15 +467,60 @@ export default function CoursesManagement() {
                 {/* Search */}
                 <div className={styles.searchSection}>
                     <div className={styles.searchHeader}>
-                        <div className={styles.searchContainer}>
-                            <MagnifyingGlassIcon className={styles.searchIcon} />
-                            <input
-                                type="text"
-                                placeholder="Search courses..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className={styles.searchInput}
-                            />
+                        <div className={styles.searchRow}>
+                            <div className={styles.searchContainer}>
+                                <MagnifyingGlassIcon className={styles.searchIcon} />
+                                <input
+                                    type="text"
+                                    placeholder="Search courses..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className={styles.searchInput}
+                                />
+                            </div>
+                            <div className={styles.sortControl}>
+                                <label
+                                    htmlFor="course-sort"
+                                    className={styles.sortLabel}
+                                >
+                                    Sort by
+                                </label>
+                                <select
+                                    id="course-sort"
+                                    className={styles.sortSelect}
+                                    value={`${sortBy}:${sortDir}`}
+                                    onChange={(e) => {
+                                        const [nextSortBy, nextSortDir] =
+                                            e.target.value.split(":");
+                                        setSortBy(nextSortBy);
+                                        setSortDir(
+                                            nextSortDir as "asc" | "desc"
+                                        );
+                                    }}
+                                >
+                                    <option value="createdAt:desc">
+                                        Newest first
+                                    </option>
+                                    <option value="createdAt:asc">
+                                        Oldest first
+                                    </option>
+                                    <option value="courseCode:asc">
+                                        Code A–Z
+                                    </option>
+                                    <option value="courseCode:desc">
+                                        Code Z–A
+                                    </option>
+                                    <option value="courseName:asc">
+                                        Name A–Z
+                                    </option>
+                                    <option value="applicationDeadline:asc">
+                                        Deadline (soonest)
+                                    </option>
+                                    <option value="applicationDeadline:desc">
+                                        Deadline (latest)
+                                    </option>
+                                </select>
+                            </div>
                         </div>
                     </div>
                 </div>

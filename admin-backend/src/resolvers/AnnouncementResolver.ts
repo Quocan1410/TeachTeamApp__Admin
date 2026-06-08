@@ -10,6 +10,16 @@ import {
     UseMiddleware,
     Ctx,
 } from "type-graphql";
+import {
+    IsBoolean,
+    IsEnum,
+    IsInt,
+    IsOptional,
+    Max,
+    MaxLength,
+    Min,
+    MinLength,
+} from "class-validator";
 import { AdminAuthMiddleware } from "../middleware/AdminAuthMiddleware";
 import {
     Announcement,
@@ -22,23 +32,45 @@ import {
     normalizePagination,
     paginatedResult,
 } from "../utils/pagination";
+import { applyEntitySort } from "../utils/sort";
 
 @InputType()
 class AnnouncementListInput {
     @Field(() => Int, { defaultValue: 1 })
+    @IsInt()
+    @Min(1)
     page: number;
 
     @Field(() => Int, { defaultValue: 20 })
+    @IsInt()
+    @Min(1)
+    @Max(100)
     pageSize: number;
 
     @Field({ nullable: true })
+    @IsOptional()
+    @MaxLength(200)
     search?: string;
 
     @Field(() => AnnouncementAudience, { nullable: true })
+    @IsOptional()
+    @IsEnum(AnnouncementAudience)
     audience?: AnnouncementAudience;
 
     @Field({ nullable: true })
+    @IsOptional()
+    @IsBoolean()
     isActive?: boolean;
+
+    @Field({ nullable: true })
+    @IsOptional()
+    @MaxLength(50)
+    sortBy?: string;
+
+    @Field({ nullable: true })
+    @IsOptional()
+    @MaxLength(4)
+    sortDir?: string;
 }
 
 @ObjectType()
@@ -62,21 +94,31 @@ class AnnouncementPage {
 @InputType()
 class AnnouncementInput {
     @Field()
+    @MinLength(1)
+    @MaxLength(200)
     title: string;
 
     @Field()
+    @MinLength(1)
+    @MaxLength(10000)
     body: string;
 
     @Field(() => AnnouncementAudience, { nullable: true })
+    @IsOptional()
+    @IsEnum(AnnouncementAudience)
     audience?: AnnouncementAudience;
 
     @Field({ nullable: true })
+    @IsOptional()
     startsAt?: Date;
 
     @Field({ nullable: true })
+    @IsOptional()
     endsAt?: Date;
 
     @Field({ nullable: true })
+    @IsOptional()
+    @IsBoolean()
     isActive?: boolean;
 }
 
@@ -112,9 +154,21 @@ export class AnnouncementResolver {
         );
         const search = input.search?.trim();
 
-        const qb = repo
-            .createQueryBuilder("announcement")
-            .orderBy("announcement.createdAt", "DESC");
+        const qb = repo.createQueryBuilder("announcement");
+        applyEntitySort(
+            qb,
+            input.sortBy,
+            input.sortDir,
+            {
+                title: "announcement.title",
+                audience: "announcement.audience",
+                startsAt: "announcement.startsAt",
+                endsAt: "announcement.endsAt",
+                isActive: "announcement.isActive",
+                createdAt: "announcement.createdAt",
+            },
+            "createdAt"
+        );
 
         if (search) {
             const term = `%${search}%`;

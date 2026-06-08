@@ -9,11 +9,20 @@ import {
     InputType,
     UseMiddleware,
 } from "type-graphql";
+import {
+    IsInt,
+    IsOptional,
+    Max,
+    MaxLength,
+    Min,
+    MinLength,
+} from "class-validator";
 import { Brackets } from "typeorm";
 import {
     normalizePagination,
     paginatedResult,
 } from "../utils/pagination";
+import { applyEntitySort } from "../utils/sort";
 import { attachCourseListStats } from "../utils/courseListStats";
 import { AdminAuthMiddleware } from "../middleware/AdminAuthMiddleware";
 import { Course } from "../types/Course";
@@ -29,24 +38,39 @@ import { CourseEvent } from "./SubscriptionResolver";
 @InputType()
 class CourseInput {
     @Field()
+    @MinLength(2)
+    @MaxLength(20)
     courseCode: string;
 
     @Field()
+    @MinLength(2)
+    @MaxLength(255)
     courseName: string;
 
     @Field()
+    @MinLength(2)
+    @MaxLength(50)
     semester: string;
 
     @Field({ nullable: true })
+    @IsOptional()
+    @MaxLength(5000)
     description?: string;
 
     @Field(() => Int)
+    @IsInt()
+    @Min(0)
+    @Max(100)
     maxTutors: number;
 
     @Field(() => Int)
+    @IsInt()
+    @Min(0)
+    @Max(100)
     maxLabAssistants: number;
 
     @Field({ nullable: true })
+    @IsOptional()
     applicationDeadline?: Date;
 }
 
@@ -60,6 +84,12 @@ class CourseListInput {
 
     @Field({ nullable: true })
     search?: string;
+
+    @Field({ nullable: true })
+    sortBy?: string;
+
+    @Field({ nullable: true })
+    sortDir?: string;
 }
 
 @ObjectType()
@@ -183,8 +213,20 @@ export class CourseResolver {
         const qb = courseRepository
             .createQueryBuilder("course")
             .leftJoinAndSelect("course.courseAssignments", "assignment")
-            .leftJoinAndSelect("assignment.lecturer", "lecturer")
-            .orderBy("course.createdAt", "DESC");
+            .leftJoinAndSelect("assignment.lecturer", "lecturer");
+        applyEntitySort(
+            qb,
+            input.sortBy,
+            input.sortDir,
+            {
+                courseCode: "course.courseCode",
+                courseName: "course.courseName",
+                semester: "course.semester",
+                applicationDeadline: "course.applicationDeadline",
+                createdAt: "course.createdAt",
+            },
+            "createdAt"
+        );
 
         if (search) {
             const term = `%${search}%`;
