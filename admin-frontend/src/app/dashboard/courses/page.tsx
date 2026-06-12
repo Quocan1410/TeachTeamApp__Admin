@@ -680,8 +680,11 @@ export default function CoursesManagement() {
                                             <span className={styles.metricValue}>
                                                 {appCount}
                                             </span>
-                                            <span className={styles.metricLabel}>
-                                                Applications
+                                            <span
+                                                className={styles.metricLabel}
+                                                title="Applications"
+                                            >
+                                                Apps
                                             </span>
                                         </div>
                                     </div>

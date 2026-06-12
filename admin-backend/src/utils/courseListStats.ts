@@ -31,6 +31,7 @@ export async function attachCourseListStats(courses: Course[]): Promise<Course[]
             .andWhere("a.status = :status", {
                 status: ApplicationStatus.SELECTED,
             })
+            .andWhere("a.isWithdrawn = :isWithdrawn", { isWithdrawn: false })
             .groupBy("a.courseId")
             .addGroupBy("r.roleName")
             .getRawMany<RoleCountRow>(),

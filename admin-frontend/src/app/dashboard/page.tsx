@@ -12,7 +12,6 @@ import {
     UserGroupIcon,
     ExclamationTriangleIcon,
     DocumentChartBarIcon,
-    MegaphoneIcon,
     ShieldCheckIcon,
 } from "@heroicons/react/24/outline";
 import AdminPageSkeleton from "@/shared/components/common/AdminPageSkeleton/AdminPageSkeleton";
@@ -44,11 +43,6 @@ const QUICK_ACTIONS = [
     { href: "/dashboard/users", label: "Users", icon: UsersIcon },
     { href: "/dashboard/courses", label: "Courses", icon: AcademicCapIcon },
     { href: "/dashboard/reports", label: "Selections", icon: DocumentChartBarIcon },
-    {
-        href: "/dashboard/announcements",
-        label: "Announcements",
-        icon: MegaphoneIcon,
-    },
 ] as const;
 
 const COURSE_PAGE_SIZE = 6;
@@ -111,12 +105,6 @@ export default function Dashboard() {
             value: userStats?.getUserStats?.totalCourses || 0,
             icon: AcademicCapIcon,
             color: "blue",
-        },
-        {
-            name: "Announcements",
-            value: userStats?.getUserStats?.totalAnnouncements || 0,
-            icon: MegaphoneIcon,
-            color: "green",
         },
         {
             name: "Blocked Users",

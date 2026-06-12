@@ -161,17 +161,18 @@ export class CourseResolver {
                     where: {
                         courseId: course.id,
                         status: ApplicationStatus.SELECTED,
+                        isWithdrawn: false,
                         role: { roleName: "tutor" },
                     },
                     relations: ["role"],
                 });
 
-                // Count selected applications for lab assistants
                 const selectedLabAssistants = await applicationRepository.count(
                     {
                         where: {
                             courseId: course.id,
                             status: ApplicationStatus.SELECTED,
+                            isWithdrawn: false,
                             role: { roleName: "lab_assistant" },
                         },
                         relations: ["role"],

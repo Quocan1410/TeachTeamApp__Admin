@@ -77,6 +77,15 @@ export class UserAccountEvent {
 }
 
 @ObjectType()
+export class AdminNotificationEvent {
+    @Field(() => Int)
+    userId: number;
+
+    @Field()
+    timestamp: string;
+}
+
+@ObjectType()
 export class CourseEvent {
     @Field(() => ID)
     courseId: number;
@@ -163,6 +172,36 @@ export class SubscriptionResolver {
 
         if (!eventData) {
             throw new Error("No course subscription data available");
+        }
+
+        return eventData;
+    }
+
+    @Subscription(() => AdminNotificationEvent, {
+        description: "Subscribe to in-app notification changes for the signed-in admin",
+        subscribe: ({ context }) => {
+            assertWsRole(context?.extra as WsAuthExtra, [UserType.ADMIN]);
+            const adminId = (context?.extra as WsAuthExtra).userId;
+            const iterator = createAsyncIterator([
+                SUBSCRIPTION_TOPICS.ADMIN_NOTIFICATION_UPDATED,
+            ]) as AsyncIterable<Record<string, AdminNotificationEvent>>;
+
+            return (async function* filteredIterator() {
+                for await (const payload of iterator) {
+                    const eventData =
+                        payload?.adminNotificationUpdates || payload;
+                    if (eventData && eventData.userId === adminId) {
+                        yield payload;
+                    }
+                }
+            })();
+        },
+    })
+    adminNotificationUpdates(@Root() payload: any): AdminNotificationEvent {
+        const eventData = payload?.adminNotificationUpdates || payload;
+
+        if (!eventData) {
+            throw new Error("No notification subscription data available");
         }
 
         return eventData;

@@ -5,6 +5,7 @@ import {
 } from "../types/Notification";
 import { User, UserType } from "../types/User";
 import { CourseAssignment } from "../types/CourseAssignment";
+import { pubsub, SUBSCRIPTION_TOPICS } from "../config/pubsub";
 
 export interface CreateNotificationInput {
     userId: number;
@@ -29,7 +30,16 @@ export class NotificationService {
             ...input,
             read: false,
         });
-        return repo.save(notification);
+        const saved = await repo.save(notification);
+
+        await pubsub.publish(SUBSCRIPTION_TOPICS.ADMIN_NOTIFICATION_UPDATED, {
+            adminNotificationUpdates: {
+                userId: saved.userId,
+                timestamp: saved.createdAt.toISOString(),
+            },
+        });
+
+        return saved;
     }
 
     static async createForUsers(

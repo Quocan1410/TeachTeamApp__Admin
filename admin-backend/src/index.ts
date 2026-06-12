@@ -11,14 +11,17 @@ import cors from "cors";
 import helmet from "helmet";
 import session from "express-session";
 import { loadAdminRepoEnv } from "./config/loadEnv";
-import { initializeDatabase } from "./config/database";
+import {
+    initializeDatabase,
+    pingDatabase,
+    AppDataSource,
+} from "./config/database";
 import { AuthResolver } from "./resolvers/AuthResolver";
 import { UserResolver } from "./resolvers/UserResolver";
 import { CourseResolver } from "./resolvers/CourseResolver";
 import { ReportResolver } from "./resolvers/ReportResolver";
 import { SubscriptionResolver } from "./resolvers/SubscriptionResolver";
 import { NotificationResolver } from "./resolvers/NotificationResolver";
-import { AnnouncementResolver } from "./resolvers/AnnouncementResolver";
 import { resolveAdminFromContext, resolveWsUser } from "./utils/graphqlContext";
 import "./types/session";
 loadAdminRepoEnv();
@@ -38,8 +41,8 @@ const parseAllowedOrigins = (): string[] => {
 
 async function startServer() {
     try {
+        console.log("Starting admin GraphQL server...");
         await initializeDatabase();
-
         const app = express();
         const isProduction = process.env.NODE_ENV === "production";
 
@@ -74,7 +77,6 @@ async function startServer() {
                 ReportResolver,
                 SubscriptionResolver,
                 NotificationResolver,
-                AnnouncementResolver,
             ],
             validate: true,
             pubSub: require("./config/pubsub").pubsub,
@@ -93,8 +95,8 @@ async function startServer() {
                 onConnect: async (ctx) => {
                     const user = await resolveWsUser(
                         ctx.connectionParams as
-                            | Record<string, unknown>
-                            | undefined
+                        | Record<string, unknown>
+                        | undefined
                     );
                     if (!user) {
                         return false;
@@ -160,27 +162,49 @@ async function startServer() {
                         user: adminUser
                             ? { id: adminUser.id }
                             : req.session?.userId
-                              ? { id: req.session.userId }
-                              : null,
+                                ? { id: req.session.userId }
+                                : null,
                         adminUser,
                     };
                 },
             })
         );
 
-        app.get("/health", (_req, res) => {
-            res.json({
-                status: "OK",
+        app.get("/health", async (_req, res) => {
+            const databaseConnected = await pingDatabase();
+            const payload = {
+                status: databaseConnected ? "OK" : "DEGRADED",
                 service: "Admin GraphQL Backend",
+                database: databaseConnected ? "connected" : "disconnected",
+                databaseInitialized: AppDataSource.isInitialized,
                 timestamp: new Date().toISOString(),
-            });
+            };
+
+            if (!databaseConnected) {
+                res.status(503).json(payload);
+                return;
+            }
+
+            res.json(payload);
         });
 
         const PORT = process.env.ADMIN_BACKEND_PORT || process.env.PORT || 4002;
-        httpServer.listen(PORT);
+        httpServer.listen(PORT, () => {
+            console.log(`Admin API listening on port ${PORT}`);
+        });
     } catch (error) {
+        console.error("Server startup failed:", error);
         process.exit(1);
     }
 }
+
+process.on("unhandledRejection", (reason) => {
+    console.error("Unhandled promise rejection:", reason);
+});
+
+process.on("uncaughtException", (error) => {
+    console.error("Uncaught exception:", error);
+    process.exit(1);
+});
 
 startServer();

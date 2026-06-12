@@ -6,7 +6,6 @@ import { CourseAssignment } from "../types/CourseAssignment";
 import { Application } from "../types/Application";
 import { SelectedCandidate } from "../types/SelectedCandidate";
 import { Notification } from "../types/Notification";
-import { Announcement } from "../types/Announcement";
 import { UserSecurityAnswer } from "../types/UserSecurityAnswer";
 import bcrypt from "bcryptjs";
 import { getAdminEmail, getAdminSeedPassword } from "../utils/adminConfig";
@@ -31,7 +30,6 @@ export const AppDataSource = new DataSource({
         Application,
         SelectedCandidate,
         Notification,
-        Announcement,
         UserSecurityAnswer,
     ],
     // Connection options for Cloud MySQL
@@ -43,14 +41,32 @@ export const AppDataSource = new DataSource({
 
 export const initializeDatabase = async () => {
     try {
+        console.log(
+            `Connecting to MySQL ${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || "3306"}/${process.env.DB_NAME || ""}`
+        );
         await AppDataSource.initialize();
+        console.log("MySQL connected");
 
         // Seed admin user
         await seedAdminUser();
     } catch (error) {
+        console.error("Database initialization failed:", error);
         throw error;
     }
 };
+
+export async function pingDatabase(): Promise<boolean> {
+    try {
+        if (!AppDataSource.isInitialized) {
+            return false;
+        }
+        await AppDataSource.query("SELECT 1");
+        return true;
+    } catch (error) {
+        console.error("Database ping failed:", error);
+        return false;
+    }
+}
 
 const seedAdminUser = async () => {
     try {

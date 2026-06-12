@@ -2,14 +2,16 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation, useSubscription } from "@apollo/client";
 import {
     GET_MY_NOTIFICATIONS,
     MARK_NOTIFICATION_AS_READ,
     MARK_ALL_NOTIFICATIONS_AS_READ,
     DELETE_NOTIFICATION,
+    ADMIN_NOTIFICATION_UPDATES_SUBSCRIPTION,
 } from "@/lib/graphql/queries";
 import CloseIcon from "@/shared/components/common/icons/CloseIcon";
+import { parseApiDateTime } from "@/shared/utils/parseApiDateTime";
 import styles from "./AdminNotificationBell.module.css";
 
 type AdminNotification = {
@@ -145,8 +147,14 @@ const AdminNotificationBell: React.FC = () => {
 
     const { data, loading, refetch } = useQuery(GET_MY_NOTIFICATIONS, {
         variables: { limit: 50 },
-        pollInterval: 30000,
+        pollInterval: 15000,
         fetchPolicy: "network-only",
+    });
+
+    useSubscription(ADMIN_NOTIFICATION_UPDATES_SUBSCRIPTION, {
+        onSubscriptionData: () => {
+            void refetch();
+        },
     });
 
     const [markAsRead] = useMutation(MARK_NOTIFICATION_AS_READ);
@@ -157,6 +165,12 @@ const AdminNotificationBell: React.FC = () => {
         data?.getMyNotifications?.notifications ?? [];
     const unreadCount = data?.getMyNotifications?.unreadCount ?? 0;
     const visible = notifications.slice(0, 10);
+
+    useEffect(() => {
+        if (isOpen) {
+            void refetch();
+        }
+    }, [isOpen, refetch]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -175,7 +189,7 @@ const AdminNotificationBell: React.FC = () => {
     }, []);
 
     const formatTimeAgo = (dateString: string) => {
-        const date = new Date(dateString);
+        const date = parseApiDateTime(dateString);
         const now = new Date();
         const diffInSeconds = Math.floor(
             (now.getTime() - date.getTime()) / 1000

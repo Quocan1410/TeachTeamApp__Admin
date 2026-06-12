@@ -17,7 +17,7 @@ import {
     MaxLength,
     MinLength,
 } from "class-validator";
-import { Brackets } from "typeorm";
+import { Brackets, IsNull } from "typeorm";
 import {
     normalizePagination,
     paginatedResult,
@@ -29,7 +29,6 @@ import { AppDataSource } from "../config/database";
 import { NotificationService } from "../services/NotificationService";
 import { NotificationType } from "../types/Notification";
 import { Course } from "../types/Course";
-import { Announcement } from "../types/Announcement";
 import { pubsub, SUBSCRIPTION_TOPICS } from "../config/pubsub";
 import {
     CandidateBlockedEvent,
@@ -59,9 +58,6 @@ class UserStats {
 
     @Field(() => Int)
     totalCourses: number;
-
-    @Field(() => Int)
-    totalAnnouncements: number;
 }
 
 @InputType()
@@ -232,6 +228,7 @@ export class UserResolver {
     async getAllUsers(): Promise<User[]> {
         const userRepository = AppDataSource.getRepository(User);
         return await userRepository.find({
+            where: { deletedAt: IsNull() },
             order: { createdAt: "DESC" },
         });
     }
@@ -246,7 +243,9 @@ export class UserResolver {
         const filter = (input.filter ?? "all").toLowerCase();
         const search = input.search?.trim();
 
-        const qb = userRepository.createQueryBuilder("user");
+        const qb = userRepository
+            .createQueryBuilder("user")
+            .where("user.deletedAt IS NULL");
 
         if (!input.sortBy) {
             qb.orderBy(
@@ -305,7 +304,7 @@ export class UserResolver {
     async getUsersByType(@Arg("userType") userType: UserType): Promise<User[]> {
         const userRepository = AppDataSource.getRepository(User);
         return await userRepository.find({
-            where: { userType },
+            where: { userType, deletedAt: IsNull() },
             order: { createdAt: "DESC" },
         });
     }
@@ -321,15 +320,21 @@ export class UserResolver {
             totalAdmins,
             blockedUsers,
             totalCourses,
-            totalAnnouncements,
         ] = await Promise.all([
-            userRepository.count(),
-            userRepository.count({ where: { userType: UserType.CANDIDATE } }),
-            userRepository.count({ where: { userType: UserType.LECTURER } }),
-            userRepository.count({ where: { userType: UserType.ADMIN } }),
-            userRepository.count({ where: { isBlocked: true } }),
+            userRepository.count({ where: { deletedAt: IsNull() } }),
+            userRepository.count({
+                where: { userType: UserType.CANDIDATE, deletedAt: IsNull() },
+            }),
+            userRepository.count({
+                where: { userType: UserType.LECTURER, deletedAt: IsNull() },
+            }),
+            userRepository.count({
+                where: { userType: UserType.ADMIN, deletedAt: IsNull() },
+            }),
+            userRepository.count({
+                where: { isBlocked: true, deletedAt: IsNull() },
+            }),
             AppDataSource.getRepository(Course).count(),
-            AppDataSource.getRepository(Announcement).count(),
         ]);
 
         return {
@@ -339,7 +344,6 @@ export class UserResolver {
             totalAdmins,
             blockedUsers,
             totalCourses,
-            totalAnnouncements,
         };
     }
 
@@ -385,7 +389,7 @@ export class UserResolver {
     async getUserById(@Arg("id", () => Int) id: number): Promise<User | null> {
         const userRepository = AppDataSource.getRepository(User);
         return await userRepository.findOne({
-            where: { id },
+            where: { id, deletedAt: IsNull() },
             relations: [
                 "courseAssignments",
                 "applications",
@@ -401,7 +405,9 @@ export class UserResolver {
     ): Promise<UserResponse> {
         try {
             const userRepository = AppDataSource.getRepository(User);
-            const user = await userRepository.findOne({ where: { id } });
+            const user = await userRepository.findOne({
+                where: { id, deletedAt: IsNull() },
+            });
 
             if (!user) {
                 return {
@@ -497,7 +503,9 @@ export class UserResolver {
     async unblockUser(@Arg("id", () => Int) id: number): Promise<UserResponse> {
         try {
             const userRepository = AppDataSource.getRepository(User);
-            const user = await userRepository.findOne({ where: { id } });
+            const user = await userRepository.findOne({
+                where: { id, deletedAt: IsNull() },
+            });
 
             if (!user) {
                 return {
@@ -570,7 +578,9 @@ export class UserResolver {
     ): Promise<UserResponse> {
         try {
             const userRepository = AppDataSource.getRepository(User);
-            const user = await userRepository.findOne({ where: { id } });
+            const user = await userRepository.findOne({
+                where: { id, deletedAt: IsNull() },
+            });
 
             if (!user) {
                 return {
@@ -637,7 +647,13 @@ export class UserResolver {
                 userAccountUpdates: userAccountEvent,
             });
 
-            await userRepository.remove(user);
+            user.deletedAt = new Date();
+            await userRepository.save(user);
+
+            await AppDataSource.query(
+                "UPDATE `refresh_tokens` SET `revokedAt` = ? WHERE `userId` = ? AND `revokedAt` IS NULL",
+                [new Date(), user.id]
+            );
 
             return {
                 success: true,

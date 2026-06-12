@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useQuery, useMutation } from "@apollo/client";
+import { useQuery, useMutation, NetworkStatus } from "@apollo/client";
 import {
     GET_USERS,
     GET_USER_STATS,
@@ -22,6 +22,9 @@ import {
     XCircleIcon,
     ExclamationTriangleIcon,
     MagnifyingGlassIcon,
+    XMarkIcon,
+    EyeIcon,
+    EyeSlashIcon,
 } from "@heroicons/react/24/outline";
 import AdminPageSkeleton from "@/shared/components/common/AdminPageSkeleton/AdminPageSkeleton";
 import styles from "./users-management.module.css";
@@ -34,8 +37,38 @@ import SortableTableHeader, {
     toggleSort,
     type SortDirection,
 } from "@/shared/components/common/SortableTableHeader/SortableTableHeader";
+import AppSelect from "@/shared/components/common/AppSelect/AppSelect";
 
 const PAGE_SIZE = 20;
+
+const USER_TYPE_OPTIONS = [
+    { value: "candidate", label: "Candidate (tutor applicant)" },
+    { value: "lecturer", label: "Lecturer" },
+];
+
+const USER_TYPE_HINT: Record<string, string> = {
+    candidate: "Applicant account — signs in at the tutor portal",
+    lecturer: "Staff account — signs in at the lecturer dashboard",
+};
+
+const EMAIL_PLACEHOLDER: Record<string, string> = {
+    candidate: "name@candidate.edu.au",
+    lecturer: "name@lecturer.edu.au",
+};
+
+const HONORIFIC_OPTIONS = [
+    { value: "", label: "Title", isDefault: true },
+    { value: "Mr.", label: "Mr." },
+    { value: "Ms.", label: "Ms." },
+    { value: "Mrs.", label: "Mrs." },
+    { value: "Dr.", label: "Dr." },
+    { value: "Prof.", label: "Prof." },
+];
+
+const EMAIL_DOMAIN_HINT: Record<string, string> = {
+    candidate: "Must end with @candidate.edu.au",
+    lecturer: "Must end with @lecturer.edu.au",
+};
 
 interface User {
     id: number;
@@ -59,6 +92,7 @@ export default function UsersManagement() {
     const [showDeleteModal, setShowDeleteModal] = useState(false);
     const [showEditModal, setShowEditModal] = useState(false);
     const [showCreateModal, setShowCreateModal] = useState(false);
+    const [showCreatePassword, setShowCreatePassword] = useState(false);
     const [userToDelete, setUserToDelete] = useState<User | null>(null);
     const [userToEdit, setUserToEdit] = useState<User | null>(null);
     const [editForm, setEditForm] = useState({
@@ -69,6 +103,8 @@ export default function UsersManagement() {
     const [createForm, setCreateForm] = useState({
         email: "",
         password: "",
+        confirmPassword: "",
+        honorific: "",
         firstName: "",
         lastName: "",
         userType: "candidate",
@@ -96,7 +132,9 @@ export default function UsersManagement() {
 
     const {
         data: usersData,
+        previousData: previousUsersData,
         loading: usersLoading,
+        networkStatus: usersNetworkStatus,
         refetch: refetchUsers,
     } = useQuery(GET_USERS, {
         variables: {
@@ -110,6 +148,7 @@ export default function UsersManagement() {
             },
         },
         fetchPolicy: "cache-and-network",
+        notifyOnNetworkStatusChange: true,
     });
     const { data: statsData, loading: statsLoading, refetch: refetchStats } =
         useQuery(GET_USER_STATS);
@@ -152,33 +191,43 @@ export default function UsersManagement() {
         onError: () => showError("Update failed"),
     });
 
-    const [createUser] = useMutation(CREATE_USER, {
-        onCompleted: (data) => {
-            if (data.createUser.success) {
-                showSuccess(data.createUser.message || "User created");
-                refetchUsers();
-                refetchStats();
-                setShowCreateModal(false);
-                setCreateForm({
-                    email: "",
-                    password: "",
-                    firstName: "",
-                    lastName: "",
-                    userType: "candidate",
-                });
-                setCreateErrors({});
-            } else {
-                showError(data.createUser.message || "Create failed");
-            }
-        },
-        onError: () => showError("Create failed"),
-    });
+    const [createUser, { loading: createUserLoading }] = useMutation(
+        CREATE_USER,
+        {
+            onCompleted: (data) => {
+                if (data.createUser.success) {
+                    showSuccess(data.createUser.message || "User created");
+                    void refetchUsers();
+                    void refetchStats();
+                    setShowCreateModal(false);
+                    setShowCreatePassword(false);
+                    setCreateForm({
+                        email: "",
+                        password: "",
+                        confirmPassword: "",
+                        honorific: "",
+                        firstName: "",
+                        lastName: "",
+                        userType: "candidate",
+                    });
+                    setCreateErrors({});
+                } else {
+                    showError(data.createUser.message || "Create failed");
+                }
+            },
+            onError: () => showError("Create failed"),
+        }
+    );
 
-    const userPage = usersData?.getUsers;
+    const resolvedUsersData = usersData ?? previousUsersData;
+    const userPage = resolvedUsersData?.getUsers;
     const filteredUsers = userPage?.items || [];
     const stats = statsData?.getUserStats;
     const isInitialLoad =
-        (usersLoading && !usersData) || (statsLoading && !statsData);
+        (usersLoading && !resolvedUsersData) || (statsLoading && !statsData);
+    const isUsersRefetching =
+        usersNetworkStatus === NetworkStatus.refetch ||
+        usersNetworkStatus === NetworkStatus.setVariables;
 
     const isAdminAccount = (userType: string) =>
         userType?.toLowerCase() === "admin";
@@ -279,6 +328,11 @@ export default function UsersManagement() {
         }
         if (!createForm.password || createForm.password.length < 8) {
             errors.password = "Password must be at least 8 characters";
+        } else if (createForm.password !== createForm.confirmPassword) {
+            errors.confirmPassword = "Passwords do not match";
+        }
+        if (!createForm.honorific) {
+            errors.honorific = "Please select a title";
         }
         if (!createForm.firstName.trim()) {
             errors.firstName = "First name is required";
@@ -303,7 +357,8 @@ export default function UsersManagement() {
                     password: createForm.password,
                     firstName: createForm.firstName.trim(),
                     lastName: createForm.lastName.trim(),
-                    userType: createForm.userType.toUpperCase(),
+                    userType: createForm.userType,
+                    honorific: createForm.honorific,
                 },
             },
         });
@@ -502,7 +557,11 @@ export default function UsersManagement() {
                         <div className={styles.tableHeader}>
                             <h3 className={styles.tableTitle}>Users</h3>
                         </div>
-                        <div className={styles.tableWrapper}>
+                        <div
+                            className={`${styles.tableWrapper} ${
+                                isUsersRefetching ? styles.tableRefetching : ""
+                            }`}
+                        >
                         <table className={styles.table}>
                             <thead className={styles.tableHeaderRow}>
                                 <tr>
@@ -521,6 +580,7 @@ export default function UsersManagement() {
                                         activeSortDir={sortDir}
                                         onSort={handleSort}
                                         className={styles.tableHeaderCell}
+                                        center
                                     />
                                     <SortableTableHeader
                                         label="Status"
@@ -529,6 +589,7 @@ export default function UsersManagement() {
                                         activeSortDir={sortDir}
                                         onSort={handleSort}
                                         className={styles.tableHeaderCell}
+                                        center
                                     />
                                     <SortableTableHeader
                                         label="Created"
@@ -537,6 +598,7 @@ export default function UsersManagement() {
                                         activeSortDir={sortDir}
                                         onSort={handleSort}
                                         className={styles.tableHeaderCell}
+                                        center
                                     />
                                     <th className={styles.tableHeaderCell}>
                                         Actions
@@ -757,14 +819,16 @@ export default function UsersManagement() {
                                     pageSize={userPage.pageSize}
                                     totalCount={userPage.totalCount}
                                     totalPages={userPage.totalPages}
-                                    loading={isInitialLoad}
+                                    loading={isUsersRefetching}
                                     onPageChange={setPage}
                                 />
                             </div>
                         )}
                     </div>
 
-                    {filteredUsers.length === 0 && !isInitialLoad && (
+                    {filteredUsers.length === 0 &&
+                        !isInitialLoad &&
+                        !isUsersRefetching && (
                         <div className={styles.emptyState}>
                             <UsersIcon className={styles.emptyStateIcon} />
                             <h3 className={styles.emptyStateText}>
@@ -782,8 +846,23 @@ export default function UsersManagement() {
                     <div className={styles.modalOverlay}>
                         <div className={styles.modal}>
                             <div className={styles.modalHeader}>
-                                <PencilIcon className={styles.modalIcon} />
-                                <h3 className={styles.modalTitle}>Edit User</h3>
+                                <div className={styles.modalHeaderMain}>
+                                    <PencilIcon className={styles.modalIcon} />
+                                    <h3 className={styles.modalTitle}>
+                                        Edit User
+                                    </h3>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowEditModal(false);
+                                        setUserToEdit(null);
+                                    }}
+                                    className={styles.closeButton}
+                                    aria-label="Close edit user"
+                                >
+                                    <XMarkIcon className={styles.closeIcon} />
+                                </button>
                             </div>
                             <form onSubmit={handleConfirmEdit}>
                                 <div className={styles.modalContent}>
@@ -827,24 +906,17 @@ export default function UsersManagement() {
                                         </label>
                                         <label className={styles.editLabel}>
                                             User type
-                                            <select
-                                                className={styles.editInput}
+                                            <AppSelect
                                                 value={editForm.userType}
-                                                onChange={(e) =>
+                                                onChange={(userType) =>
                                                     setEditForm({
                                                         ...editForm,
-                                                        userType:
-                                                            e.target.value,
+                                                        userType,
                                                     })
                                                 }
-                                            >
-                                                <option value="candidate">
-                                                    Candidate
-                                                </option>
-                                                <option value="lecturer">
-                                                    Lecturer
-                                                </option>
-                                            </select>
+                                                options={USER_TYPE_OPTIONS}
+                                                aria-label="User type"
+                                            />
                                         </label>
                                     </div>
                                 </div>
@@ -873,20 +945,91 @@ export default function UsersManagement() {
 
                 {showCreateModal && (
                     <div className={styles.modalOverlay}>
-                        <div className={styles.modal}>
+                        <div className={`${styles.modal} ${styles.modalWide}`}>
                             <div className={styles.modalHeader}>
-                                <PlusIcon className={styles.modalIcon} />
-                                <h3 className={styles.modalTitle}>Create User</h3>
+                                <div className={styles.modalHeaderMain}>
+                                    <PlusIcon
+                                        className={`${styles.modalIcon} ${styles.modalIconCreate}`}
+                                    />
+                                    <h3 className={styles.modalTitle}>
+                                        Create User
+                                    </h3>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowCreateModal(false);
+                                        setShowCreatePassword(false);
+                                        setCreateErrors({});
+                                    }}
+                                    className={styles.closeButton}
+                                    aria-label="Close create user"
+                                >
+                                    <XMarkIcon className={styles.closeIcon} />
+                                </button>
                             </div>
                             <form onSubmit={handleConfirmCreate}>
                                 <div className={styles.modalContent}>
-                                    <div className={styles.editFormGrid}>
+                                    <div className={styles.editFormGridTwoCol}>
                                         <label className={styles.editLabel}>
+                                            Account type
+                                            <AppSelect
+                                                value={createForm.userType}
+                                                onChange={(userType) =>
+                                                    setCreateForm((prev) => ({
+                                                        ...prev,
+                                                        userType,
+                                                        honorific:
+                                                            userType ===
+                                                                "lecturer" &&
+                                                            !prev.honorific
+                                                                ? "Dr."
+                                                                : prev.honorific,
+                                                    }))
+                                                }
+                                                options={USER_TYPE_OPTIONS}
+                                                aria-label="Account type"
+                                            />
+                                            <span className={styles.fieldHint}>
+                                                {
+                                                    USER_TYPE_HINT[
+                                                        createForm.userType
+                                                    ]
+                                                }
+                                            </span>
+                                        </label>
+                                        <label className={styles.editLabel}>
+                                            Title
+                                            <AppSelect
+                                                value={createForm.honorific}
+                                                onChange={(honorific) =>
+                                                    setCreateForm({
+                                                        ...createForm,
+                                                        honorific,
+                                                    })
+                                                }
+                                                options={HONORIFIC_OPTIONS}
+                                                aria-label="Title"
+                                            />
+                                            {createErrors.honorific && (
+                                                <span className={styles.fieldError}>
+                                                    {createErrors.honorific}
+                                                </span>
+                                            )}
+                                        </label>
+                                        <label
+                                            className={`${styles.editLabel} ${styles.editFormFullWidth}`}
+                                        >
                                             Email
                                             <input
                                                 className={styles.editInput}
                                                 type="email"
                                                 value={createForm.email}
+                                                placeholder={
+                                                    EMAIL_PLACEHOLDER[
+                                                        createForm.userType
+                                                    ]
+                                                }
                                                 onChange={(e) =>
                                                     setCreateForm({
                                                         ...createForm,
@@ -895,6 +1038,13 @@ export default function UsersManagement() {
                                                 }
                                                 required
                                             />
+                                            <span className={styles.fieldHint}>
+                                                {
+                                                    EMAIL_DOMAIN_HINT[
+                                                        createForm.userType
+                                                    ]
+                                                }
+                                            </span>
                                             {createErrors.email && (
                                                 <span className={styles.fieldError}>
                                                     {createErrors.email}
@@ -903,21 +1053,119 @@ export default function UsersManagement() {
                                         </label>
                                         <label className={styles.editLabel}>
                                             Password
-                                            <input
-                                                className={styles.editInput}
-                                                type="password"
-                                                value={createForm.password}
-                                                onChange={(e) =>
-                                                    setCreateForm({
-                                                        ...createForm,
-                                                        password: e.target.value,
-                                                    })
-                                                }
-                                                required
-                                            />
+                                            <div className={styles.passwordField}>
+                                                <input
+                                                    className={styles.editInput}
+                                                    type={
+                                                        showCreatePassword
+                                                            ? "text"
+                                                            : "password"
+                                                    }
+                                                    value={createForm.password}
+                                                    onChange={(e) =>
+                                                        setCreateForm({
+                                                            ...createForm,
+                                                            password:
+                                                                e.target.value,
+                                                        })
+                                                    }
+                                                    required
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className={
+                                                        styles.passwordToggle
+                                                    }
+                                                    onClick={() =>
+                                                        setShowCreatePassword(
+                                                            (prev) => !prev
+                                                        )
+                                                    }
+                                                    aria-label={
+                                                        showCreatePassword
+                                                            ? "Hide password"
+                                                            : "Show password"
+                                                    }
+                                                >
+                                                    {showCreatePassword ? (
+                                                        <EyeSlashIcon
+                                                            className={
+                                                                styles.passwordToggleIcon
+                                                            }
+                                                        />
+                                                    ) : (
+                                                        <EyeIcon
+                                                            className={
+                                                                styles.passwordToggleIcon
+                                                            }
+                                                        />
+                                                    )}
+                                                </button>
+                                            </div>
                                             {createErrors.password && (
                                                 <span className={styles.fieldError}>
                                                     {createErrors.password}
+                                                </span>
+                                            )}
+                                        </label>
+                                        <label className={styles.editLabel}>
+                                            Confirm password
+                                            <div className={styles.passwordField}>
+                                                <input
+                                                    className={styles.editInput}
+                                                    type={
+                                                        showCreatePassword
+                                                            ? "text"
+                                                            : "password"
+                                                    }
+                                                    value={
+                                                        createForm.confirmPassword
+                                                    }
+                                                    onChange={(e) =>
+                                                        setCreateForm({
+                                                            ...createForm,
+                                                            confirmPassword:
+                                                                e.target.value,
+                                                        })
+                                                    }
+                                                    required
+                                                />
+                                                <button
+                                                    type="button"
+                                                    className={
+                                                        styles.passwordToggle
+                                                    }
+                                                    onClick={() =>
+                                                        setShowCreatePassword(
+                                                            (prev) => !prev
+                                                        )
+                                                    }
+                                                    aria-label={
+                                                        showCreatePassword
+                                                            ? "Hide password"
+                                                            : "Show password"
+                                                    }
+                                                >
+                                                    {showCreatePassword ? (
+                                                        <EyeSlashIcon
+                                                            className={
+                                                                styles.passwordToggleIcon
+                                                            }
+                                                        />
+                                                    ) : (
+                                                        <EyeIcon
+                                                            className={
+                                                                styles.passwordToggleIcon
+                                                            }
+                                                        />
+                                                    )}
+                                                </button>
+                                            </div>
+                                            {createErrors.confirmPassword && (
+                                                <span className={styles.fieldError}>
+                                                    {
+                                                        createErrors.confirmPassword
+                                                    }
                                                 </span>
                                             )}
                                         </label>
@@ -959,26 +1207,14 @@ export default function UsersManagement() {
                                                 </span>
                                             )}
                                         </label>
-                                        <label className={styles.editLabel}>
-                                            User type
-                                            <select
-                                                className={styles.editInput}
-                                                value={createForm.userType}
-                                                onChange={(e) =>
-                                                    setCreateForm({
-                                                        ...createForm,
-                                                        userType: e.target.value,
-                                                    })
-                                                }
-                                            >
-                                                <option value="candidate">
-                                                    Candidate
-                                                </option>
-                                                <option value="lecturer">
-                                                    Lecturer
-                                                </option>
-                                            </select>
-                                        </label>
+                                        <p
+                                            className={`${styles.formNote} ${styles.editFormFullWidth}`}
+                                        >
+                                            Applies to both candidate and lecturer
+                                            accounts. Default security answers:
+                                            Melbourne, Demo School, TeachTeam
+                                            Guide, Demo.
+                                        </p>
                                     </div>
                                 </div>
                                 <div className={styles.modalActions}>
@@ -986,6 +1222,7 @@ export default function UsersManagement() {
                                         type="button"
                                         onClick={() => {
                                             setShowCreateModal(false);
+                                            setShowCreatePassword(false);
                                             setCreateErrors({});
                                         }}
                                         className={`${styles.modalButton} ${styles.modalButtonSecondary}`}
@@ -994,9 +1231,12 @@ export default function UsersManagement() {
                                     </button>
                                     <button
                                         type="submit"
+                                        disabled={createUserLoading}
                                         className={`${styles.modalButton} ${styles.modalButtonPrimary}`}
                                     >
-                                        Create user
+                                        {createUserLoading
+                                            ? "Creating..."
+                                            : "Create user"}
                                     </button>
                                 </div>
                             </form>
@@ -1009,12 +1249,25 @@ export default function UsersManagement() {
                     <div className={styles.modalOverlay}>
                         <div className={styles.modal}>
                             <div className={styles.modalHeader}>
-                                <ExclamationTriangleIcon
-                                    className={styles.modalIcon}
-                                />
-                                <h3 className={styles.modalTitle}>
-                                    Delete User
-                                </h3>
+                                <div className={styles.modalHeaderMain}>
+                                    <ExclamationTriangleIcon
+                                        className={styles.modalIcon}
+                                    />
+                                    <h3 className={styles.modalTitle}>
+                                        Delete User
+                                    </h3>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setShowDeleteModal(false);
+                                        setUserToDelete(null);
+                                    }}
+                                    className={styles.closeButton}
+                                    aria-label="Close delete user"
+                                >
+                                    <XMarkIcon className={styles.closeIcon} />
+                                </button>
                             </div>
                             <div className={styles.modalContent}>
                                 <p className={styles.modalText}>

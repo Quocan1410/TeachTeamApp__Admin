@@ -61,6 +61,14 @@ export class User {
     })
     lastName: string;
 
+    @Field({ nullable: true })
+    @Column({
+        type: "varchar",
+        length: 10,
+        nullable: true,
+    })
+    honorific: string | null;
+
     @Field(() => UserType)
     @Column({
         type: "varchar",
@@ -91,6 +99,13 @@ export class User {
     @Field()
     @UpdateDateColumn()
     updatedAt: Date;
+
+    @Column({
+        type: "datetime",
+        precision: 6,
+        nullable: true,
+    })
+    deletedAt: Date | null;
 
     // Relationships
     @Field(() => [CourseAssignment])

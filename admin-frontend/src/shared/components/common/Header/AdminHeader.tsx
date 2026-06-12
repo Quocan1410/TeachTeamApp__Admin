@@ -13,7 +13,6 @@ import {
     MoonIcon,
     ChevronDownIcon,
     DocumentChartBarIcon,
-    MegaphoneIcon,
     Bars3Icon,
     XMarkIcon,
 } from "@heroicons/react/24/outline";
@@ -98,11 +97,6 @@ const AdminHeader: React.FC<AdminHeaderProps> = ({ user, onLogout }) => {
             name: "Selections",
             href: "/dashboard/reports",
             icon: DocumentChartBarIcon,
-        },
-        {
-            name: "Announcements",
-            href: "/dashboard/announcements",
-            icon: MegaphoneIcon,
         },
     ];
 

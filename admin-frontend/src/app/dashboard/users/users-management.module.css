@@ -55,6 +55,22 @@
     color: #dc2626;
 }
 
+.fieldHint {
+    font-size: 0.75rem;
+    color: var(--color-text-secondary);
+    line-height: 1.4;
+}
+
+.formNote {
+    font-size: 0.8125rem;
+    color: var(--color-text-secondary);
+    padding: 0.75rem 1rem;
+    background: var(--color-bg-secondary);
+    border: 1px solid var(--color-border);
+    border-radius: 0.5rem;
+    line-height: 1.45;
+}
+
 .title {
     font-size: 2.5rem;
     font-weight: bold;
@@ -290,6 +306,13 @@
 
 .tableWrapper {
     overflow-x: auto;
+    position: relative;
+    transition: opacity 0.15s ease;
+}
+
+.tableRefetching {
+    opacity: 0.6;
+    pointer-events: none;
 }
 
 .tableHeader {
@@ -325,6 +348,11 @@
     white-space: nowrap;
 }
 
+/* Sortable headers pad via the inner button — avoid double padding */
+.tableHeaderCell:has(button) {
+    padding: 0;
+}
+
 /* Balanced column widths */
 .tableHeaderCell:nth-child(1) {
     /* User column */
@@ -353,7 +381,6 @@
     /* Actions column */
     width: 15%;
     text-align: left;
-    padding-left: 2rem;
 }
 
 .tableRow {
@@ -505,7 +532,6 @@
     align-items: center;
     justify-content: flex-start;
     gap: 0.75rem;
-    padding-left: 0.5rem;
 }
 
 .actionButton {
@@ -660,19 +686,65 @@
     box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
     position: relative;
     z-index: 1001;
+    overflow: visible;
 }
 
 .modalHeader {
     display: flex;
     align-items: center;
+    justify-content: space-between;
     gap: 0.75rem;
     margin-bottom: 1rem;
+}
+
+.modalHeaderMain {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    min-width: 0;
 }
 
 .modalIcon {
     width: 1.5rem;
     height: 1.5rem;
     color: #ef4444;
+    flex-shrink: 0;
+}
+
+.modalIconCreate {
+    color: var(--color-primary);
+}
+
+.closeButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background: var(--color-bg-primary);
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease,
+        color 0.15s ease;
+}
+
+.closeButton:hover {
+    background: rgba(239, 68, 68, 0.1);
+    border-color: #ef4444;
+    color: #ef4444;
+}
+
+.closeButton:focus,
+.closeButton:focus-visible {
+    outline: none;
+}
+
+.closeIcon {
+    width: 1.125rem;
+    height: 1.125rem;
 }
 
 .modalTitle {
@@ -684,6 +756,7 @@
 
 .modalContent {
     margin-bottom: 1.5rem;
+    overflow: visible;
 }
 
 .modalText {
@@ -744,11 +817,35 @@
     filter: brightness(0.92);
 }
 
+.modalButton:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+.modalButtonPrimary:disabled:hover {
+    filter: none;
+}
+
+.modalWide {
+    max-width: 640px;
+}
+
 .editFormGrid {
     display: flex;
     flex-direction: column;
     gap: 1rem;
     margin-top: 1rem;
+}
+
+.editFormGridTwoCol {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1rem 1.25rem;
+    margin-top: 1rem;
+}
+
+.editFormFullWidth {
+    grid-column: 1 / -1;
 }
 
 .editLabel {
@@ -761,17 +858,61 @@
 }
 
 .editInput {
+    width: 100%;
     padding: 0.5rem 0.75rem;
     border: 1px solid var(--color-border);
-    border-radius: 0.375rem;
+    border-radius: 0.5rem;
     background: var(--color-bg-primary);
     color: var(--color-text-primary);
     font-size: 0.875rem;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .editInput:focus {
-    outline: 2px solid var(--color-primary, #2563eb);
-    outline-offset: 1px;
+    outline: none;
+    border-color: var(--color-primary, #f97316);
+    box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+}
+
+.passwordField {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.passwordField .editInput {
+    padding-right: 2.5rem;
+}
+
+.passwordToggle {
+    position: absolute;
+    right: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    padding: 0;
+    border: none;
+    border-radius: 0.375rem;
+    background: transparent;
+    color: var(--color-text-secondary);
+    cursor: pointer;
+    transition: color 0.15s ease;
+}
+
+.passwordToggle:hover {
+    color: var(--color-text-primary);
+}
+
+.passwordToggle:focus,
+.passwordToggle:focus-visible {
+    outline: none;
+}
+
+.passwordToggleIcon {
+    width: 1.125rem;
+    height: 1.125rem;
 }
 
 /* Loading States */
@@ -1060,6 +1201,14 @@
     .modal {
         padding: 1.5rem;
         width: 95%;
+    }
+
+    .editFormGridTwoCol {
+        grid-template-columns: 1fr;
+    }
+
+    .editFormFullWidth {
+        grid-column: auto;
     }
 
     .userTypeBadge,

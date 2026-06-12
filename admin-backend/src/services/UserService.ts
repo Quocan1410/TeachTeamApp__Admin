@@ -1,4 +1,5 @@
 import bcrypt from "bcryptjs";
+import { IsNull } from "typeorm";
 import { AppDataSource } from "../config/database";
 import { User, UserType } from "../types/User";
 import { UserSecurityAnswer } from "../types/UserSecurityAnswer";
@@ -26,6 +27,16 @@ export type UserServiceResult = {
     message: string;
     user?: User;
 };
+
+const BCRYPT_ROUNDS = 10;
+
+const ALLOWED_HONORIFICS = new Set([
+    "Mr.",
+    "Ms.",
+    "Mrs.",
+    "Dr.",
+    "Prof.",
+]);
 
 const normalizeEmail = (email: string): string => email.trim().toLowerCase();
 
@@ -61,20 +72,31 @@ export class UserService {
             };
         }
 
+        const honorific = payload.honorific?.trim() || null;
+        if (!honorific || !ALLOWED_HONORIFICS.has(honorific)) {
+            return {
+                success: false,
+                message: "Please select a valid title",
+            };
+        }
+
         const existing = await userRepository.findOne({ where: { email } });
         if (existing) {
             return {
                 success: false,
-                message: "A user with this email already exists",
+                message: existing.deletedAt
+                    ? "This email belonged to a deleted account and cannot be reused"
+                    : "A user with this email already exists",
             };
         }
 
-        const passwordHash = await bcrypt.hash(payload.password, 12);
+        const passwordHash = await bcrypt.hash(payload.password, BCRYPT_ROUNDS);
         const newUser = userRepository.create({
             email,
             password: passwordHash,
             firstName,
             lastName,
+            honorific,
             userType: payload.userType,
             isBlocked: false,
         });
@@ -82,19 +104,24 @@ export class UserService {
         const savedUser = await userRepository.save(newUser);
 
         try {
-            for (const row of ADMIN_CREATED_USER_SECURITY_ANSWERS) {
-                const answerHash = await bcrypt.hash(
-                    row.answer.trim().toLowerCase(),
-                    12
-                );
-                await answerRepository.save(
+            const hashedAnswers = await Promise.all(
+                ADMIN_CREATED_USER_SECURITY_ANSWERS.map(async (row) => ({
+                    questionId: row.questionId,
+                    answerHash: await bcrypt.hash(
+                        row.answer.trim().toLowerCase(),
+                        BCRYPT_ROUNDS
+                    ),
+                }))
+            );
+            await answerRepository.save(
+                hashedAnswers.map((row) =>
                     answerRepository.create({
                         userId: savedUser.id,
                         questionId: row.questionId,
-                        answerHash,
+                        answerHash: row.answerHash,
                     })
-                );
-            }
+                )
+            );
         } catch {
             await userRepository.delete({ id: savedUser.id });
             return {
@@ -128,7 +155,9 @@ export class UserService {
         adminUserId?: number
     ): Promise<UserServiceResult> {
         const userRepository = AppDataSource.getRepository(User);
-        const user = await userRepository.findOne({ where: { id } });
+        const user = await userRepository.findOne({
+            where: { id, deletedAt: IsNull() },
+        });
 
         if (!user) {
             return { success: false, message: "User not found" };
