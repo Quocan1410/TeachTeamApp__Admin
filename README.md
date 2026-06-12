@@ -172,8 +172,12 @@ After login, token is stored in `sessionStorage` (`admin-user`, `admin-token`).
 
 | Role | Email | Password |
 |------|-------|----------|
-| Lecturer | `jane.lecturer@lecturer.edu.au` | `Password123!` |
-| Candidate | `alex.candidate@candidate.edu.au` | `Password123!` |
+| Lecturer | `jane.morrison@lecturer.edu.au` | `Password123!` |
+| Lecturer | `marcus.chen@lecturer.edu.au` | `Password123!` |
+| Lecturer | `priya.sharma@lecturer.edu.au` | `Password123!` |
+| Candidate | `alex.nguyen@candidate.edu.au` | `Password123!` |
+| Candidate | `samira.patel@candidate.edu.au` | `Password123!` |
+| Candidate | `james.oconnor@candidate.edu.au` | `Password123!` |
 
 ---
 

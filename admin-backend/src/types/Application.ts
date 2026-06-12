@@ -142,6 +142,20 @@ export class Application {
     rankedForCourse?: string | null;
 
     @Field()
+    @Column({
+        type: "boolean",
+        default: false,
+    })
+    isWithdrawn: boolean;
+
+    @Field({ nullable: true })
+    @Column({
+        type: "datetime",
+        nullable: true,
+    })
+    withdrawnAt?: Date | null;
+
+    @Field()
     @CreateDateColumn()
     appliedAt: Date;
 
@@ -225,7 +239,11 @@ export class Application {
 
     @Field()
     get canBeRanked(): boolean {
-        return this.status === ApplicationStatus.PENDING && !this.isRejected;
+        return (
+            this.status === ApplicationStatus.PENDING &&
+            !this.isRejected &&
+            !this.isWithdrawn
+        );
     }
 
     @Field()
