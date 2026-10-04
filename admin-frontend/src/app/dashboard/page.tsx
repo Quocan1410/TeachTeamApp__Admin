@@ -36,7 +36,7 @@ type DashboardCourse = {
             email: string;
         } | null;
     }>;
-    applications?: Array<{ id: number }>;
+    applications?: Array<{ id: string }>;
 };
 
 const QUICK_ACTIONS = [

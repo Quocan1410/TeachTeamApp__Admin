@@ -103,7 +103,7 @@ async function startServer() {
                     }
                     (ctx.extra as { userId?: string; userType?: string }).userId =
                         user.id;
-                    (ctx.extra as { userId?: number; userType?: string }).userType =
+                    (ctx.extra as { userId?: string; userType?: string }).userType =
                         user.userType;
                     return true;
                 },

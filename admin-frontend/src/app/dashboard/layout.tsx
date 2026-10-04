@@ -3,7 +3,7 @@
 import { useState, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@apollo/client";
-import AdminHeader from "../../shared/components/common/Header/AdminHeader";
+import AdminHeader from "@/shared/components/common/Header/AdminHeader";
 import { ADMIN_LOGOUT } from "@/lib/graphql/queries";
 import { clearAdminSession, type StoredAdminUser } from "@/lib/adminSession";
 import { readAdminSessionUser } from "@/lib/readAdminSessionUser";

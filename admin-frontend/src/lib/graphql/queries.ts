@@ -104,7 +104,7 @@ export const UNBLOCK_USER = gql`
 `;
 
 export const DELETE_USER = gql`
-    mutation DeleteUser($id: Int!) {
+    mutation DeleteUser($id: ID!) {
         deleteUser(id: $id) {
             success
             message
@@ -113,7 +113,7 @@ export const DELETE_USER = gql`
 `;
 
 export const UPDATE_USER = gql`
-    mutation UpdateUser($id: Int!, $input: UpdateUserInput!) {
+    mutation UpdateUser($id: ID!, $input: UpdateUserInput!) {
         updateUser(id: $id, input: $input) {
             success
             message
@@ -225,7 +225,7 @@ export const GET_COURSES = gql`
 `;
 
 export const GET_UNASSIGNED_LECTURERS = gql`
-    query GetUnassignedLecturers($courseId: Int) {
+    query GetUnassignedLecturers($courseId: ID) {
         getUnassignedLecturers(courseId: $courseId) {
             id
             firstName
@@ -257,7 +257,7 @@ export const CREATE_COURSE = gql`
 `;
 
 export const UPDATE_COURSE = gql`
-    mutation UpdateCourse($id: Int!, $input: CourseInput!) {
+    mutation UpdateCourse($id: ID!, $input: CourseInput!) {
         updateCourse(id: $id, input: $input) {
             success
             message
@@ -276,7 +276,7 @@ export const UPDATE_COURSE = gql`
 `;
 
 export const DELETE_COURSE = gql`
-    mutation DeleteCourse($id: Int!) {
+    mutation DeleteCourse($id: ID!) {
         deleteCourse(id: $id) {
             success
             message

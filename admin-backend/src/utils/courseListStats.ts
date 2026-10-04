@@ -38,12 +38,12 @@ export async function attachCourseListStats(courses: Course[]): Promise<Course[]
     ]);
 
     const appCountMap = new Map(
-        appCountRows.map((row) => [Number(row.courseId), Number(row.count)])
+        appCountRows.map((row) => [String(row.courseId), Number(row.count)])
     );
 
-    const selectedByCourse = new Map<number, { tutors: number; lab: number }>();
+    const selectedByCourse = new Map<string, { tutors: number; lab: number }>();
     for (const row of selectedRows) {
-        const courseId = Number(row.courseId);
+        const courseId = String(row.courseId);
         const entry = selectedByCourse.get(courseId) ?? {
             tutors: 0,
             lab: 0,

@@ -46,7 +46,7 @@ export class NotificationService {
         userIds: string[],
         input: Omit<CreateNotificationInput, "userId">
     ): Promise<void> {
-        const uniqueIds = [...new Set(userIds.filter((id) => id > 0))];
+        const uniqueIds = [...new Set(userIds.filter((id) => id.trim().length > 0))];
         if (uniqueIds.length === 0) return;
 
         await Promise.all(
@@ -74,7 +74,7 @@ export class NotificationService {
     }
 
     static async notifyLecturers(
-        lecturerIds: number[],
+        lecturerIds: string[],
         input: Omit<CreateNotificationInput, "userId">
     ): Promise<void> {
         await this.createForUsers(lecturerIds, input);
@@ -98,7 +98,7 @@ export class NotificationService {
     }
 
     static async markAsRead(
-        notificationId: number,
+        notificationId: string,
         userId: string
     ): Promise<boolean> {
         const result = await this.getRepository().update(

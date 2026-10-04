@@ -49,7 +49,6 @@ export class UserService {
         payload: CreateUserPayload
     ): Promise<UserServiceResult> {
         const userRepository = AppDataSource.getRepository(User);
-        const answerRepository = AppDataSource.getRepository(UserSecurityAnswer);
 
         const email = normalizeEmail(payload.email);
         const firstName = payload.firstName.trim();
@@ -113,16 +112,16 @@ export class UserService {
         });
 
         return {
+            success: true,
             message: "User created successfully.",
-                "User created successfully. Default security answers: Melbourne, Demo School, TeachTeam Guide, Demo.",
             user: savedUser,
         };
     }
 
+    static async updateUser(
         id: string,
-        id: number,
+        payload: UpdateUserPayload,
         adminUserId?: string
-        adminUserId?: number
     ): Promise<UserServiceResult> {
         const userRepository = AppDataSource.getRepository(User);
         const user = await userRepository.findOne({
