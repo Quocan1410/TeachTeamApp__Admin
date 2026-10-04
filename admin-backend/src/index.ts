@@ -101,14 +101,14 @@ async function startServer() {
                     if (!user) {
                         return false;
                     }
-                    (ctx.extra as { userId?: number; userType?: string }).userId =
+                    (ctx.extra as { userId?: string; userType?: string }).userId =
                         user.id;
-                    (ctx.extra as { userId?: number; userType?: string }).userType =
+                    (ctx.extra as { userId?: string; userType?: string }).userType =
                         user.userType;
                     return true;
                 },
                 context: (ctx) => ({
-                    extra: ctx.extra as { userId?: number; userType?: string },
+                    extra: ctx.extra as { userId?: string; userType?: string },
                 }),
             },
             wsServer

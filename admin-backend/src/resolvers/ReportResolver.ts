@@ -153,7 +153,7 @@ class ReportSummary {
 }
 
 async function loadSelectionsForCourse(
-    courseId: number
+    courseId: string
 ): Promise<CandidateSelectionInfo[]> {
     const selectedCandidateRepository =
         AppDataSource.getRepository(SelectedCandidate);
@@ -301,7 +301,7 @@ export class ReportResolver {
 
         // Group by candidate
         const candidateSelectionMap = new Map<
-            number,
+            string,
             CandidateSelectionInfo[]
         >();
 
@@ -470,7 +470,7 @@ export class ReportResolver {
 
         const totalCount = allRows.length;
         const pageRows = allRows.slice(skip, skip + take);
-        const candidateIds = pageRows.map((row) => Number(row.candidateId));
+        const candidateIds = pageRows.map((row) => String(row.candidateId));
 
         if (candidateIds.length === 0) {
             return paginatedResult([], totalCount, page, pageSize);
@@ -493,7 +493,7 @@ export class ReportResolver {
         });
 
         const candidateSelectionMap = new Map<
-            number,
+            string,
             CandidateSelectionInfo[]
         >();
 

@@ -2,8 +2,8 @@ import { Course } from "../types/Course";
 import { ApplicationStatus } from "../types/Application";
 import { AppDataSource } from "../config/database";
 
-type RoleCountRow = { courseId: number; roleName: string; count: string };
-type AppCountRow = { courseId: number; count: string };
+type RoleCountRow = { courseId: string; roleName: string; count: string };
+type AppCountRow = { courseId: string; count: string };
 
 export async function attachCourseListStats(courses: Course[]): Promise<Course[]> {
     if (courses.length === 0) {
@@ -38,12 +38,12 @@ export async function attachCourseListStats(courses: Course[]): Promise<Course[]
     ]);
 
     const appCountMap = new Map(
-        appCountRows.map((row) => [Number(row.courseId), Number(row.count)])
+        appCountRows.map((row) => [String(row.courseId), Number(row.count)])
     );
 
-    const selectedByCourse = new Map<number, { tutors: number; lab: number }>();
+    const selectedByCourse = new Map<string, { tutors: number; lab: number }>();
     for (const row of selectedRows) {
-        const courseId = Number(row.courseId);
+        const courseId = String(row.courseId);
         const entry = selectedByCourse.get(courseId) ?? {
             tutors: 0,
             lab: 0,

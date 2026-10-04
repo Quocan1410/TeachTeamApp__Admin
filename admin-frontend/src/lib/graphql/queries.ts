@@ -78,7 +78,7 @@ export const GET_USER_STATS = gql`
 
 // User Mutations
 export const BLOCK_USER = gql`
-    mutation BlockUser($id: Int!) {
+    mutation BlockUser($id: ID!) {
         blockUser(id: $id) {
             success
             message
@@ -91,7 +91,7 @@ export const BLOCK_USER = gql`
 `;
 
 export const UNBLOCK_USER = gql`
-    mutation UnblockUser($id: Int!) {
+    mutation UnblockUser($id: ID!) {
         unblockUser(id: $id) {
             success
             message
@@ -104,7 +104,7 @@ export const UNBLOCK_USER = gql`
 `;
 
 export const DELETE_USER = gql`
-    mutation DeleteUser($id: Int!) {
+    mutation DeleteUser($id: ID!) {
         deleteUser(id: $id) {
             success
             message
@@ -113,7 +113,7 @@ export const DELETE_USER = gql`
 `;
 
 export const UPDATE_USER = gql`
-    mutation UpdateUser($id: Int!, $input: UpdateUserInput!) {
+    mutation UpdateUser($id: ID!, $input: UpdateUserInput!) {
         updateUser(id: $id, input: $input) {
             success
             message
@@ -225,7 +225,7 @@ export const GET_COURSES = gql`
 `;
 
 export const GET_UNASSIGNED_LECTURERS = gql`
-    query GetUnassignedLecturers($courseId: Int) {
+    query GetUnassignedLecturers($courseId: ID) {
         getUnassignedLecturers(courseId: $courseId) {
             id
             firstName
@@ -257,7 +257,7 @@ export const CREATE_COURSE = gql`
 `;
 
 export const UPDATE_COURSE = gql`
-    mutation UpdateCourse($id: Int!, $input: CourseInput!) {
+    mutation UpdateCourse($id: ID!, $input: CourseInput!) {
         updateCourse(id: $id, input: $input) {
             success
             message
@@ -276,7 +276,7 @@ export const UPDATE_COURSE = gql`
 `;
 
 export const DELETE_COURSE = gql`
-    mutation DeleteCourse($id: Int!) {
+    mutation DeleteCourse($id: ID!) {
         deleteCourse(id: $id) {
             success
             message
@@ -551,7 +551,7 @@ export const GET_UNSELECTED_CANDIDATES = gql`
 `;
 
 export const ASSIGN_LECTURER_TO_COURSE = gql`
-    mutation AssignLecturerToCourse($lecturerId: Int!, $courseId: Int!) {
+    mutation AssignLecturerToCourse($lecturerId: ID!, $courseId: ID!) {
         assignLecturerToCourse(lecturerId: $lecturerId, courseId: $courseId) {
             success
             message
@@ -575,7 +575,7 @@ export const ASSIGN_LECTURER_TO_COURSE = gql`
 `;
 
 export const REMOVE_LECTURER_FROM_COURSE = gql`
-    mutation RemoveLecturerFromCourse($lecturerId: Int!, $courseId: Int!) {
+    mutation RemoveLecturerFromCourse($lecturerId: ID!, $courseId: ID!) {
         removeLecturerFromCourse(lecturerId: $lecturerId, courseId: $courseId) {
             success
             message
@@ -603,7 +603,7 @@ export const GET_MY_NOTIFICATIONS = gql`
 `;
 
 export const MARK_NOTIFICATION_AS_READ = gql`
-    mutation MarkNotificationAsRead($id: Int!) {
+    mutation MarkNotificationAsRead($id: ID!) {
         markNotificationAsRead(id: $id) {
             success
             message
@@ -622,7 +622,7 @@ export const MARK_ALL_NOTIFICATIONS_AS_READ = gql`
 `;
 
 export const DELETE_NOTIFICATION = gql`
-    mutation DeleteNotification($id: Int!) {
+    mutation DeleteNotification($id: ID!) {
         deleteNotification(id: $id) {
             success
             unreadCount

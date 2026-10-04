@@ -81,10 +81,10 @@ flowchart TB
 
 ## Database
 
-Admin backend reads/writes the **same 12-table schema** as the main app. Run migrations and seed from the main repo:
+Admin backend reads/writes the **same schema** as the main app. Apply migrations from the main repo:
 
 ```bash
-cd ../TeachTeamApp/backend && npm run db:reset
+cd ../TeachTeamApp/backend && npm run migration:run
 ```
 
 ```mermaid
@@ -122,11 +122,11 @@ See [env.example](./env.example) for the full list.
 
 ## Getting started
 
-**Requirements:** Node.js 20+, MySQL 8+ (schema seeded from main repo)
+**Requirements:** Node.js 20+, MySQL 8+ (schema from the main repo)
 
 ```bash
-# 1. Seed database (from main repo)
-cd ../TeachTeamApp/backend && npm run db:reset
+# 1. Apply schema (from main repo)
+cd ../TeachTeamApp/backend && npm run migration:run
 
 # 2. Install admin dependencies
 cd ../../TeachTeamApp-Admin
@@ -166,9 +166,9 @@ cd admin-frontend && npm run dev:clean   # :3001
 
 After login, token is stored in `sessionStorage` (`admin-user`, `admin-token`).
 
-**Create user (admin UI):** Users → **Create user** — candidate/lecturer emails must end with `@candidate.edu.au` or `@lecturer.edu.au`. Default security answers: Melbourne, Demo School, TeachTeam Guide, Demo.
+**Create user (admin UI):** Users → **Create user** — candidate/lecturer emails must end with `@candidate.edu.au` or `@lecturer.edu.au`.
 
-**Cross-app test users** (seeded from main repo):
+**Cross-app accounts** already stored in the shared database:
 
 | Role | Email | Password |
 |------|-------|----------|

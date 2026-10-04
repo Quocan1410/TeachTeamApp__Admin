@@ -16,7 +16,7 @@ import {
     Bars3Icon,
     XMarkIcon,
 } from "@heroicons/react/24/outline";
-import { useTheme } from "../../../contexts/ThemeContext";
+import { useTheme } from "@/shared/contexts/ThemeContext";
 import ThemeToggle from "../ThemeToggle/ThemeToggle";
 import AdminNotificationBell from "../AdminNotificationBell/AdminNotificationBell";
 import { getUserInitials, hasCustomAvatar } from "@/lib/avatarUtils";

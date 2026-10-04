@@ -71,7 +71,7 @@ const EMAIL_DOMAIN_HINT: Record<string, string> = {
 };
 
 interface User {
-    id: number;
+    id: string;
     email: string;
     firstName: string;
     lastName: string;
@@ -244,7 +244,7 @@ export default function UsersManagement() {
         try {
             if (user.isBlocked) {
                 const result = await unblockUser({
-                    variables: { id: parseInt(user.id.toString()) },
+                    variables: { id: user.id },
                 });
                 if (result.data?.unblockUser.success) {
                     showSuccess(
@@ -259,7 +259,7 @@ export default function UsersManagement() {
                 }
             } else {
                 const result = await blockUser({
-                    variables: { id: parseInt(user.id.toString()) },
+                    variables: { id: user.id },
                 });
                 if (result.data?.blockUser.success) {
                     showSuccess(
@@ -298,7 +298,7 @@ export default function UsersManagement() {
         }
         await updateUser({
             variables: {
-                id: parseInt(userToEdit.id.toString(), 10),
+                id: userToEdit.id,
                 input: {
                     firstName: editForm.firstName.trim(),
                     lastName: editForm.lastName.trim(),
@@ -382,7 +382,7 @@ export default function UsersManagement() {
 
         try {
             const result = await deleteUser({
-                variables: { id: parseInt(userToDelete.id.toString()) },
+                variables: { id: userToDelete.id },
             });
             if (result.data?.deleteUser.success) {
                 showSuccess(
@@ -1207,14 +1207,6 @@ export default function UsersManagement() {
                                                 </span>
                                             )}
                                         </label>
-                                        <p
-                                            className={`${styles.formNote} ${styles.editFormFullWidth}`}
-                                        >
-                                            Applies to both candidate and lecturer
-                                            accounts. Default security answers:
-                                            Melbourne, Demo School, TeachTeam
-                                            Guide, Demo.
-                                        </p>
                                     </div>
                                 </div>
                                 <div className={styles.modalActions}>

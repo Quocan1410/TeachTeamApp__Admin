@@ -4,6 +4,7 @@ import {
     Mutation,
     Arg,
     Int,
+    ID,
     ObjectType,
     Field,
     InputType,
@@ -248,7 +249,7 @@ export class CourseResolver {
 
     @Query(() => Course, { nullable: true })
     async getCourseById(
-        @Arg("id", () => Int) id: number
+        @Arg("id", () => ID) id: string
     ): Promise<Course | null> {
         const courseRepository = AppDataSource.getRepository(Course);
         return await courseRepository.findOne({
@@ -273,7 +274,7 @@ export class CourseResolver {
 
     @Query(() => [User])
     async getUnassignedLecturers(
-        @Arg("courseId", () => Int, { nullable: true }) courseId?: number
+        @Arg("courseId", () => ID, { nullable: true }) courseId?: string
     ): Promise<User[]> {
         const userRepository = AppDataSource.getRepository(User);
         const assignmentRepository =
@@ -344,7 +345,7 @@ export class CourseResolver {
 
     @Mutation(() => CourseResponse)
     async updateCourse(
-        @Arg("id", () => Int) id: number,
+        @Arg("id", () => ID) id: string,
         @Arg("input") input: CourseInput
     ): Promise<CourseResponse> {
         try {
@@ -400,7 +401,7 @@ export class CourseResolver {
 
     @Mutation(() => CourseResponse)
     async deleteCourse(
-        @Arg("id", () => Int) id: number
+        @Arg("id", () => ID) id: string
     ): Promise<CourseResponse> {
         try {
             const courseRepository = AppDataSource.getRepository(Course);
@@ -479,8 +480,8 @@ export class CourseResolver {
 
     @Mutation(() => AssignmentResponse)
     async assignLecturerToCourse(
-        @Arg("lecturerId", () => Int) lecturerId: number,
-        @Arg("courseId", () => Int) courseId: number
+        @Arg("lecturerId", () => ID) lecturerId: string,
+        @Arg("courseId", () => ID) courseId: string
     ): Promise<AssignmentResponse> {
         try {
             const userRepository = AppDataSource.getRepository(User);
@@ -578,8 +579,8 @@ export class CourseResolver {
 
     @Mutation(() => AssignmentResponse)
     async removeLecturerFromCourse(
-        @Arg("lecturerId", () => Int) lecturerId: number,
-        @Arg("courseId", () => Int) courseId: number
+        @Arg("lecturerId", () => ID) lecturerId: string,
+        @Arg("courseId", () => ID) courseId: string
     ): Promise<AssignmentResponse> {
         try {
             const assignmentRepository =

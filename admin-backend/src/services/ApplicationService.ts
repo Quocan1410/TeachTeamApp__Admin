@@ -18,8 +18,8 @@ export class ApplicationService {
      * This is used to send targeted notifications only to relevant lecturers
      */
     static async getAffectedLecturerIds(
-        candidateId: number
-    ): Promise<number[]> {
+        candidateId: string
+    ): Promise<string[]> {
         try {
             const applicationRepository =
                 AppDataSource.getRepository(Application);
@@ -65,7 +65,7 @@ export class ApplicationService {
      * Mirrors main-app rules: pending shortlisted rows and selected apps must not linger after block/delete.
      */
     static async cleanupCandidateApplications(
-        candidateId: number
+        candidateId: string
     ): Promise<CandidateApplicationCleanupResult> {
         const queryRunner = AppDataSource.createQueryRunner();
         await queryRunner.connect();
@@ -160,7 +160,7 @@ export class ApplicationService {
 
     /** @deprecated Use cleanupCandidateApplications */
     static async unselectAndUnrankCandidateApplications(
-        candidateId: number
+        candidateId: string
     ): Promise<{
         success: boolean;
         message: string;

@@ -6,8 +6,8 @@ import { Application } from "./Application";
 @Entity("roles")
 export class Role {
     @Field(() => ID)
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn("uuid")
+    id: string;
 
     @Field()
     @Column({

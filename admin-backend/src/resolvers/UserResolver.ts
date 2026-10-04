@@ -4,6 +4,7 @@ import {
     Mutation,
     Arg,
     Int,
+    ID,
     ObjectType,
     Field,
     InputType,
@@ -165,7 +166,7 @@ class UserResponse {
 
 async function publishCandidateBlockingUpdate(
     user: User,
-    affectedLecturerIds: number[],
+    affectedLecturerIds: string[],
     cleanup: CandidateApplicationCleanupResult,
     isBlocked: boolean
 ): Promise<void> {
@@ -191,7 +192,7 @@ async function publishCandidateBlockingUpdate(
 
 async function notifyLecturersAboutCandidateChange(
     user: User,
-    affectedLecturerIds: number[],
+    affectedLecturerIds: string[],
     cleanup: CandidateApplicationCleanupResult,
     action: "blocked" | "deleted"
 ): Promise<void> {
@@ -365,7 +366,7 @@ export class UserResolver {
 
     @Mutation(() => UserResponse)
     async updateUser(
-        @Arg("id", () => Int) id: number,
+        @Arg("id", () => ID) id: string,
         @Arg("input") input: UpdateUserInput,
         @Ctx() ctx: GraphQLContext
     ): Promise<UserResponse> {
@@ -386,7 +387,7 @@ export class UserResolver {
     }
 
     @Query(() => User, { nullable: true })
-    async getUserById(@Arg("id", () => Int) id: number): Promise<User | null> {
+    async getUserById(@Arg("id", () => ID) id: string): Promise<User | null> {
         const userRepository = AppDataSource.getRepository(User);
         return await userRepository.findOne({
             where: { id, deletedAt: IsNull() },
@@ -400,7 +401,7 @@ export class UserResolver {
 
     @Mutation(() => UserResponse)
     async blockUser(
-        @Arg("id", () => Int) id: number,
+        @Arg("id", () => ID) id: string,
         @Ctx() ctx: GraphQLContext
     ): Promise<UserResponse> {
         try {
@@ -500,7 +501,7 @@ export class UserResolver {
     }
 
     @Mutation(() => UserResponse)
-    async unblockUser(@Arg("id", () => Int) id: number): Promise<UserResponse> {
+    async unblockUser(@Arg("id", () => ID) id: string): Promise<UserResponse> {
         try {
             const userRepository = AppDataSource.getRepository(User);
             const user = await userRepository.findOne({
@@ -573,7 +574,7 @@ export class UserResolver {
 
     @Mutation(() => UserResponse)
     async deleteUser(
-        @Arg("id", () => Int) id: number,
+        @Arg("id", () => ID) id: string,
         @Ctx() ctx: GraphQLContext
     ): Promise<UserResponse> {
         try {

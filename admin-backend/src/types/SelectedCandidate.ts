@@ -7,7 +7,7 @@ import {
     JoinColumn,
     Index,
 } from "typeorm";
-import { ObjectType, Field, ID, Int } from "type-graphql";
+import { ObjectType, Field, ID } from "type-graphql";
 import { Application } from "./Application";
 import { User } from "./User";
 
@@ -16,22 +16,16 @@ import { User } from "./User";
 @Index(["applicationId"], { unique: true })
 export class SelectedCandidate {
     @Field(() => ID)
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn("uuid")
+    id: string;
 
-    @Field(() => Int)
-    @Column({
-        type: "int",
-        nullable: false,
-    })
-    applicationId: number;
+    @Field(() => ID)
+    @Column({ type: "varchar", length: 36 })
+    applicationId: string;
 
-    @Field(() => Int)
-    @Column({
-        type: "int",
-        nullable: false,
-    })
-    selectedById: number;
+    @Field(() => ID)
+    @Column({ type: "varchar", length: 36 })
+    selectedById: string;
 
     @Field()
     @CreateDateColumn()

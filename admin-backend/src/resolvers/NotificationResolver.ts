@@ -4,6 +4,7 @@ import {
     Mutation,
     Arg,
     Int,
+    ID,
     Ctx,
     ObjectType,
     Field,
@@ -60,7 +61,7 @@ export class NotificationResolver {
 
     @Mutation(() => NotificationActionResponse)
     async markNotificationAsRead(
-        @Arg("id", () => Int) id: number,
+        @Arg("id", () => ID) id: string,
         @Ctx() ctx: any
     ): Promise<NotificationActionResponse> {
         const userId = getUserIdFromContext(ctx);
@@ -92,7 +93,7 @@ export class NotificationResolver {
 
     @Mutation(() => NotificationActionResponse)
     async deleteNotification(
-        @Arg("id", () => Int) id: number,
+        @Arg("id", () => ID) id: string,
         @Ctx() ctx: any
     ): Promise<NotificationActionResponse> {
         const userId = getUserIdFromContext(ctx);

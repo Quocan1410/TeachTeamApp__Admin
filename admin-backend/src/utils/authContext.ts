@@ -1,6 +1,6 @@
 import { resolveAdminFromContext, GraphQLContext } from "./graphqlContext";
 
-export function getUserIdFromContext(ctx: GraphQLContext): number | null {
+export function getUserIdFromContext(ctx: GraphQLContext): string | null {
     if (ctx.adminUser?.id) {
         return ctx.adminUser.id;
     }
@@ -14,7 +14,7 @@ export function getUserIdFromContext(ctx: GraphQLContext): number | null {
 
 export async function getAdminUserIdFromContext(
     ctx: GraphQLContext
-): Promise<number | null> {
+): Promise<string | null> {
     const admin = await resolveAdminFromContext(ctx);
     return admin?.id ?? null;
 }

@@ -1,7 +1,7 @@
 import { UserType } from "../types/User";
 
 export interface WsAuthExtra {
-    userId?: number;
+    userId?: string;
     userType?: UserType;
 }
 
@@ -16,7 +16,7 @@ export const assertWsRole = (
 
 export const assertWsSelf = (
     extra: WsAuthExtra | undefined,
-    userId: number
+    userId: string
 ): void => {
     if (!extra?.userId || extra.userId !== userId) {
         throw new Error("Forbidden subscription");

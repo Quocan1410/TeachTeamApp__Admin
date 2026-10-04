@@ -9,10 +9,10 @@ import {
 export interface GraphQLContext {
     req: {
         headers: { authorization?: string };
-        session?: { userId?: number };
+        session?: { userId?: string };
     };
     res: unknown;
-    user?: { id: number } | null;
+    user?: { id: string } | null;
     adminUser?: User | null;
 }
 

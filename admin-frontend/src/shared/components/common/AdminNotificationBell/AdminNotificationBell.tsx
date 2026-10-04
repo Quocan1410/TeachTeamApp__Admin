@@ -15,7 +15,7 @@ import { parseApiDateTime } from "@/shared/utils/parseApiDateTime";
 import styles from "./AdminNotificationBell.module.css";
 
 type AdminNotification = {
-    id: number;
+    id: string;
     type: string;
     title: string;
     message: string;
@@ -206,7 +206,7 @@ const AdminNotificationBell: React.FC = () => {
     };
 
     const handleNotificationClick = async (
-        id: number,
+        id: string,
         link?: string | null
     ) => {
         await markAsRead({ variables: { id } });
@@ -222,7 +222,7 @@ const AdminNotificationBell: React.FC = () => {
         await refetch();
     };
 
-    const handleDelete = async (id: number, e: React.MouseEvent) => {
+    const handleDelete = async (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
         await deleteNotification({ variables: { id } });
         await refetch();
