@@ -31,29 +31,20 @@ registerEnumType(ApplicationStatus, {
 @Index(["candidateId", "courseId", "roleId"], { unique: true })
 export class Application {
     @Field(() => ID)
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn("uuid")
+    id: string;
 
-    @Field(() => Int)
-    @Column({
-        type: "int",
-        nullable: false,
-    })
-    candidateId: number;
+    @Field(() => ID)
+    @Column({ type: "varchar", length: 36 })
+    candidateId: string;
 
-    @Field(() => Int)
-    @Column({
-        type: "int",
-        nullable: false,
-    })
-    courseId: number;
+    @Field(() => ID)
+    @Column({ type: "varchar", length: 36 })
+    courseId: string;
 
-    @Field(() => Int)
-    @Column({
-        type: "int",
-        nullable: false,
-    })
-    roleId: number;
+    @Field(() => ID)
+    @Column({ type: "varchar", length: 36 })
+    roleId: string;
 
     @Field(() => ApplicationStatus)
     @Column({
@@ -98,12 +89,9 @@ export class Application {
     })
     comment?: string;
 
-    @Field(() => Int, { nullable: true })
-    @Column({
-        type: "int",
-        nullable: true,
-    })
-    commentedBy?: number;
+    @Field(() => ID, { nullable: true })
+    @Column({ type: "varchar", length: 36, nullable: true })
+    commentedBy?: string | null;
 
     @Field({ nullable: true })
     @Column({
@@ -119,12 +107,9 @@ export class Application {
     })
     rank?: number | null;
 
-    @Field(() => Int, { nullable: true })
-    @Column({
-        type: "int",
-        nullable: true,
-    })
-    rankedBy?: number | null;
+    @Field(() => ID, { nullable: true })
+    @Column({ type: "varchar", length: 36, nullable: true })
+    rankedBy?: string | null;
 
     @Field({ nullable: true })
     @Column({

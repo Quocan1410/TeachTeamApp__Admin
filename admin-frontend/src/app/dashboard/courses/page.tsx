@@ -43,7 +43,7 @@ import UserAvatar from "@/shared/components/common/UserAvatar/UserAvatar";
 const PAGE_SIZE = 6;
 
 interface Course {
-    id: number;
+    id: string;
     courseCode: string;
     courseName: string;
     semester: string;
@@ -57,23 +57,23 @@ interface Course {
     availableLabAssistants?: number;
     createdAt: string;
     courseAssignments: Array<{
-        id: number;
+        id: string;
         lecturer: {
-            id: number;
+            id: string;
             firstName: string;
             lastName: string;
             email: string;
         } | null;
     }>;
     applications?: Array<{
-        id: number;
+        id: string;
         status: string;
     }>;
     applicationCount?: number;
 }
 
 interface Lecturer {
-    id: number;
+    id: string;
     firstName: string;
     lastName: string;
     email: string;
@@ -344,7 +344,7 @@ export default function CoursesManagement() {
         try {
             await updateCourse({
                 variables: {
-                    id: parseInt(selectedCourse.id.toString()),
+                    id: selectedCourse.id,
                     input: buildCourseInput(formData),
                 },
             });
@@ -358,21 +358,21 @@ export default function CoursesManagement() {
 
         try {
             await deleteCourse({
-                variables: { id: parseInt(selectedCourse.id.toString()) },
+                variables: { id: selectedCourse.id },
             });
         } catch (error) {
             // Silent error handling for production
         }
     };
 
-    const handleAssignLecturer = async (lecturerId: number) => {
+    const handleAssignLecturer = async (lecturerId: string) => {
         if (!selectedCourse) return;
 
         try {
             await assignLecturer({
                 variables: {
-                    lecturerId: parseInt(lecturerId.toString()),
-                    courseId: parseInt(selectedCourse.id.toString()),
+                    lecturerId,
+                    courseId: selectedCourse.id,
                 },
             });
         } catch (error) {
@@ -380,12 +380,12 @@ export default function CoursesManagement() {
         }
     };
 
-    const handleRemoveLecturer = async (lecturerId: number, course: Course) => {
+    const handleRemoveLecturer = async (lecturerId: string, course: Course) => {
         try {
             await removeLecturer({
                 variables: {
-                    lecturerId: parseInt(lecturerId.toString()),
-                    courseId: parseInt(course.id.toString()),
+                    lecturerId,
+                    courseId: course.id,
                 },
             });
         } catch (error) {
@@ -424,7 +424,7 @@ export default function CoursesManagement() {
         setSelectedCourse(course);
         setShowAssignModal(true);
         getLecturers({
-            variables: { courseId: parseInt(course.id.toString()) },
+            variables: { courseId: course.id },
         });
     };
 

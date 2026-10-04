@@ -2,7 +2,7 @@ export const ADMIN_TOKEN_KEY = "admin-token";
 export const ADMIN_USER_KEY = "admin-user";
 
 export type StoredAdminUser = {
-    id?: number;
+    id?: string;
     email: string;
     firstName?: string;
     lastName?: string;

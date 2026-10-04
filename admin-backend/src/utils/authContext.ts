@@ -1,6 +1,6 @@
 import { resolveAdminFromContext, GraphQLContext } from "./graphqlContext";
 
-export function getUserIdFromContext(ctx: GraphQLContext): number | null {
+export function getUserIdFromContext(ctx: GraphQLContext): string | null {
     if (ctx.adminUser?.id) {
         return ctx.adminUser.id;
     }

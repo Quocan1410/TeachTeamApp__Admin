@@ -8,7 +8,7 @@ import { CourseAssignment } from "../types/CourseAssignment";
 import { pubsub, SUBSCRIPTION_TOPICS } from "../config/pubsub";
 
 export interface CreateNotificationInput {
-    userId: number;
+    userId: string;
     type: NotificationType;
     title: string;
     message: string;
@@ -43,7 +43,7 @@ export class NotificationService {
     }
 
     static async createForUsers(
-        userIds: number[],
+        userIds: string[],
         input: Omit<CreateNotificationInput, "userId">
     ): Promise<void> {
         const uniqueIds = [...new Set(userIds.filter((id) => id > 0))];
@@ -81,7 +81,7 @@ export class NotificationService {
     }
 
     static async getForUser(
-        userId: number,
+        userId: string,
         limit = 50
     ): Promise<Notification[]> {
         return this.getRepository().find({
@@ -91,7 +91,7 @@ export class NotificationService {
         });
     }
 
-    static async getUnreadCount(userId: number): Promise<number> {
+    static async getUnreadCount(userId: string): Promise<number> {
         return this.getRepository().count({
             where: { userId, read: false },
         });
@@ -99,7 +99,7 @@ export class NotificationService {
 
     static async markAsRead(
         notificationId: number,
-        userId: number
+        userId: string
     ): Promise<boolean> {
         const result = await this.getRepository().update(
             { id: notificationId, userId },
@@ -108,13 +108,13 @@ export class NotificationService {
         return (result.affected ?? 0) > 0;
     }
 
-    static async markAllAsRead(userId: number): Promise<void> {
+    static async markAllAsRead(userId: string): Promise<void> {
         await this.getRepository().update({ userId, read: false }, { read: true });
     }
 
     static async deleteNotification(
-        notificationId: number,
-        userId: number
+        notificationId: string,
+        userId: string
     ): Promise<boolean> {
         const result = await this.getRepository().delete({
             id: notificationId,

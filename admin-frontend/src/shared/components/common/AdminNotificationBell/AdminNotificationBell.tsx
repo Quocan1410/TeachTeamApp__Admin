@@ -15,7 +15,7 @@ import { parseApiDateTime } from "@/shared/utils/parseApiDateTime";
 import styles from "./AdminNotificationBell.module.css";
 
 type AdminNotification = {
-    id: number;
+    id: string;
     type: string;
     title: string;
     message: string;

@@ -7,6 +7,7 @@ import AdminHeader from "../../shared/components/common/Header/AdminHeader";
 import { ADMIN_LOGOUT } from "@/lib/graphql/queries";
 import { clearAdminSession, type StoredAdminUser } from "@/lib/adminSession";
 import { readAdminSessionUser } from "@/lib/readAdminSessionUser";
+import AdminPageSkeleton from "@/shared/components/common/AdminPageSkeleton/AdminPageSkeleton";
 import layoutStyles from "./dashboard-layout.module.css";
 
 export default function DashboardLayout({
@@ -40,16 +41,15 @@ export default function DashboardLayout({
         router.replace("/");
     };
 
-    if (!ready) {
+    if (!ready || !user) {
         return (
             <div className={layoutStyles.shell} aria-busy="true">
-                <main className={layoutStyles.bootstrapMain} />
+                <p className={layoutStyles.bootLabel} role="status">
+                    Loading…
+                </p>
+                <AdminPageSkeleton variant="dashboard" />
             </div>
         );
-    }
-
-    if (!user) {
-        return <div className={layoutStyles.shell} aria-busy="true" />;
     }
 
     return (

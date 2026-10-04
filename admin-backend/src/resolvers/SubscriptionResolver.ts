@@ -25,7 +25,7 @@ import {
 @ObjectType()
 export class CandidateBlockedEvent {
     @Field(() => ID)
-    candidateId: number;
+    candidateId: string;
 
     @Field()
     candidateName: string;
@@ -48,14 +48,14 @@ export class CandidateBlockedEvent {
     @Field(() => Int, { nullable: true })
     unrankedApplicationsCount?: number;
 
-    @Field(() => [Int], { nullable: true })
-    affectedLecturerIds?: number[];
+    @Field(() => [ID], { nullable: true })
+    affectedLecturerIds?: string[];
 }
 
 @ObjectType()
 export class UserAccountEvent {
     @Field(() => ID)
-    userId: number;
+    userId: string;
 
     @Field()
     userEmail: string;
@@ -78,8 +78,8 @@ export class UserAccountEvent {
 
 @ObjectType()
 export class AdminNotificationEvent {
-    @Field(() => Int)
-    userId: number;
+    @Field(() => ID)
+    userId: string;
 
     @Field()
     timestamp: string;
@@ -88,7 +88,7 @@ export class AdminNotificationEvent {
 @ObjectType()
 export class CourseEvent {
     @Field(() => ID)
-    courseId: number;
+    courseId: string;
 
     @Field()
     action: string; // "created", "updated", or "deleted"
@@ -150,7 +150,7 @@ export class SubscriptionResolver {
     })
     userAccountUpdates(
         @Root() payload: any,
-        @Arg("userId", () => Int) _userId: number
+        @Arg("userId", () => ID) _userId: string
     ): UserAccountEvent {
         const eventData = payload?.userAccountUpdates || payload;
         return eventData;

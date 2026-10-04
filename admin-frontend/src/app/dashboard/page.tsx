@@ -18,7 +18,7 @@ import AdminPageSkeleton from "@/shared/components/common/AdminPageSkeleton/Admi
 import styles from "./admin-dashboard.module.css";
 
 type DashboardCourse = {
-    id: number;
+    id: string;
     courseCode: string;
     courseName: string;
     semester: string;

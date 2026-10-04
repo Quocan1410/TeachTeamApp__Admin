@@ -18,8 +18,8 @@ export class ApplicationService {
      * This is used to send targeted notifications only to relevant lecturers
      */
     static async getAffectedLecturerIds(
-        candidateId: number
-    ): Promise<number[]> {
+        candidateId: string
+    ): Promise<string[]> {
         try {
             const applicationRepository =
                 AppDataSource.getRepository(Application);

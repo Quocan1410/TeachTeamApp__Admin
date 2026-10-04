@@ -14,8 +14,8 @@ import { Application } from "./Application";
 @Entity("courses")
 export class Course {
     @Field(() => ID)
-    @PrimaryGeneratedColumn()
-    id: number;
+    @PrimaryGeneratedColumn("uuid")
+    id: string;
 
     @Field()
     @Column({

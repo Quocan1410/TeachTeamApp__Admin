@@ -11,6 +11,9 @@
     padding-top: 5rem;
 }
 
-.bootstrapMain {
-    min-height: calc(100vh - 80px);
+.bootLabel {
+    margin: 0;
+    padding: 5.5rem 1.5rem 0;
+    font-size: 0.95rem;
+    font-weight: 600;
 }

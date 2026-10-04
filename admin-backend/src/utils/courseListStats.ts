@@ -2,8 +2,8 @@ import { Course } from "../types/Course";
 import { ApplicationStatus } from "../types/Application";
 import { AppDataSource } from "../config/database";
 
-type RoleCountRow = { courseId: number; roleName: string; count: string };
-type AppCountRow = { courseId: number; count: string };
+type RoleCountRow = { courseId: string; roleName: string; count: string };
+type AppCountRow = { courseId: string; count: string };
 
 export async function attachCourseListStats(courses: Course[]): Promise<Course[]> {
     if (courses.length === 0) {

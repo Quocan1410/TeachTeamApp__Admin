@@ -2,10 +2,8 @@ import bcrypt from "bcryptjs";
 import { IsNull } from "typeorm";
 import { AppDataSource } from "../config/database";
 import { User, UserType } from "../types/User";
-import { UserSecurityAnswer } from "../types/UserSecurityAnswer";
 import { NotificationService } from "./NotificationService";
 import { NotificationType } from "../types/Notification";
-import { ADMIN_CREATED_USER_SECURITY_ANSWERS } from "../config/securityQuestions";
 
 export interface CreateUserPayload {
     email: string;
@@ -103,33 +101,6 @@ export class UserService {
 
         const savedUser = await userRepository.save(newUser);
 
-        try {
-            const hashedAnswers = await Promise.all(
-                ADMIN_CREATED_USER_SECURITY_ANSWERS.map(async (row) => ({
-                    questionId: row.questionId,
-                    answerHash: await bcrypt.hash(
-                        row.answer.trim().toLowerCase(),
-                        BCRYPT_ROUNDS
-                    ),
-                }))
-            );
-            await answerRepository.save(
-                hashedAnswers.map((row) =>
-                    answerRepository.create({
-                        userId: savedUser.id,
-                        questionId: row.questionId,
-                        answerHash: row.answerHash,
-                    })
-                )
-            );
-        } catch {
-            await userRepository.delete({ id: savedUser.id });
-            return {
-                success: false,
-                message: "Unable to save default security answers",
-            };
-        }
-
         await NotificationService.notifyAdmins({
             type: NotificationType.USER_REGISTERED,
             title: "New user created by admin",
@@ -142,16 +113,15 @@ export class UserService {
         });
 
         return {
-            success: true,
-            message:
+            message: "User created successfully.",
                 "User created successfully. Default security answers: Melbourne, Demo School, TeachTeam Guide, Demo.",
             user: savedUser,
         };
     }
 
-    static async updateUser(
+        id: string,
         id: number,
-        payload: UpdateUserPayload,
+        adminUserId?: string
         adminUserId?: number
     ): Promise<UserServiceResult> {
         const userRepository = AppDataSource.getRepository(User);
