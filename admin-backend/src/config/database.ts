@@ -12,6 +12,12 @@ import { loadAdminRepoEnv } from "./loadEnv";
 
 loadAdminRepoEnv();
 
+function mysqlPoolSize(): number {
+    const parsed = Number(process.env.DB_CONNECTION_LIMIT ?? 10);
+    if (!Number.isFinite(parsed)) return 10;
+    return Math.min(20, Math.max(1, Math.floor(parsed)));
+}
+
 export const AppDataSource = new DataSource({
     type: "mysql",
     host: process.env.DB_HOST || "localhost",
@@ -30,7 +36,7 @@ export const AppDataSource = new DataSource({
         SelectedCandidate,
         Notification,
     ],
-    // Connection options for Cloud MySQL
+    poolSize: mysqlPoolSize(),
     extra: {
         charset: "utf8mb4_unicode_ci",
         connectTimeout: 60000,
