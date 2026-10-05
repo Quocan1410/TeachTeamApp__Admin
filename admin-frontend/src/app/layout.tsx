@@ -11,6 +11,10 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
     title: "Teaching Tutor - Admin Dashboard",
     description: "Admin dashboard for Teaching Tutor application management",
+    icons: {
+        icon: "/favicon.png",
+        apple: "/favicon.png",
+    },
 };
 
 export default function RootLayout({
