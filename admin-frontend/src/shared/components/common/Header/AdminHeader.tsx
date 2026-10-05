@@ -17,8 +17,8 @@ import {
     XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { useTheme } from "@/shared/contexts/ThemeContext";
-import ThemeToggle from "../ThemeToggle/ThemeToggle";
-import AdminNotificationBell from "../AdminNotificationBell/AdminNotificationBell";
+import ThemeToggle from "@/shared/components/common/ThemeToggle/ThemeToggle";
+import AdminNotificationBell from "@/shared/components/common/AdminNotificationBell/AdminNotificationBell";
 import { getUserInitials, hasCustomAvatar } from "@/lib/avatarUtils";
 import { useProtectedAvatar } from "@/hooks/useProtectedAvatar";
 import { getUserDisplayName } from "@/shared/utils/personDisplayName";
