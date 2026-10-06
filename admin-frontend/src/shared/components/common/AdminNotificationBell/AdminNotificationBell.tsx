@@ -11,6 +11,7 @@ import {
     ADMIN_NOTIFICATION_UPDATES_SUBSCRIPTION,
 } from "@/lib/graphql/queries";
 import CloseIcon from "@/shared/components/common/icons/CloseIcon";
+import LoadingIcon from "@/shared/components/common/LoadingIcon/LoadingIcon";
 import { parseApiDateTime } from "@/shared/utils/parseApiDateTime";
 import styles from "./AdminNotificationBell.module.css";
 
@@ -295,7 +296,10 @@ const AdminNotificationBell: React.FC = () => {
                     <div className={styles.notificationList}>
                         {loading && notifications.length === 0 ? (
                             <div className={styles.emptyState}>
-                                <p className={styles.emptyText}>Loading…</p>
+                                <p className={`${styles.emptyText} ${styles.loadingText}`}>
+                                    <LoadingIcon size={16} />
+                                    Loading…
+                                </p>
                             </div>
                         ) : notifications.length === 0 ? (
                             <div className={styles.emptyState}>

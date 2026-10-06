@@ -8,6 +8,7 @@ import { ADMIN_LOGOUT } from "@/lib/graphql/queries";
 import { clearAdminSession, type StoredAdminUser } from "@/lib/adminSession";
 import { readAdminSessionUser } from "@/lib/readAdminSessionUser";
 import AdminPageSkeleton from "@/shared/components/common/AdminPageSkeleton/AdminPageSkeleton";
+import LoadingIcon from "@/shared/components/common/LoadingIcon/LoadingIcon";
 import layoutStyles from "./dashboard-layout.module.css";
 
 export default function DashboardLayout({
@@ -45,6 +46,7 @@ export default function DashboardLayout({
         return (
             <div className={layoutStyles.shell} aria-busy="true">
                 <p className={layoutStyles.bootLabel} role="status">
+                    <LoadingIcon size={18} />
                     Loading…
                 </p>
                 <AdminPageSkeleton variant="dashboard" />

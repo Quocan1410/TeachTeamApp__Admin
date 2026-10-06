@@ -35,6 +35,7 @@ import {
     ClipboardDocumentListIcon,
 } from "@heroicons/react/24/outline";
 import AdminPageSkeleton from "@/shared/components/common/AdminPageSkeleton/AdminPageSkeleton";
+import LoadingIcon from "@/shared/components/common/LoadingIcon/LoadingIcon";
 import styles from "./courses-management.module.css";
 import { useDebouncedValue } from "@/shared/hooks/useDebouncedValue";
 import PaginationBar from "@/shared/components/common/PaginationBar/PaginationBar";
@@ -1289,7 +1290,10 @@ export default function CoursesManagement() {
                             <div className={styles.modalForm}>
                                 {lecturersLoading ? (
                                     <div className={styles.emptyLecturers}>
-                                        <p>Loading lecturers...</p>
+                                        <p className={styles.loadingLecturers}>
+                                            <LoadingIcon size={18} />
+                                            Loading lecturers...
+                                        </p>
                                     </div>
                                 ) : lecturers.length > 0 ? (
                                     <div className={styles.lecturersList}>

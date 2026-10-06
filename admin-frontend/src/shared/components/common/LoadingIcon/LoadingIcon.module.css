@@ -1,0 +1,11 @@
+.icon {
+    flex-shrink: 0;
+    color: var(--color-primary, #f6610a);
+    animation: loading-icon-spin 0.8s linear infinite;
+}
+
+@keyframes loading-icon-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}

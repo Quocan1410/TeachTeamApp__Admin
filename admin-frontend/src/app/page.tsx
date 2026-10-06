@@ -19,6 +19,7 @@ import {
     UserIcon,
     EyeIcon,
     EyeSlashIcon,
+    ArrowPathIcon,
 } from "@heroicons/react/24/outline";
 import ThemeToggle from "@/shared/components/common/ThemeToggle/ThemeToggle";
 import { LoginSuccessModal } from "@/shared/components/common/modal/LoginSuccessModal";
@@ -138,7 +139,7 @@ export default function AdminLogin() {
                 aria-live="polite"
             >
                 <div className={styles.sessionGate}>
-                    <div className={styles.sessionGateSpinner} />
+                    <ArrowPathIcon className={styles.sessionGateSpinner} aria-hidden />
                     <p className={styles.sessionGateText}>
                         {isNavigating ? "Opening dashboard..." : "Loading..."}
                     </p>
