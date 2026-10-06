@@ -4,6 +4,7 @@ import "./globals.css";
 import { ApolloWrapper } from "@/components/ApolloWrapper";
 import { ThemeProvider } from "@/shared/contexts/ThemeContext";
 import RoutePending from "@/shared/components/route-pending/RoutePending";
+import LoadingIcon from "@/shared/components/common/LoadingIcon/LoadingIcon";
 import { ROUTE_PENDING_BOOT } from "@/shared/components/route-pending/routePendingBoot";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -30,7 +31,10 @@ export default function RootLayout({
             >
                 <div id="app-route-pending" hidden>
                     <div />
-                    <p id="app-route-pending-label">Loading…</p>
+                    <p id="app-route-pending-label">
+                        <LoadingIcon size={16} />
+                        Loading…
+                    </p>
                 </div>
                 <style>{`
                   #app-route-pending[hidden] { display: none !important; }
@@ -61,7 +65,10 @@ export default function RootLayout({
                     padding: 0.45rem 0.9rem 0.55rem;
                     font-size: 0.875rem;
                     font-weight: 600;
-                    text-align: center;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 0.4rem;
                   }
                   @keyframes app-route-pending {
                     from { background-position: 100% 0; }

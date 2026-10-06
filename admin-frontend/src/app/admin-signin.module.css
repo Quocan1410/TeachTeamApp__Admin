@@ -21,9 +21,7 @@
 .sessionGateSpinner {
     width: 2.25rem;
     height: 2.25rem;
-    border: 3px solid var(--color-border);
-    border-top-color: var(--color-primary);
-    border-radius: 50%;
+    color: var(--color-primary);
     animation: sessionGateSpin 0.75s linear infinite;
 }
 
