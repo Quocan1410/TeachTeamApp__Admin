@@ -38,6 +38,7 @@ import SortableTableHeader, {
     type SortDirection,
 } from "@/shared/components/common/SortableTableHeader/SortableTableHeader";
 import AppSelect from "@/shared/components/common/AppSelect/AppSelect";
+import { toGraphQLUserType } from "@/lib/userType";
 
 const PAGE_SIZE = 20;
 
@@ -45,17 +46,6 @@ const USER_TYPE_OPTIONS = [
     { value: "candidate", label: "Candidate (tutor applicant)" },
     { value: "lecturer", label: "Lecturer" },
 ];
-
-const toGraphQLUserType = (value: string) => {
-    switch (value.trim().toLowerCase()) {
-        case "lecturer":
-            return "LECTURER";
-        case "admin":
-            return "ADMIN";
-        default:
-            return "CANDIDATE";
-    }
-};
 
 const USER_TYPE_HINT: Record<string, string> = {
     candidate: "Applicant account — signs in at the tutor portal",

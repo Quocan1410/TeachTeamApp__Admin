@@ -63,6 +63,24 @@ Lecturer and candidate passwords for the user app are listed in that repositoryâ
 
 ## Tests
 
+### Unit tests (Jest)
+
+```bash
+cd admin-backend && npm test
+cd admin-frontend && npm test
+```
+
+Coverage for the pagination/sort helpers and GraphQL user-type mapping:
+
+```bash
+cd admin-backend && npm run test:coverage
+cd admin-frontend && npm run test:coverage
+```
+
+Those reports cover the listed modules, not every GraphQL resolver or dashboard page. CI fails if that scoped coverage drops below 80% lines.
+
+### End-to-end (Playwright)
+
 With the admin app on port 3001 and this API on port 4002:
 
 ```bash
@@ -72,4 +90,4 @@ npx playwright install chromium
 npm test
 ```
 
-`npm test` uses the servers that are already running. GitHub Actions runs frontend typecheck and build, API typecheck and build, then a separate end-to-end job on a fresh MySQL database.
+GitHub Actions runs unit coverage, typecheck/build, then Playwright on a fresh MySQL database.
