@@ -46,7 +46,13 @@ export class NotificationService {
         userIds: string[],
         input: Omit<CreateNotificationInput, "userId">
     ): Promise<void> {
-        const uniqueIds = [...new Set(userIds.filter((id) => id.trim().length > 0))];
+        const uniqueIds = [
+            ...new Set(
+                userIds
+                    .map((id) => String(id ?? "").trim())
+                    .filter((id) => id.length > 0)
+            ),
+        ];
         if (uniqueIds.length === 0) return;
 
         await Promise.all(

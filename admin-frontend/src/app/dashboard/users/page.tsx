@@ -46,6 +46,17 @@ const USER_TYPE_OPTIONS = [
     { value: "lecturer", label: "Lecturer" },
 ];
 
+const toGraphQLUserType = (value: string) => {
+    switch (value.trim().toLowerCase()) {
+        case "lecturer":
+            return "LECTURER";
+        case "admin":
+            return "ADMIN";
+        default:
+            return "CANDIDATE";
+    }
+};
+
 const USER_TYPE_HINT: Record<string, string> = {
     candidate: "Applicant account — signs in at the tutor portal",
     lecturer: "Staff account — signs in at the lecturer dashboard",
@@ -178,14 +189,14 @@ export default function UsersManagement() {
 
     const [updateUser] = useMutation(UPDATE_USER, {
         onCompleted: (data) => {
-            if (data.updateUser.success) {
+            if (data?.updateUser?.success) {
                 showSuccess(data.updateUser.message || "User updated");
                 refetchUsers();
                 refetchStats();
                 setShowEditModal(false);
                 setUserToEdit(null);
             } else {
-                showError(data.updateUser.message || "Update failed");
+                showError(data?.updateUser?.message || "Update failed");
             }
         },
         onError: () => showError("Update failed"),
@@ -195,7 +206,7 @@ export default function UsersManagement() {
         CREATE_USER,
         {
             onCompleted: (data) => {
-                if (data.createUser.success) {
+                if (data?.createUser?.success) {
                     showSuccess(data.createUser.message || "User created");
                     void refetchUsers();
                     void refetchStats();
@@ -212,7 +223,7 @@ export default function UsersManagement() {
                     });
                     setCreateErrors({});
                 } else {
-                    showError(data.createUser.message || "Create failed");
+                    showError(data?.createUser?.message || "Create failed");
                 }
             },
             onError: () => showError("Create failed"),
@@ -302,7 +313,7 @@ export default function UsersManagement() {
                 input: {
                     firstName: editForm.firstName.trim(),
                     lastName: editForm.lastName.trim(),
-                    userType: editForm.userType,
+                    userType: toGraphQLUserType(editForm.userType),
                 },
             },
         });
@@ -357,7 +368,7 @@ export default function UsersManagement() {
                     password: createForm.password,
                     firstName: createForm.firstName.trim(),
                     lastName: createForm.lastName.trim(),
-                    userType: createForm.userType,
+                    userType: toGraphQLUserType(createForm.userType),
                     honorific: createForm.honorific,
                 },
             },

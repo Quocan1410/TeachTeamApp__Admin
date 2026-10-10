@@ -288,7 +288,11 @@ export class UserResolver {
                 new Brackets((sub) => {
                     sub.where("user.email LIKE :term", { term })
                         .orWhere("user.firstName LIKE :term", { term })
-                        .orWhere("user.lastName LIKE :term", { term });
+                        .orWhere("user.lastName LIKE :term", { term })
+                        .orWhere(
+                            "CONCAT(user.firstName, ' ', user.lastName) LIKE :term",
+                            { term }
+                        );
                 })
             );
         }

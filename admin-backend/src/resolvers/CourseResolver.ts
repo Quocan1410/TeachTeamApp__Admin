@@ -364,7 +364,7 @@ export class CourseResolver {
                 where: { courseCode: input.courseCode },
             });
 
-            if (existingCourse && existingCourse.id !== id) {
+            if (existingCourse && String(existingCourse.id) !== String(id)) {
                 return {
                     success: false,
                     message: "Course code already exists",
