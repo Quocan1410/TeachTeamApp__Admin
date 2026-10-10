@@ -6,6 +6,7 @@ node_modules/
 dist/
 .next/
 out/
+coverage/
 *.log
 .DS_Store
 Thumbs.db

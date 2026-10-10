@@ -20,6 +20,7 @@ jobs:
           cache-dependency-path: admin-frontend/package-lock.json
       - run: npm ci
       - run: npm run type-check
+      - run: npm run test:coverage
       - run: npm run build
 
   backend:
@@ -36,4 +37,51 @@ jobs:
           cache-dependency-path: admin-backend/package-lock.json
       - run: npm ci
       - run: npm run typecheck
+      - run: npm run test:coverage
       - run: npm run build
+
+  e2e-admin:
+    runs-on: ubuntu-latest
+    needs: [frontend, backend]
+    timeout-minutes: 30
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: e2e
+          MYSQL_DATABASE: teachteamapp
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -pe2e"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.14.0
+          cache: npm
+          cache-dependency-path: |
+            admin-frontend/package-lock.json
+            admin-backend/package-lock.json
+            e2e/package-lock.json
+      - run: npm ci
+        working-directory: admin-frontend
+      - run: npm ci
+        working-directory: admin-backend
+      - run: npm ci
+        working-directory: e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: e2e
+      - run: bash e2e/ci/run-admin.sh
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-admin-report
+          path: |
+            e2e/playwright-report
+            e2e/test-results
+            admin-api.log
+            admin-web.log

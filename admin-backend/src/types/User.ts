@@ -26,7 +26,7 @@ registerEnumType(UserType, {
 @Entity("users")
 export class User {
     @Field(() => ID)
-    @PrimaryGeneratedColumn("uuid")
+    @PrimaryGeneratedColumn()
     id: string;
 
     @Field()

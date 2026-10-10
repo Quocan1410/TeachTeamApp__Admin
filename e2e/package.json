@@ -1,0 +1,14 @@
+{
+  "name": "teachteam-admin-e2e",
+  "private": true,
+  "description": "Browser end-to-end tests for the admin app.",
+  "scripts": {
+    "test": "playwright test --project=admin-app",
+    "test:admin": "playwright test --project=admin-app",
+    "test:headed": "playwright test --project=admin-app --headed",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.55.1"
+  }
+}

@@ -1,271 +1,93 @@
 # TeachTeamApp-Admin
 
-Separate **admin CMS** repository for the TeachTeam hiring system. Manages users, courses, announcements, and hiring reports.
+Admin dashboard for the TeachTeam hiring system. It manages users, courses, lecturer assignments, and hiring selections.
 
-**User app:** [TeachTeamApp](../TeachTeamApp/)
+The candidate and lecturer app is a separate repository: [TeachTeamApp](https://github.com/Quocan1410/TeachTeamApp).
 
-**Default ports:** frontend `3001`, backend `4002`
+| | |
+|---|---|
+| Admin app | http://localhost:3001 |
+| GraphQL API | http://localhost:4002/graphql |
+| Health | http://localhost:4002/health |
 
----
+The frontend is Next.js. The API is Express, Apollo Server, and TypeORM. Browser calls go through Next rewrites: `/graphql` to this API, and `/api` to the user API when that API is running.
 
-## Overview
+## Run
 
-| Area | Features |
-|------|----------|
-| Dashboard | 7 stat cards, course preview |
-| Users | Create, edit, block, delete; search, filter, pagination |
-| Courses | Full CRUD, assign lecturers, realtime subscriptions |
-| Announcements | Full CRUD, Active/Inactive filters |
-| Reports | Selected candidates, multiple selections, unselected |
-| Realtime | GraphQL subscriptions (course/user/blocking events) |
+Node.js 20+ and MySQL 8.
 
----
-
-## Tech stack
-
-| Layer | Path | Technologies |
-|-------|------|--------------|
-| Frontend | `admin-frontend/` | Next.js 15, React 19, Apollo Client, Tailwind CSS 4, Recharts |
-| Backend | `admin-backend/` | Express, Apollo Server 4, type-graphql, class-validator, GraphQL WS |
-| Database | — | **Shared MySQL** with TeachTeamApp backend (no separate migrations) |
-
----
-
-## Project structure
-
-```
-TeachTeamApp-Admin/
-├── .env                 # copy from env.example (do not commit)
-├── env.example
-├── package.json
-├── admin-frontend/      # Next.js admin UI (:3001)
-│   └── src/
-│       ├── app/dashboard/   # users, courses, announcements, reports
-│       └── lib/graphql/     # queries & mutations
-└── admin-backend/       # GraphQL API (:4002)
-    └── src/
-        ├── resolvers/
-        ├── services/
-        ├── middleware/
-        └── types/
+```bash
+cp env.example .env
+npm run install:all
+npm run dev:windows
 ```
 
----
+On macOS or Linux, use `npm run dev:unix`.
 
-## Architecture
+One service at a time:
 
-```mermaid
-flowchart TB
-    subgraph Admin["TeachTeamApp-Admin"]
-        AFE["admin-frontend :3001"]
-        ABE["admin-backend :4002"]
-        AFE -->|"/graphql"| ABE
-        AFE -->|"/api proxy"| MainAPI["TeachTeamApp :5000"]
-    end
-    ABE --> DB[(MySQL shared)]
-    MainAPI --> DB
-    UserFE["user frontend :3000"] -.->|subscriptions| ABE
+```bash
+cd admin-backend && npm run dev
+cd admin-frontend && npm run dev
 ```
 
-**Admin frontend rewrites** (`admin-frontend/next.config.js`):
-
-| Path | Target |
-|------|--------|
-| `/graphql` | Admin GraphQL backend |
-| `/api/*` | Main REST API |
-| `/uploads/*` | Main backend static files |
-
-**Auth:** `adminLogin` → session + JWT Bearer. All queries/mutations require admin auth (except login).
-
----
+The API reads the repository-root `.env`. On startup it ensures the admin account from `ADMIN_EMAIL` and `ADMIN_PASSWORD` exists. The default in `env.example` is `admin@admin.com` / `admin`.
 
 ## Database
 
-Admin backend reads/writes the **same schema** as the main app. Apply migrations from the main repo:
+Set `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, and `DB_NAME` in `.env`. This API does not run the user app’s migrations.
 
-```bash
-cd ../TeachTeamApp/backend && npm run migration:run
-```
+Its tables use auto-increment integer ids: users, courses, roles, applications, notifications, course assignments, and selected candidates. Leave `DB_SYNC` unset for a database that already has that shape. Set `DB_SYNC=true` only on an empty database you are willing to let TypeORM create. Do not point `DB_SYNC=true` at the user app’s UUID database.
 
-```mermaid
-erDiagram
-    users ||--o{ course_assignments : lecturer
-    users ||--o{ applications : candidate
-    courses ||--o{ course_assignments : has
-    courses ||--o{ applications : has
-    announcements }o--|| users : createdBy
-```
+`ADMIN_JWT_SECRET` should match `ADMIN_JWT_SECRET` in the user API when admin actions call that API.
 
-Full ERD: see [TeachTeamApp/README.md](../TeachTeamApp/README.md#database-erd).
+## Pages
 
----
+| Route | What it does |
+|-------|----------------|
+| `/` | Admin sign-in |
+| `/dashboard` | Totals and a course preview |
+| `/dashboard/users` | Search, create, edit, block, and delete users |
+| `/dashboard/courses` | Create, edit, and delete courses, and assign lecturers |
+| `/dashboard/reports` | Selection overview and selected candidates by course |
 
-## Environment variables
+User search matches email, first name, last name, and the full name together. A new candidate must use `@candidate.edu.au`. A new lecturer must use `@lecturer.edu.au`. A deleted email cannot be reused.
 
-```bash
-cp env.example .env
-```
-
-| Group | Variables |
-|-------|-----------|
-| Database | `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, `DB_NAME` — **same as main app** |
-| Admin API | `ADMIN_BACKEND_PORT=4002`, `ADMIN_JWT_SECRET`, `ADMIN_SESSION_SECRET` |
-| Admin UI | `ADMIN_FRONTEND_PORT=3001`, `ADMIN_FRONTEND_URL` |
-| Login | `ADMIN_EMAIL`, `ADMIN_PASSWORD` |
-| CORS | `ALLOWED_ORIGINS` |
-| Frontend (public) | `NEXT_PUBLIC_ADMIN_GRAPHQL_ENDPOINT=/graphql`, `NEXT_PUBLIC_API_ENDPOINT=/api` |
-| Rewrite targets | `MAIN_API_ORIGIN`, `ADMIN_GRAPHQL_ORIGIN` |
-
-See [env.example](./env.example) for the full list.
-
----
-
-## Getting started
-
-**Requirements:** Node.js 20+, MySQL 8+ (schema from the main repo)
-
-```bash
-# 1. Apply schema (from main repo)
-cd ../TeachTeamApp/backend && npm run migration:run
-
-# 2. Install admin dependencies
-cd ../../TeachTeamApp-Admin
-npm run install:all
-
-# 3. Configure env
-cp env.example .env
-
-# 4. Development
-npm run dev:windows    # Windows
-npm run dev:unix       # macOS / Linux
-
-# 5. Production build
-npm run build
-```
-
-**Individual services:**
-
-```bash
-cd admin-backend && npm run dev    # :4002
-cd admin-frontend && npm run dev:clean   # :3001
-```
-
-| Service | URL |
-|---------|-----|
-| Admin UI | http://localhost:3001 |
-| GraphQL | http://localhost:4002/graphql |
-| Health | http://localhost:4002/health |
-
----
-
-## Demo accounts
+## Demo sign-in
 
 | Role | URL | Email | Password |
 |------|-----|-------|----------|
-| **Admin** | http://localhost:3001 | `admin@admin.com` | `admin` |
+| Admin | http://localhost:3001 | `admin@admin.com` | `admin` |
 
-After login, token is stored in `sessionStorage` (`admin-user`, `admin-token`).
+Lecturer and candidate passwords for the user app are listed in that repository’s README. Those rows appear here only when this `.env` points at the same database.
 
-**Create user (admin UI):** Users → **Create user** — candidate/lecturer emails must end with `@candidate.edu.au` or `@lecturer.edu.au`.
+## Tests
 
-**Cross-app accounts** already stored in the shared database:
+### Unit tests (Jest)
 
-| Role | Email | Password |
-|------|-------|----------|
-| Lecturer | `jane.morrison@lecturer.edu.au` | `Password123!` |
-| Lecturer | `marcus.chen@lecturer.edu.au` | `Password123!` |
-| Lecturer | `priya.sharma@lecturer.edu.au` | `Password123!` |
-| Candidate | `alex.nguyen@candidate.edu.au` | `Password123!` |
-| Candidate | `samira.patel@candidate.edu.au` | `Password123!` |
-| Candidate | `james.oconnor@candidate.edu.au` | `Password123!` |
-
----
-
-## Admin pages
-
-| Route | Description |
-|-------|-------------|
-| `/` | Admin login |
-| `/dashboard` | Overview + stat cards |
-| `/dashboard/users` | User management |
-| `/dashboard/courses` | Course management + lecturer assignment |
-| `/dashboard/announcements` | Announcement management |
-| `/dashboard/reports` | Hiring reports (3 tabs, pagination) |
-
----
-
-## GraphQL API
-
-**Endpoint:** `POST http://localhost:4002/graphql`
-
-### Auth
-
-| Type | Name | Description |
-|------|------|-------------|
-| Mutation | `adminLogin(email, password)` | Returns JWT + user |
-| Mutation | `adminLogout` | Clears session |
-
-### Users
-
-| Type | Name |
-|------|------|
-| Query | `getUsers(input)` — paginate, search, filter, sort |
-| Query | `getUserStats`, `getUserById(id)` |
-| Mutation | `createUser(input)` |
-| Mutation | `updateUser(id, input)` |
-| Mutation | `blockUser(id)`, `unblockUser(id)`, `deleteUser(id)` |
-
-### Courses
-
-| Type | Name |
-|------|------|
-| Query | `getCourses(input)`, `getAllCourses`, `getCourseById(id)`, `getLecturers` |
-| Mutation | `createCourse`, `updateCourse`, `deleteCourse` |
-| Mutation | `assignLecturerToCourse`, `removeLecturerFromCourse` |
-
-### Announcements
-
-| Type | Name |
-|------|------|
-| Query | `getAnnouncements(input)` |
-| Mutation | `createAnnouncement`, `updateAnnouncement`, `deleteAnnouncement` |
-
-### Reports
-
-| Type | Name |
-|------|------|
-| Query | `getReportSummary` |
-| Query | `getCourseSelectedCandidates(input)` |
-| Query | `getCandidateMultipleSelections(input)` |
-| Query | `getUnselectedCandidates(input)` |
-
-### Notifications
-
-| Type | Name |
-|------|------|
-| Query | `getAdminNotifications`, `getUnreadNotificationCount` |
-| Mutation | `markNotificationRead`, `markAllNotificationsRead` |
-
-### Subscriptions (WebSocket)
-
-| Topic | Events |
-|-------|--------|
-| `courseUpdates` | course created / updated / deleted |
-| `userAccountUpdates` | user blocked / unblocked |
-| `candidateBlockingUpdates` | candidate block status |
-
-**Validation:** `class-validator` on GraphQL input types (`CreateUserInput`, `CourseInput`, `AnnouncementInput`, …).
-
-**Example login:**
-
-```graphql
-mutation {
-  adminLogin(email: "admin@admin.com", password: "admin") {
-    success
-    token
-    message
-  }
-}
+```bash
+cd admin-backend && npm test
+cd admin-frontend && npm test
 ```
 
-Client operations are defined in `admin-frontend/src/lib/graphql/queries.ts`.
+Coverage for the pagination/sort helpers and GraphQL user-type mapping:
+
+```bash
+cd admin-backend && npm run test:coverage
+cd admin-frontend && npm run test:coverage
+```
+
+Those reports cover the listed modules, not every GraphQL resolver or dashboard page. CI fails if **any** of those files drops below 80% lines, statements, or functions.
+
+### End-to-end (Playwright)
+
+With the admin app on port 3001 and this API on port 4002:
+
+```bash
+cd e2e
+npm install
+npx playwright install chromium
+npm test
+```
+
+GitHub Actions runs unit coverage, typecheck/build, then Playwright on a fresh MySQL database.
