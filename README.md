@@ -77,7 +77,7 @@ cd admin-backend && npm run test:coverage
 cd admin-frontend && npm run test:coverage
 ```
 
-Those reports cover the listed modules, not every GraphQL resolver or dashboard page. CI fails if that scoped coverage drops below 80% lines.
+Those reports cover the listed modules, not every GraphQL resolver or dashboard page. CI fails if **any** of those files drops below 80% lines, statements, or functions.
 
 ### End-to-end (Playwright)
 
