@@ -9,7 +9,11 @@ module.exports = {
   moduleNameMapper: {
     "^@/(.*)$": "<rootDir>/src/$1",
   },
-  collectCoverageFrom: ["src/lib/userType.ts"],
+  collectCoverageFrom: [
+    "src/lib/userType.ts",
+    "src/shared/utils/personDisplayName.ts",
+    "src/shared/utils/parseApiDateTime.ts",
+  ],
   coverageDirectory: "coverage",
   coverageReporters: ["text", "lcov", "json-summary"],
 };

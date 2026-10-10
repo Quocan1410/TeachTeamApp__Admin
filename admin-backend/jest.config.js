@@ -19,6 +19,7 @@ module.exports = {
   collectCoverageFrom: [
     "src/utils/paginationHelpers.ts",
     "src/utils/sort.ts",
+    "src/utils/adminConfig.ts",
   ],
   coverageDirectory: "coverage",
   coverageReporters: ["text", "lcov", "json-summary"],
