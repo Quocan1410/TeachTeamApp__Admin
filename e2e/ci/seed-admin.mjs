@@ -45,6 +45,17 @@ await connection.execute(
   [passwordHash]
 );
 
+for (let index = 1; index <= 20; index += 1) {
+  const label = String(index).padStart(2, "0");
+  await connection.execute(
+    `INSERT INTO users
+      (email, password, firstName, lastName, userType, honorific, isBlocked, createdAt, updatedAt)
+     VALUES (?, ?, 'Page', ?, 'candidate', 'Ms.', 0, NOW(6), NOW(6))
+     ON DUPLICATE KEY UPDATE firstName = VALUES(firstName)`,
+    [`e2e.page${label}@candidate.edu.au`, passwordHash, `User${label}`]
+  );
+}
+
 await connection.execute(
   `INSERT INTO roles (roleName) VALUES ('tutor')
    ON DUPLICATE KEY UPDATE roleName = VALUES(roleName)`
