@@ -4,20 +4,15 @@
 
 .wrapper {
     width: 100%;
-    min-height: calc(100vh - 5rem);
-    padding: 1rem 0 2rem;
-    background: linear-gradient(
-        135deg,
-        var(--color-bg-primary) 0%,
-        var(--color-bg-secondary) 100%
-    );
+    min-height: calc(100vh - 2rem);
+    padding: 0 0 1rem;
 }
 
 .pageContainer {
     width: 100%;
     max-width: 1280px;
     margin: 0 auto;
-    padding: 0 1.5rem;
+    padding: 0;
 }
 
 .pulse {
@@ -44,7 +39,7 @@
 
 .headerBlock {
     margin-bottom: 1.5rem;
-    padding-top: 3rem;
+    padding-top: 0.25rem;
 }
 
 .titleLine {

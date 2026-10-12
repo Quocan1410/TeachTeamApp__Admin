@@ -1,21 +1,16 @@
 /* Selections Page — aligned with Users/Courses layout */
 .reportsPage {
     width: 100%;
-    min-height: calc(100vh - 80px);
-    padding-top: 1rem;
-    padding-bottom: 2rem;
-    background: linear-gradient(
-        135deg,
-        var(--color-bg-primary) 0%,
-        var(--color-bg-secondary) 100%
-    );
+    min-height: calc(100vh - 2rem);
+    padding-top: 0;
+    padding-bottom: 1rem;
 }
 
 .reportsContainer {
     width: 100%;
     max-width: 1280px;
     margin: 0 auto;
-    padding: 0 1.5rem;
+    padding: 0;
 }
 
 .headerSection {
@@ -24,8 +19,8 @@
     align-items: center;
     flex-wrap: wrap;
     gap: 1rem;
-    margin-bottom: 2rem;
-    padding-top: 2.5rem;
+    margin-bottom: 1.5rem;
+    padding-top: 0.25rem;
 }
 
 .headerContent {
@@ -34,18 +29,11 @@
 }
 
 .title {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin: 0 0 0.5rem;
-    color: var(--color-primary);
-    background: linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        var(--color-secondary) 100%
-    );
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-size: clamp(1.75rem, 2.4vw, 2.15rem);
+    font-weight: 800;
+    margin: 0 0 0.35rem;
+    letter-spacing: -0.03em;
+    color: var(--color-text-primary);
 }
 
 .subtitle {
