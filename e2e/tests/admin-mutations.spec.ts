@@ -27,7 +27,7 @@ test.describe("admin create, edit, block, and delete", () => {
       cwd: path.join(__dirname, ".."),
       stdio: "inherit",
     });
-    await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Users" }).click();
+    await page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Users" }).click();
     const searched = page.waitForResponse(
       (response) =>
         response.url().includes("graphql") &&
@@ -112,7 +112,7 @@ test.describe("admin create, edit, block, and delete", () => {
 
   test("user list pagination opens the next page", async ({ page }) => {
     test.setTimeout(90_000);
-    await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Users" }).click();
+    await page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Users" }).click();
     await expect(page.getByText(/Page 1 of/)).toBeVisible();
     const nextPage = page.getByRole("button", { name: "Next", exact: true });
     await expect(nextPage).toBeEnabled();

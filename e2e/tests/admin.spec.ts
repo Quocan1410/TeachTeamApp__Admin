@@ -18,7 +18,7 @@ test.describe("admin", () => {
   });
 
   test("user search matches a full name", async ({ page }) => {
-    await page.getByRole("navigation", { name: "Main navigation" }).getByRole("link", { name: "Users" }).click();
+    await page.getByRole("navigation", { name: "Admin navigation" }).getByRole("link", { name: "Users" }).click();
     await expect(page.getByRole("heading", { name: "User Management" })).toBeVisible();
     await page.getByRole("textbox", { name: "Search users..." }).fill("Alex Nguyen");
     await expect(page.getByText("Showing 1–1 of 1")).toBeVisible();
