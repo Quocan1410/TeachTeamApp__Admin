@@ -141,7 +141,14 @@ const getNotificationIcon = (type: string) => {
     );
 };
 
-const AdminNotificationBell: React.FC = () => {
+type AdminNotificationBellProps = {
+    /** Sidebar sits on the left — open the panel upward to the right. */
+    menuPlacement?: "bottom-end" | "top-start";
+};
+
+const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({
+    menuPlacement = "bottom-end",
+}) => {
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
@@ -269,7 +276,11 @@ const AdminNotificationBell: React.FC = () => {
 
             {isOpen && (
                 <div
-                    className={styles.notificationDropdown}
+                    className={`${styles.notificationDropdown} ${
+                        menuPlacement === "top-start"
+                            ? styles.notificationDropdownTopStart
+                            : ""
+                    }`}
                     role="dialog"
                     aria-label="Notifications"
                 >

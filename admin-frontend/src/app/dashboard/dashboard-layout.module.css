@@ -1,22 +1,43 @@
 .shell {
     min-height: 100vh;
     background: linear-gradient(
-        135deg,
+        145deg,
         var(--color-bg-primary) 0%,
         var(--color-bg-secondary) 100%
     );
 }
 
+.frame {
+    display: flex;
+    min-height: 100vh;
+}
+
 .main {
-    padding-top: 5rem;
+    flex: 1;
+    min-width: 0;
+    margin-left: 15.75rem;
+    padding: 1.5rem 1.5rem 2.25rem;
 }
 
 .bootLabel {
     margin: 0;
-    padding: 5.5rem 1.5rem 0;
+    padding: 1.5rem 1.5rem 0;
+    margin-left: 15.75rem;
     font-size: 0.95rem;
     font-weight: 600;
     display: flex;
     align-items: center;
     gap: 0.45rem;
+}
+
+@media (max-width: 960px) {
+    .main {
+        margin-left: 0;
+        padding: 4.75rem 1rem 1.75rem;
+    }
+
+    .bootLabel {
+        margin-left: 0;
+        padding-top: 4.75rem;
+    }
 }

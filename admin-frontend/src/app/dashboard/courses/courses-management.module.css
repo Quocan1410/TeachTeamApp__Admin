@@ -1,29 +1,24 @@
 /* Courses Management Page - Enhanced Styling */
 .coursesManagement {
     width: 100%;
-    min-height: calc(100vh - 80px);
-    padding-top: 1rem;
-    padding-bottom: 2rem;
-    background: linear-gradient(
-        135deg,
-        var(--color-bg-primary) 0%,
-        var(--color-bg-secondary) 100%
-    );
+    min-height: calc(100vh - 2rem);
+    padding-top: 0;
+    padding-bottom: 1rem;
 }
 
 .managementContainer {
     width: 100%;
     margin-left: auto;
     margin-right: auto;
-    padding-left: 1.5rem;
-    padding-right: 1.5rem;
+    padding-left: 0;
+    padding-right: 0;
     max-width: 1280px;
 }
 
 /* Header Section */
 .headerSection {
-    margin-bottom: 2rem;
-    padding-top: 2.5rem;
+    margin-bottom: 1.5rem;
+    padding-top: 0.25rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -36,18 +31,11 @@
 }
 
 .title {
-    font-size: 2.5rem;
-    font-weight: bold;
-    margin-bottom: 0.5rem;
-    color: var(--color-primary);
-    background: linear-gradient(
-        135deg,
-        var(--color-primary) 0%,
-        var(--color-secondary) 100%
-    );
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    font-size: clamp(1.75rem, 2.4vw, 2.15rem);
+    font-weight: 800;
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.03em;
+    color: var(--color-text-primary);
 }
 
 .subtitle {

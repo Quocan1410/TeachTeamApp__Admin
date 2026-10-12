@@ -3,7 +3,7 @@
 import { useState, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useMutation } from "@apollo/client";
-import AdminHeader from "@/shared/components/common/Header/AdminHeader";
+import AdminSidebar from "@/shared/components/common/Sidebar/AdminSidebar";
 import { ADMIN_LOGOUT } from "@/lib/graphql/queries";
 import { clearAdminSession, type StoredAdminUser } from "@/lib/adminSession";
 import { readAdminSessionUser } from "@/lib/readAdminSessionUser";
@@ -56,8 +56,10 @@ export default function DashboardLayout({
 
     return (
         <div className={layoutStyles.shell}>
-            <AdminHeader user={user} onLogout={handleLogout} />
-            <main className={layoutStyles.main}>{children}</main>
+            <div className={layoutStyles.frame}>
+                <AdminSidebar user={user} onLogout={handleLogout} />
+                <main className={layoutStyles.main}>{children}</main>
+            </div>
         </div>
     );
 }
