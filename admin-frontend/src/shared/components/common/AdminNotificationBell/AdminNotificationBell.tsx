@@ -13,6 +13,7 @@ import {
 import CloseIcon from "@/shared/components/common/icons/CloseIcon";
 import LoadingIcon from "@/shared/components/common/LoadingIcon/LoadingIcon";
 import { parseApiDateTime } from "@/shared/utils/parseApiDateTime";
+import { resolveAdminNotificationNav } from "@/shared/utils/adminNotificationNav";
 import styles from "./AdminNotificationBell.module.css";
 
 type AdminNotification = {
@@ -151,6 +152,7 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({
 }) => {
     const router = useRouter();
     const [isOpen, setIsOpen] = useState(false);
+    const [peek, setPeek] = useState<AdminNotification | null>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     const { data, loading, refetch } = useQuery(GET_MY_NOTIFICATIONS, {
@@ -187,6 +189,7 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({
                 !dropdownRef.current.contains(event.target as Node)
             ) {
                 setIsOpen(false);
+                setPeek(null);
             }
         };
 
@@ -195,6 +198,10 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({
             document.removeEventListener("mousedown", handleClickOutside);
         };
     }, []);
+
+    const peekNav = peek
+        ? resolveAdminNotificationNav({ type: peek.type, link: peek.link })
+        : null;
 
     const formatTimeAgo = (dateString: string) => {
         const date = parseApiDateTime(dateString);
@@ -213,16 +220,17 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({
         return `${Math.floor(diffInSeconds / 86400)}d`;
     };
 
-    const handleNotificationClick = async (
-        id: string,
-        link?: string | null
-    ) => {
-        await markAsRead({ variables: { id } });
+    const handleNotificationClick = async (notification: AdminNotification) => {
+        await markAsRead({ variables: { id: notification.id } });
         await refetch();
-        if (link) {
-            router.push(link);
-            setIsOpen(false);
-        }
+        setPeek(notification);
+    };
+
+    const openPeekDestination = () => {
+        if (!peek || !peekNav) return;
+        setIsOpen(false);
+        setPeek(null);
+        router.push(peekNav.href);
     };
 
     const handleMarkAllAsRead = async () => {
@@ -241,7 +249,12 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({
             <button
                 type="button"
                 className={`${styles.bellButton} ${isOpen ? styles.bellButtonActive : ""}`}
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => {
+                    setIsOpen((open) => {
+                        if (open) setPeek(null);
+                        return !open;
+                    });
+                }}
                 aria-label={`Notifications (${unreadCount} unread)`}
                 aria-expanded={isOpen}
             >
@@ -340,6 +353,13 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({
                                     const actor = getNotificationActor(
                                         notification.type
                                     );
+                                    const isPeeked = peek?.id === notification.id;
+                                    const hasNav = Boolean(
+                                        resolveAdminNotificationNav({
+                                            type: notification.type,
+                                            link: notification.link,
+                                        })
+                                    );
                                     return (
                                         <div
                                             key={notification.id}
@@ -349,11 +369,14 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({
                                                 !notification.read
                                                     ? styles.unread
                                                     : ""
+                                            } ${isPeeked ? styles.notificationItemPeeked : ""} ${
+                                                hasNav
+                                                    ? styles.notificationItemInteractive
+                                                    : ""
                                             }`}
                                             onClick={() =>
-                                                handleNotificationClick(
-                                                    notification.id,
-                                                    notification.link
+                                                void handleNotificationClick(
+                                                    notification
                                                 )
                                             }
                                             onKeyDown={(event) => {
@@ -362,73 +385,84 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({
                                                     event.key === " "
                                                 ) {
                                                     event.preventDefault();
-                                                    handleNotificationClick(
-                                                        notification.id,
-                                                        notification.link
+                                                    void handleNotificationClick(
+                                                        notification
                                                     );
                                                 }
                                             }}
                                         >
-                                            <div
-                                                className={
-                                                    styles.notificationIconWrap
-                                                }
-                                            >
-                                                {getNotificationIcon(
-                                                    notification.type
-                                                )}
-                                                {!notification.read && (
+                                            <div className={styles.notificationMain}>
+                                                <div
+                                                    className={
+                                                        styles.notificationIconWrap
+                                                    }
+                                                >
+                                                    {getNotificationIcon(
+                                                        notification.type
+                                                    )}
+                                                    {!notification.read && (
+                                                        <span
+                                                            className={
+                                                                styles.unreadDot
+                                                            }
+                                                            aria-hidden
+                                                        />
+                                                    )}
+                                                </div>
+                                                <div
+                                                    className={
+                                                        styles.notificationContent
+                                                    }
+                                                >
+                                                    {actor && (
+                                                        <span
+                                                            className={
+                                                                styles.actorBadge
+                                                            }
+                                                        >
+                                                            {actor}
+                                                        </span>
+                                                    )}
                                                     <span
                                                         className={
-                                                            styles.unreadDot
-                                                        }
-                                                        aria-hidden
-                                                    />
-                                                )}
-                                            </div>
-                                            <div
-                                                className={
-                                                    styles.notificationContent
-                                                }
-                                            >
-                                                {actor && (
-                                                    <span
-                                                        className={
-                                                            styles.actorBadge
+                                                            styles.notificationTitle
                                                         }
                                                     >
-                                                        {actor}
+                                                        {notification.title}
                                                     </span>
-                                                )}
-                                                <span
-                                                    className={
-                                                        styles.notificationTitle
-                                                    }
-                                                >
-                                                    {notification.title}
-                                                </span>
-                                                <p
-                                                    className={
-                                                        styles.notificationMessage
-                                                    }
-                                                >
-                                                    {notification.message}
-                                                </p>
-                                            </div>
-                                            <div className={styles.itemAside}>
+                                                    <p
+                                                        className={
+                                                            styles.notificationMessage
+                                                        }
+                                                    >
+                                                        {notification.message}
+                                                    </p>
+                                                </div>
                                                 <button
                                                     type="button"
                                                     className={`${styles.removeButton} iconCloseHit iconCloseCircle`}
-                                                    onClick={(e) =>
-                                                        handleDelete(
+                                                    onClick={(e) => {
+                                                        if (
+                                                            peek?.id ===
+                                                            notification.id
+                                                        ) {
+                                                            setPeek(null);
+                                                        }
+                                                        void handleDelete(
                                                             notification.id,
                                                             e
-                                                        )
-                                                    }
+                                                        );
+                                                    }}
                                                     aria-label="Remove notification"
                                                 >
                                                     <CloseIcon size={7} />
                                                 </button>
+                                            </div>
+                                            <div
+                                                className={
+                                                    styles.notificationTimeRow
+                                                }
+                                            >
                                                 <span
                                                     className={
                                                         styles.notificationTime
@@ -445,6 +479,44 @@ const AdminNotificationBell: React.FC<AdminNotificationBellProps> = ({
                             </div>
                         )}
                     </div>
+
+                    {peek && (
+                        <div
+                            className={styles.peek}
+                            role="region"
+                            aria-label="Notification preview"
+                        >
+                            <p className={styles.peekEyebrow}>Quick look</p>
+                            <p className={styles.peekTitle}>{peek.title}</p>
+                            <p className={styles.peekMessage}>{peek.message}</p>
+                            {peekNav ? (
+                                <p className={styles.peekHint}>{peekNav.hint}</p>
+                            ) : (
+                                <p className={styles.peekHint}>
+                                    Marked as read. There’s no admin page you can
+                                    open for this update.
+                                </p>
+                            )}
+                            <div className={styles.peekActions}>
+                                <button
+                                    type="button"
+                                    className={styles.peekStay}
+                                    onClick={() => setPeek(null)}
+                                >
+                                    Not now
+                                </button>
+                                {peekNav && (
+                                    <button
+                                        type="button"
+                                        className={styles.peekOpen}
+                                        onClick={openPeekDestination}
+                                    >
+                                        {peekNav.actionLabel}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {notifications.length > 10 && (
                         <div className={styles.dropdownFooter}>
