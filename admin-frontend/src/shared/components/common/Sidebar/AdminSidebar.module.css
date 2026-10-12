@@ -120,19 +120,12 @@
     margin-top: 0.75rem;
 }
 
-.footerTools {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 0.5rem;
-}
-
 .themeButton {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2.35rem;
-    height: 2.35rem;
+    width: 2.4rem;
+    height: 2.4rem;
     border: 1px solid var(--color-border);
     border-radius: 0.7rem;
     background: var(--color-bg-primary);
@@ -303,6 +296,7 @@
         margin-left: auto;
         display: flex;
         align-items: center;
+        gap: 0.4rem;
     }
 
     .mobileBackdrop {

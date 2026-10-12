@@ -12,11 +12,15 @@
     min-height: 100vh;
 }
 
-.main {
+.content {
     flex: 1;
     min-width: 0;
     margin-left: 15.75rem;
-    padding: 1.5rem 1.5rem 2.25rem;
+    padding: 1.15rem 1.5rem 2.25rem;
+}
+
+.main {
+    min-width: 0;
 }
 
 .bootLabel {
@@ -31,7 +35,7 @@
 }
 
 @media (max-width: 960px) {
-    .main {
+    .content {
         margin-left: 0;
         padding: 4.75rem 1rem 1.75rem;
     }

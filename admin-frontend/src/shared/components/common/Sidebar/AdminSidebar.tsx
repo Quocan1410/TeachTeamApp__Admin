@@ -114,25 +114,6 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ user, onLogout }) => {
             </nav>
 
             <div className={styles.footer}>
-                <div className={styles.footerTools}>
-                    <AdminNotificationBell menuPlacement="top-start" />
-                    <button
-                        type="button"
-                        className={styles.themeButton}
-                        onClick={isHydrated ? toggleDarkMode : undefined}
-                        aria-label={
-                            isDarkMode ? "Switch to light mode" : "Switch to dark mode"
-                        }
-                        disabled={!isHydrated}
-                    >
-                        {isDarkMode ? (
-                            <SunIcon className={styles.themeIcon} aria-hidden />
-                        ) : (
-                            <MoonIcon className={styles.themeIcon} aria-hidden />
-                        )}
-                    </button>
-                </div>
-
                 <div className={styles.userCard}>
                     <div className={styles.userAvatar}>
                         {avatarSrc ? (
@@ -192,6 +173,23 @@ const AdminSidebar: React.FC<AdminSidebarProps> = ({ user, onLogout }) => {
                 </Link>
                 <div className={styles.mobileBarActions}>
                     <AdminNotificationBell />
+                    <button
+                        type="button"
+                        className={styles.themeButton}
+                        onClick={isHydrated ? toggleDarkMode : undefined}
+                        aria-label={
+                            isDarkMode
+                                ? "Switch to light mode"
+                                : "Switch to dark mode"
+                        }
+                        disabled={!isHydrated}
+                    >
+                        {isDarkMode ? (
+                            <SunIcon className={styles.themeIcon} aria-hidden />
+                        ) : (
+                            <MoonIcon className={styles.themeIcon} aria-hidden />
+                        )}
+                    </button>
                 </div>
             </div>
 
