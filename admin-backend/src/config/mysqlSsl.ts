@@ -1,6 +1,7 @@
 /**
- * Maps DB_SSL onto mysql2 (same behaviour as TeachTeamApp user API).
- * preferred / disable = plain connection.
+ * Maps DB_SSL onto mysql2.
+ * preferred = SslMode.Preferred: do not force TLS. This host rejects SSL
+ * (HANDSHAKE_NO_SSL_SUPPORT) and accepts a plain connection.
  * required = always open TLS.
  */
 export function mysqlSslOption():

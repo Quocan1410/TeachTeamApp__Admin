@@ -10,33 +10,16 @@ import bcrypt from "bcryptjs";
 import { getAdminEmail, getAdminSeedPassword } from "../utils/adminConfig";
 import { loadAdminRepoEnv } from "./loadEnv";
 import { mysqlSslOption } from "./mysqlSsl";
+import { mysqlPoolSize } from "./mysqlPool";
 
 loadAdminRepoEnv();
-
-function mysqlPoolSize(): number {
-    const parsed = Number(process.env.DB_CONNECTION_LIMIT ?? 10);
-    if (!Number.isFinite(parsed)) return 10;
-    return Math.min(20, Math.max(1, Math.floor(parsed)));
-}
-
-/** Strip wrapping quotes so Render/env pastes like "P#..." still work. */
-function mysqlPassword(): string {
-    let password = process.env.DB_PASSWORD ?? "";
-    if (
-        (password.startsWith('"') && password.endsWith('"')) ||
-        (password.startsWith("'") && password.endsWith("'"))
-    ) {
-        password = password.slice(1, -1);
-    }
-    return password;
-}
 
 export const AppDataSource = new DataSource({
     type: "mysql",
     host: process.env.DB_HOST || "localhost",
     port: parseInt(process.env.DB_PORT || "3306"),
     username: process.env.DB_USERNAME || "",
-    password: mysqlPassword(),
+    password: process.env.DB_PASSWORD || "",
     database: process.env.DB_NAME || "",
     ssl: mysqlSslOption(),
     synchronize: process.env.DB_SYNC === "true",
@@ -59,14 +42,12 @@ export const AppDataSource = new DataSource({
 
 export const initializeDatabase = async () => {
     try {
-        const password = mysqlPassword();
         console.log(
-            `Connecting to MySQL ${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || "3306"}/${process.env.DB_NAME || ""} as ${process.env.DB_USERNAME || ""} (ssl=${process.env.DB_SSL || "disable"}, passwordLen=${password.length}, passwordHasHash=${password.includes("#")})`
+            `Connecting to MySQL ${process.env.DB_HOST || "localhost"}:${process.env.DB_PORT || "3306"}/${process.env.DB_NAME || ""}`
         );
         await AppDataSource.initialize();
         console.log("MySQL connected");
 
-        // Seed admin user
         await seedAdminUser();
     } catch (error) {
         console.error("Database initialization failed:", error);
