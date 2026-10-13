@@ -22,9 +22,7 @@
         "next": "15.2.9",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",
-        "recharts": "^2.15.2",
-        "@emnapi/core": "1.11.3",
-        "@emnapi/runtime": "1.11.3"
+        "recharts": "^2.15.2"
     },
     "devDependencies": {
         "@tailwindcss/postcss": "^4.3.3",
