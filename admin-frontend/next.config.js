@@ -19,6 +19,14 @@ function originHost(origin) {
     }
 }
 
+function originHost(origin) {
+    try {
+        return new URL(origin).hostname;
+    } catch {
+        return null;
+    }
+}
+
 const mainApiOrigin =
     process.env.MAIN_API_ORIGIN ||
     process.env.NEXT_PUBLIC_API_ORIGIN ||
