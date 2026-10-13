@@ -17,7 +17,8 @@ The frontend is Next.js. The API is Express, Apollo Server, and TypeORM. Browser
 Node.js 20+ and MySQL 8.
 
 ```bash
-cp env.example .env
+cp admin-backend/env.example admin-backend/.env
+cp admin-frontend/env.example admin-frontend/.env
 npm run install:all
 npm run dev:windows
 ```
@@ -31,11 +32,11 @@ cd admin-backend && npm run dev
 cd admin-frontend && npm run dev
 ```
 
-The API reads the repository-root `.env`. On startup it ensures the admin account from `ADMIN_EMAIL` and `ADMIN_PASSWORD` exists. The default in `env.example` is `admin@admin.com` / `admin`.
+Each package has its own `.env` (same pattern as TeachTeamApp). The API reads `admin-backend/.env` and seeds the admin account from `ADMIN_EMAIL` / `ADMIN_PASSWORD` (defaults in `admin-backend/env.example`: `admin@admin.com` / `admin`).
 
 ## Database
 
-Set `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, and `DB_NAME` in `.env` to the **same MySQL database** as TeachTeamApp. Match `DB_SSL` too when the host needs TLS.
+Set `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, and `DB_NAME` in `admin-backend/.env` to the **same MySQL database** as TeachTeamApp. Match `DB_SSL` too when the host needs TLS.
 
 This API does not run the user app’s migrations. Primary keys are **UUIDs** (same shape as the user API). Leave `DB_SYNC` unset on a shared or production database. Never set `DB_SYNC=true` against live data.
 
@@ -60,7 +61,7 @@ Checklist:
 5. On TeachTeamApp: set `ADMIN_GRAPHQL_ORIGIN` to the Admin Render URL, add the Admin Vercel origin to `ALLOWED_ORIGINS` / `ADMIN_FRONTEND_URL`, redeploy user frontend so `/admin-graphql` works.
 6. Smoke: admin sign-in, users/courses list, one mutation visible in the user app.
 
-See production comments in `env.example`.
+See `admin-backend/env.example` and `admin-frontend/env.example`.
 
 ## Pages
 

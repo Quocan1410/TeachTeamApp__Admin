@@ -4,7 +4,7 @@ set -euo pipefail
 root="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$root"
 
-cat > "$root/.env" <<'EOF'
+cat > "$root/admin-backend/.env" <<'EOF'
 NODE_ENV=development
 DB_HOST=127.0.0.1
 DB_PORT=3306
@@ -20,6 +20,9 @@ ADMIN_PASSWORD=admin
 ADMIN_FRONTEND_URL=http://localhost:3001
 FRONTEND_URL=http://localhost:3000
 ALLOWED_ORIGINS=http://localhost:3001,http://localhost:3000
+EOF
+
+cat > "$root/admin-frontend/.env" <<'EOF'
 NEXT_PUBLIC_ADMIN_GRAPHQL_ENDPOINT=/graphql
 NEXT_PUBLIC_ADMIN_WS_ENDPOINT=/graphql
 NEXT_PUBLIC_GRAPHQL_ENDPOINT=/graphql

@@ -1,5 +1,23 @@
 const path = require("path");
-require("dotenv").config({ path: path.join(__dirname, "../.env") });
+const fs = require("fs");
+const envCandidates = [
+    path.join(__dirname, ".env"),
+    path.join(__dirname, "../.env"), // legacy root .env
+];
+for (const envPath of envCandidates) {
+    if (fs.existsSync(envPath)) {
+        require("dotenv").config({ path: envPath });
+        break;
+    }
+}
+
+function originHost(origin) {
+    try {
+        return new URL(origin).hostname;
+    } catch {
+        return null;
+    }
+}
 
 function originHost(origin) {
     try {

@@ -23,7 +23,7 @@ import { ReportResolver } from "./resolvers/ReportResolver";
 import { SubscriptionResolver } from "./resolvers/SubscriptionResolver";
 import { NotificationResolver } from "./resolvers/NotificationResolver";
 import { resolveAdminFromContext, resolveWsUser } from "./utils/graphqlContext";
-import "./types/session";
+import { getAdminSessionUserId } from "./types/session";
 loadAdminRepoEnv();
 
 const parseAllowedOrigins = (): string[] => {
@@ -153,16 +153,17 @@ async function startServer() {
             expressMiddleware(server, {
                 context: async ({ req, res }) => {
                     const adminUser = await resolveAdminFromContext({
-                        req,
+                        req: req as any,
                         res,
                     });
+                    const sessionUserId = getAdminSessionUserId(req);
                     return {
-                        req,
+                        req: req as any,
                         res,
                         user: adminUser
                             ? { id: adminUser.id }
-                            : req.session?.userId
-                                ? { id: req.session.userId }
+                            : sessionUserId
+                                ? { id: sessionUserId }
                                 : null,
                         adminUser,
                     };
