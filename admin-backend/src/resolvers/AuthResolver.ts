@@ -83,8 +83,8 @@ export class AuthResolver {
                 userType: user.userType,
             });
 
-            // Store session info
-            if (ctx.req.session) {
+            // Store session info (typed without express-session augmentation)
+            if (ctx.req?.session) {
                 ctx.req.session.userId = user.id;
                 ctx.req.session.userType = user.userType;
             }

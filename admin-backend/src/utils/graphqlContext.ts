@@ -7,10 +7,8 @@ import {
 } from "../config/jwtConfig";
 
 export interface GraphQLContext {
-    req: {
-        headers: { authorization?: string };
-        session?: { userId?: string };
-    };
+    /** Loosely typed so ncc need not augment express-session. */
+    req: any;
     res: unknown;
     user?: { id: string } | null;
     adminUser?: User | null;
