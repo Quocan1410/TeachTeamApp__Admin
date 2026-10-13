@@ -16,6 +16,7 @@ import {
     pingDatabase,
     AppDataSource,
 } from "./config/database";
+import { createMysqlSessionStore } from "./config/sessionStore";
 import { AuthResolver } from "./resolvers/AuthResolver";
 import { UserResolver } from "./resolvers/UserResolver";
 import { CourseResolver } from "./resolvers/CourseResolver";
@@ -55,15 +56,24 @@ async function startServer() {
             throw new Error("ADMIN_SESSION_SECRET must be set in production");
         }
 
+        // Render (and similar hosts) terminate TLS at the proxy.
+        if (isProduction) {
+            app.set("trust proxy", 1);
+        }
+
+        const sessionStore = await createMysqlSessionStore();
+
         app.use(helmet({ contentSecurityPolicy: false }));
         app.use(
             session({
                 secret: sessionSecret,
                 resave: false,
                 saveUninitialized: false,
+                store: sessionStore,
                 cookie: {
                     secure: isProduction,
                     httpOnly: true,
+                    sameSite: isProduction ? "none" : "lax",
                     maxAge: 8 * 60 * 60 * 1000,
                 },
             })
