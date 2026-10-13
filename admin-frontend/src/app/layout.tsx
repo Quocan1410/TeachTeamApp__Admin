@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/shared/contexts/ThemeContext";
 import RoutePending from "@/shared/components/route-pending/RoutePending";
 import LoadingIcon from "@/shared/components/common/LoadingIcon/LoadingIcon";
 import { ROUTE_PENDING_BOOT } from "@/shared/components/route-pending/routePendingBoot";
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -82,6 +83,7 @@ export default function RootLayout({
                         <div className="flex-grow">{children}</div>
                     </ApolloWrapper>
                 </ThemeProvider>
+                <Analytics />
             </body>
         </html>
     );
