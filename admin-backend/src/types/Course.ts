@@ -63,6 +63,20 @@ export class Course {
     })
     maxLabAssistants: number;
 
+    @Field(() => Int)
+    @Column({
+        type: "int",
+        default: 15,
+    })
+    studentsPerClass: number;
+
+    @Field()
+    @Column({
+        type: "boolean",
+        default: false,
+    })
+    isPublished: boolean;
+
     @Field({ nullable: true })
     @Column({
         type: "datetime",

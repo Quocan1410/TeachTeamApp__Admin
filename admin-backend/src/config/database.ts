@@ -6,6 +6,8 @@ import { CourseAssignment } from "../types/CourseAssignment";
 import { Application } from "../types/Application";
 import { SelectedCandidate } from "../types/SelectedCandidate";
 import { Notification } from "../types/Notification";
+import { CourseSession } from "../types/CourseSession";
+import { CourseChangeRequest } from "../types/CourseChangeRequest";
 import bcrypt from "bcryptjs";
 import { getAdminEmail, getAdminSeedPassword } from "../utils/adminConfig";
 import { loadAdminRepoEnv } from "./loadEnv";
@@ -49,6 +51,8 @@ export const AppDataSource = new DataSource({
         Application,
         SelectedCandidate,
         Notification,
+        CourseSession,
+        CourseChangeRequest,
     ],
     poolSize: mysqlPoolSize(),
     extra: {

@@ -23,6 +23,7 @@ import { CourseResolver } from "./resolvers/CourseResolver";
 import { ReportResolver } from "./resolvers/ReportResolver";
 import { SubscriptionResolver } from "./resolvers/SubscriptionResolver";
 import { NotificationResolver } from "./resolvers/NotificationResolver";
+import { CourseChangeRequestResolver } from "./resolvers/CourseChangeRequestResolver";
 import { resolveAdminFromContext, resolveWsUser } from "./utils/graphqlContext";
 import { getAdminSessionUserId } from "./types/session";
 loadAdminRepoEnv();
@@ -87,6 +88,7 @@ async function startServer() {
                 ReportResolver,
                 SubscriptionResolver,
                 NotificationResolver,
+                CourseChangeRequestResolver,
             ],
             validate: true,
             pubSub: require("./config/pubsub").pubsub,
