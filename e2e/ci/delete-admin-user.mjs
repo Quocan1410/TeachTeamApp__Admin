@@ -14,13 +14,20 @@ if (email !== "e2e.admin@candidate.edu.au") {
 }
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "../..");
-const envPath = path.join(root, ".env");
-if (fs.existsSync(envPath)) {
+const envCandidates = [
+  path.join(root, "admin-backend", ".env"),
+  path.join(root, ".env"),
+];
+for (const envPath of envCandidates) {
+  if (!fs.existsSync(envPath)) continue;
   process.loadEnvFile?.(envPath);
   if (!process.env.DB_HOST) {
-    const requireFromBackend = createRequire(path.join(root, "admin-backend/package.json"));
+    const requireFromBackend = createRequire(
+      path.join(root, "admin-backend/package.json")
+    );
     requireFromBackend("dotenv").config({ path: envPath });
   }
+  if (process.env.DB_HOST) break;
 }
 
 const requireFromBackend = createRequire(path.join(root, "admin-backend/package.json"));

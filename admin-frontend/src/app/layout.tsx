@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
+import { Analytics } from "@vercel/analytics/next";
 import "./globals.css";
 import { ApolloWrapper } from "@/components/ApolloWrapper";
 import { ThemeProvider } from "@/shared/contexts/ThemeContext";
@@ -82,6 +83,7 @@ export default function RootLayout({
                         <div className="flex-grow">{children}</div>
                     </ApolloWrapper>
                 </ThemeProvider>
+                <Analytics />
             </body>
         </html>
     );
