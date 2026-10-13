@@ -31,19 +31,19 @@ registerEnumType(ApplicationStatus, {
 @Index(["candidateId", "courseId", "roleId"], { unique: true })
 export class Application {
     @Field(() => ID)
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn("uuid")
     id: string;
 
     @Field(() => ID)
-    @Column({ type: "int" })
+    @Column({ type: "varchar", length: 36 })
     candidateId: string;
 
     @Field(() => ID)
-    @Column({ type: "int" })
+    @Column({ type: "varchar", length: 36 })
     courseId: string;
 
     @Field(() => ID)
-    @Column({ type: "int" })
+    @Column({ type: "varchar", length: 36 })
     roleId: string;
 
     @Field(() => ApplicationStatus)
@@ -90,7 +90,7 @@ export class Application {
     comment?: string;
 
     @Field(() => ID, { nullable: true })
-    @Column({ type: "int", nullable: true })
+    @Column({ type: "varchar", length: 36, nullable: true })
     commentedBy?: string | null;
 
     @Field({ nullable: true })
@@ -108,7 +108,7 @@ export class Application {
     rank?: number | null;
 
     @Field(() => ID, { nullable: true })
-    @Column({ type: "int", nullable: true })
+    @Column({ type: "varchar", length: 36, nullable: true })
     rankedBy?: string | null;
 
     @Field({ nullable: true })

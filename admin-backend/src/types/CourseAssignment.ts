@@ -16,15 +16,15 @@ import { Course } from "./Course";
 @Index(["lecturerId", "courseId"], { unique: true })
 export class CourseAssignment {
     @Field(() => ID)
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn("uuid")
     id: string;
 
     @Field(() => ID)
-    @Column({ type: "int" })
+    @Column({ type: "varchar", length: 36 })
     lecturerId: string;
 
     @Field(() => ID)
-    @Column({ type: "int" })
+    @Column({ type: "varchar", length: 36 })
     courseId: string;
 
     @Field()

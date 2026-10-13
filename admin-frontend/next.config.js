@@ -1,15 +1,26 @@
 const path = require("path");
 require("dotenv").config({ path: path.join(__dirname, "../.env") });
 
+function originHost(origin) {
+    try {
+        return new URL(origin).hostname;
+    } catch {
+        return null;
+    }
+}
+
 const mainApiOrigin =
     process.env.MAIN_API_ORIGIN ||
     process.env.NEXT_PUBLIC_API_ORIGIN ||
     "http://localhost:5000";
 const adminGraphqlOrigin =
     process.env.ADMIN_GRAPHQL_ORIGIN || "http://localhost:4002";
+const mainApiHost = originHost(mainApiOrigin);
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    output: "standalone",
+    outputFileTracingRoot: path.join(__dirname, ".."),
     async rewrites() {
         return [
             {
@@ -34,6 +45,20 @@ const nextConfig = {
                 port: "5000",
                 pathname: "/uploads/**",
             },
+            {
+                protocol: "https",
+                hostname: "**",
+                pathname: "/uploads/**",
+            },
+            ...(mainApiHost
+                ? [
+                      {
+                          protocol: "https",
+                          hostname: mainApiHost,
+                          pathname: "/uploads/**",
+                      },
+                  ]
+                : []),
         ],
     },
     env: {

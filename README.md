@@ -35,11 +35,32 @@ The API reads the repository-root `.env`. On startup it ensures the admin accoun
 
 ## Database
 
-Set `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, and `DB_NAME` in `.env`. This API does not run the user app’s migrations.
+Set `DB_HOST`, `DB_PORT`, `DB_USERNAME`, `DB_PASSWORD`, and `DB_NAME` in `.env` to the **same MySQL database** as TeachTeamApp. Match `DB_SSL` too when the host needs TLS.
 
-Its tables use auto-increment integer ids: users, courses, roles, applications, notifications, course assignments, and selected candidates. Leave `DB_SYNC` unset for a database that already has that shape. Set `DB_SYNC=true` only on an empty database you are willing to let TypeORM create. Do not point `DB_SYNC=true` at the user app’s UUID database.
+This API does not run the user app’s migrations. Primary keys are **UUIDs** (same shape as the user API). Leave `DB_SYNC` unset on a shared or production database. Never set `DB_SYNC=true` against live data.
 
-`ADMIN_JWT_SECRET` should match `ADMIN_JWT_SECRET` in the user API when admin actions call that API.
+`ADMIN_JWT_SECRET` must match `ADMIN_JWT_SECRET` in the user API when admin actions call shared routes (for example avatar upload).
+
+## Deploy (same pattern as TeachTeamApp)
+
+TeachTeamApp ships as **Vercel (Next)** + **Render (API)** + shared hosted MySQL. Admin mirrors that:
+
+| Piece | Host | Notes |
+|-------|------|--------|
+| Admin frontend | Vercel | Root directory `admin-frontend`. Set `MAIN_API_ORIGIN` (user API) and `ADMIN_GRAPHQL_ORIGIN` (this API). |
+| Admin GraphQL API | Render | Root `admin-backend`. Build `npm ci && npm run build`, start `npm start`. |
+| MySQL | Same instance as user | Same `DB_*` as TeachTeamApp backend. Keep `DB_CONNECTION_LIMIT` modest on both APIs. |
+
+Checklist:
+
+1. Point Admin API `DB_*` at the production TeachTeamApp database (UUID schema already applied by the user API).
+2. Set `ADMIN_JWT_SECRET` identical on user API and admin API.
+3. Deploy Admin API on Render; confirm `/health`.
+4. Deploy Admin frontend on Vercel with rewrite origins above.
+5. On TeachTeamApp: set `ADMIN_GRAPHQL_ORIGIN` to the Admin Render URL, add the Admin Vercel origin to `ALLOWED_ORIGINS` / `ADMIN_FRONTEND_URL`, redeploy user frontend so `/admin-graphql` works.
+6. Smoke: admin sign-in, users/courses list, one mutation visible in the user app.
+
+See production comments in `env.example`.
 
 ## Pages
 

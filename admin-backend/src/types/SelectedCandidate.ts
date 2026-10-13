@@ -16,15 +16,15 @@ import { User } from "./User";
 @Index(["applicationId"], { unique: true })
 export class SelectedCandidate {
     @Field(() => ID)
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn("uuid")
     id: string;
 
     @Field(() => ID)
-    @Column({ type: "int" })
+    @Column({ type: "varchar", length: 36 })
     applicationId: string;
 
     @Field(() => ID)
-    @Column({ type: "int" })
+    @Column({ type: "varchar", length: 36 })
     selectedById: string;
 
     @Field()
