@@ -34,10 +34,10 @@ registerEnumType(NotificationType, {
 @Entity("notifications")
 export class Notification {
     @Field(() => ID)
-    @PrimaryGeneratedColumn()
+    @PrimaryGeneratedColumn("uuid")
     id: string;
 
-    @Column({ type: "int" })
+    @Column({ type: "varchar", length: 36 })
     userId: string;
 
     @Field(() => NotificationType)

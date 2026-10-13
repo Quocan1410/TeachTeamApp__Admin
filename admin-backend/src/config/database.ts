@@ -9,6 +9,7 @@ import { Notification } from "../types/Notification";
 import bcrypt from "bcryptjs";
 import { getAdminEmail, getAdminSeedPassword } from "../utils/adminConfig";
 import { loadAdminRepoEnv } from "./loadEnv";
+import { mysqlSslOption } from "./mysqlSsl";
 
 loadAdminRepoEnv();
 
@@ -25,6 +26,7 @@ export const AppDataSource = new DataSource({
     username: process.env.DB_USERNAME || "",
     password: process.env.DB_PASSWORD || "",
     database: process.env.DB_NAME || "",
+    ssl: mysqlSslOption(),
     synchronize: process.env.DB_SYNC === "true",
     logging: process.env.NODE_ENV === "development",
     entities: [
