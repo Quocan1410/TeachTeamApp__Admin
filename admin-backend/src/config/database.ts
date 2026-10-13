@@ -10,14 +10,9 @@ import bcrypt from "bcryptjs";
 import { getAdminEmail, getAdminSeedPassword } from "../utils/adminConfig";
 import { loadAdminRepoEnv } from "./loadEnv";
 import { mysqlSslOption } from "./mysqlSsl";
+import { mysqlPoolSize } from "./mysqlPool";
 
 loadAdminRepoEnv();
-
-function mysqlPoolSize(): number {
-    const parsed = Number(process.env.DB_CONNECTION_LIMIT ?? 10);
-    if (!Number.isFinite(parsed)) return 10;
-    return Math.min(20, Math.max(1, Math.floor(parsed)));
-}
 
 export const AppDataSource = new DataSource({
     type: "mysql",
@@ -53,7 +48,6 @@ export const initializeDatabase = async () => {
         await AppDataSource.initialize();
         console.log("MySQL connected");
 
-        // Seed admin user
         await seedAdminUser();
     } catch (error) {
         console.error("Database initialization failed:", error);
