@@ -2,6 +2,9 @@
     "name": "admin-frontend",
     "version": "0.1.0",
     "private": true,
+    "engines": {
+        "node": ">=26.12.1"
+    },
     "scripts": {
         "dev": "next dev -p 3001",
         "dev:clean": "node ./scripts/clean-next-cache.mjs && next dev -p 3001",
